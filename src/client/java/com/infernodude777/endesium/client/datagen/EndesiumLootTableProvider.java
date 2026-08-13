@@ -14,6 +14,7 @@ public final class EndesiumLootTableProvider extends FabricBlockLootTableProvide
 	@Override
 	public void generate() {
 		dropSelf(ModBlocks.FOUNDATION_TEST_BLOCK);
+		dropSelf(ModBlocks.END_RUIN_BLOCK);
 	}
 
 	@Override

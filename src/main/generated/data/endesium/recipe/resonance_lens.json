@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "minecraft:ender_eye"
+    },
+    "S": {
+      "item": "endesium:void_shard"
+    }
+  },
+  "pattern": [
+    " S ",
+    "SES",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:resonance_lens"
+  }
+}

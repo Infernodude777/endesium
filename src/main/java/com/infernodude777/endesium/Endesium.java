@@ -4,6 +4,7 @@ import com.infernodude777.endesium.registry.ModBlocks;
 import com.infernodude777.endesium.registry.ModEntities;
 import com.infernodude777.endesium.registry.ModItems;
 import com.infernodude777.endesium.registry.ModSounds;
+import com.infernodude777.endesium.world.EndesiumWorld;
 import net.fabricmc.api.ModInitializer;
 
 import net.minecraft.resources.ResourceLocation;
@@ -29,8 +30,9 @@ public class Endesium implements ModInitializer {
 		ModItems.register();
 		ModEntities.register();
 		ModSounds.register();
+		EndesiumWorld.register();
 
-		LOGGER.info("Endesium foundation initialized");
+		LOGGER.info("Endesium initialized");
 	}
 
 	public static ResourceLocation id(String path) {

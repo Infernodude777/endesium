@@ -1,4 +1,10 @@
 {
+  "advancements.endesium.discover_end_wastes.description": "Find the edge of the familiar End",
+  "advancements.endesium.discover_end_wastes.title": "A Resonance in the Wastes",
+  "block.endesium.end_ruin_block": "End Ruin Block",
   "block.endesium.foundation_test_block": "Foundation Test Block",
-  "item.endesium.foundation_test_item": "Foundation Test Item"
+  "entity.endesium.void_stalker": "Void Stalker",
+  "item.endesium.foundation_test_item": "Foundation Test Item",
+  "item.endesium.resonance_lens": "Resonance Lens",
+  "item.endesium.void_shard": "Void Shard"
 }
