@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "endesium",
+	"version": "${version}",
+	"name": "Endesium",
+	"description": "A vanilla+ expansion of the End dimension focused on exploration, mystery, and discovery.",
+	"authors": [
+		"infernodude777"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/endesium/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.infernodude777.endesium.Endesium"
+		],
+		"client": [
+			"com.infernodude777.endesium.client.EndesiumClient"
+		],
+		"fabric-datagen": [
+			"com.infernodude777.endesium.client.EndesiumDataGenerator"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*",
+		"geckolib": ">=4.9.2"
+	}
+}

@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "blockbench": {
+      "command": "node",
+      "args": [
+        "-e",
+        "const http = require('http'); http.get('http://localhost:3000/bb-mcp')"
+      ]
+    },
+    "dogsprite-pixel-art": {
+      "command": "node",
+      "args": [
+        "tools/DogSprite/mcp-server/dist/index.js"
+      ]
+    }
+  }
+}
