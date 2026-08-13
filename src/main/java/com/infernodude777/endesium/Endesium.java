@@ -1,7 +1,9 @@
 package com.infernodude777.endesium;
 
 import com.infernodude777.endesium.registry.ModBlocks;
+import com.infernodude777.endesium.registry.ModEntities;
 import com.infernodude777.endesium.registry.ModItems;
+import com.infernodude777.endesium.registry.ModSounds;
 import net.fabricmc.api.ModInitializer;
 
 import net.minecraft.resources.ResourceLocation;
@@ -25,6 +27,8 @@ public class Endesium implements ModInitializer {
 
 		ModBlocks.register();
 		ModItems.register();
+		ModEntities.register();
+		ModSounds.register();
 
 		LOGGER.info("Endesium foundation initialized");
 	}
