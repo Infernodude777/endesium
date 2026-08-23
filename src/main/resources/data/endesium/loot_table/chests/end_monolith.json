@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 3,
+      "entries": [
+        { "type": "minecraft:item", "name": "minecraft:ender_pearl", "weight": 3 },
+        { "type": "minecraft:item", "name": "minecraft:iron_ingot", "weight": 3 },
+        { "type": "minecraft:item", "name": "minecraft:gold_ingot", "weight": 2 },
+        { "type": "minecraft:item", "name": "minecraft:amethyst_shard", "weight": 2 },
+        { "type": "minecraft:item", "name": "endesium:void_shard", "weight": 2 },
+        { "type": "minecraft:item", "name": "minecraft:paper", "weight": 2 },
+        { "type": "minecraft:item", "name": "minecraft:bread", "weight": 1 },
+        { "type": "minecraft:empty", "weight": 2 }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "minecraft:iron_pickaxe", "weight": 2, "functions": [{ "function": "minecraft:enchant_randomly" }] },
+        { "type": "minecraft:item", "name": "minecraft:golden_apple", "weight": 1 },
+        { "type": "minecraft:item", "name": "endesium:resonance_token", "weight": 1 },
+        { "type": "minecraft:empty", "weight": 4 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "minecraft:clay" },
+    { "item": "endesium:void_shard" }
+  ],
+  "result": { "id": "endesium:end_clay", "count": 2 }
+}

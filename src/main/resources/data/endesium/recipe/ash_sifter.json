@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " A ",
+    "A A",
+    " A "
+  ],
+  "key": {
+    "A": { "item": "endesium:ash_stone" }
+  },
+  "result": { "id": "endesium:ash_sifter", "count": 1 }
+}

@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "endesium:voidstone" },
+    { "item": "endesium:void_nugget" }
+  ],
+  "result": { "id": "endesium:void_slate", "count": 1 }
+}

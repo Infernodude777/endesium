@@ -1,0 +1,145 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": { "min": 4, "max": 6 },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:magma_core",
+          "weight": 6,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:dragon_fang",
+          "weight": 4,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:echo_shard",
+          "weight": 4,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:resonance_core",
+          "weight": 3,
+          "functions": [{ "function": "minecraft:set_count", "count": 1 }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:diamond",
+          "weight": 5,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 5 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:emerald",
+          "weight": 4,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 3, "max": 7 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_block",
+          "weight": 3,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_ingot",
+          "weight": 2,
+          "functions": [{ "function": "minecraft:set_count", "count": 1 }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_scrap",
+          "weight": 3,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 4 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:ashen_ember",
+          "weight": 5,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 3, "max": 6 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:crying_obsidian",
+          "weight": 3,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 4 } }]
+        }
+      ]
+    },
+    {
+      "rolls": 2,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:ember_charm",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:void_flare",
+          "weight": 3,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 4 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:enchanted_golden_apple",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:golden_apple",
+          "weight": 3,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:ender_pearl",
+          "weight": 3,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 4 } }]
+        },
+        { "type": "minecraft:empty", "weight": 2 }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:diamond_helmet",
+          "weight": 2,
+          "functions": [{ "function": "minecraft:enchant_randomly" }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:diamond_chestplate",
+          "weight": 2,
+          "functions": [{ "function": "minecraft:enchant_randomly" }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:diamond_leggings",
+          "weight": 2,
+          "functions": [{ "function": "minecraft:enchant_randomly" }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:diamond_boots",
+          "weight": 2,
+          "functions": [{ "function": "minecraft:enchant_randomly" }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:ashwalker_boots",
+          "weight": 2
+        },
+        { "type": "minecraft:empty", "weight": 3 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": {
+      "item": "endesium:ender_essence"
+    },
+    "S": {
+      "item": "endesium:crown_seal_block"
+    }
+  },
+  "pattern": [
+    "SES",
+    "EEE",
+    "SES"
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:crown_seal"
+  }
+}

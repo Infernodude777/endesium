@@ -1,6 +1,6 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "endesium:item/endesium_gui",
   "textures": {
-    "layer0": "endesium:item/foundation_test_item"
+    "layer0": "endesium:item/void_shard"
   }
 }

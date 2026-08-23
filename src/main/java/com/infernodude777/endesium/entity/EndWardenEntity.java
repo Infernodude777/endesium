@@ -189,6 +189,9 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 				setGuarding(false);
 				playSound(SoundEvents.SHIELD_BLOCK, 0.8F, 0.8F);
 			}
+			// Cooldowns tick down centrally so goal polling can never stall them.
+			if (specialCooldown > 0) specialCooldown--;
+			if (guardCooldown > 0) guardCooldown--;
 			// A guarding warden plants its feet.
 			if (isGuarding()) {
 				getNavigation().stop();
@@ -205,9 +208,11 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 	 */
 	private void updateBossBarAudience(ServerLevel server) {
 		for (ServerPlayer player : server.players()) {
-			if (player.distanceToSqr(this) <= BOSS_BAR_RANGE * BOSS_BAR_RANGE) {
+			if (player.distanceToSqr(this) <= BOSS_BAR_RANGE * BOSS_BAR_RANGE && !player.isSpectator()) {
 				bossBar.addPlayer(player);
-			} else if (!player.isSpectator()) {
+			} else {
+				// Spectators must also lose the bar, or a once-near spectator
+				// keeps it pinned to their screen forever.
 				bossBar.removePlayer(player);
 			}
 		}

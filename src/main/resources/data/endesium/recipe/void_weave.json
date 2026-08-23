@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "TT",
+    "TT"
+  ],
+  "key": {
+    "T": { "item": "endesium:abyssal_thread" }
+  },
+  "result": { "id": "endesium:void_weave", "count": 1 }
+}

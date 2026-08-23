@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "endesium:resonant_slate" },
+    { "item": "minecraft:ink_sac" }
+  ],
+  "result": { "id": "endesium:inscribed_slate", "count": 1 }
+}

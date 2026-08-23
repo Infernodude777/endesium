@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 2,
+      "entries": [
+        { "type": "minecraft:item", "name": "endesium:void_shard" },
+        { "type": "minecraft:item", "name": "endesium:echo_shard" },
+        { "type": "minecraft:item", "name": "endesium:ender_essence" },
+        { "type": "minecraft:empty", "weight": 3 }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:resonance_token",
+          "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.15 } ]
+        },
+        { "type": "minecraft:empty", "weight": 6 }
+      ]
+    }
+  ]
+}

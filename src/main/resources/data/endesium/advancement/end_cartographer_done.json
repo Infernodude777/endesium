@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:echo_sight",
+  "display": {
+    "icon": { "id": "endesium:end_cartographer" },
+    "title": { "translate": "advancements.endesium.end_cartographer_done.title" },
+    "description": { "translate": "advancements.endesium.end_cartographer_done.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_end_cartographer": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:end_cartographer" }
+        ]
+      }
+    }
+  }
+}

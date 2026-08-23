@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_ender_essence": {
+      "conditions": {
+        "items": [
+          {
+            "items": "endesium:ender_essence"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "endesium:crown_seal"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_ender_essence"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "endesium:crown_seal"
+    ]
+  }
+}

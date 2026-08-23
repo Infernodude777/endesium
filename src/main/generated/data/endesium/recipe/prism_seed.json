@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": {
+      "item": "endesium:chorus_eye"
+    },
+    "P": {
+      "item": "endesium:prism_canopy_block"
+    }
+  },
+  "pattern": [
+    " P ",
+    "PEP",
+    " P "
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:prism_seed"
+  }
+}

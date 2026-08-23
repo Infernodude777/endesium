@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:leather_boots"
+    },
+    "E": {
+      "item": "endesium:ashen_ember"
+    },
+    "M": {
+      "item": "endesium:magma_core"
+    }
+  },
+  "pattern": [
+    "E E",
+    "MBM"
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:ashwalker_boots"
+  }
+}

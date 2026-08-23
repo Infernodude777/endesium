@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "T T",
+    "TMT",
+    "TTT"
+  ],
+  "key": {
+    "T": { "item": "endesium:abyssal_thread" },
+    "M": { "item": "endesium:void_membrane" }
+  },
+  "result": { "id": "endesium:void_filter", "count": 1 }
+}

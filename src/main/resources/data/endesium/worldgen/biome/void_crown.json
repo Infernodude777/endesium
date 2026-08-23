@@ -1,0 +1,76 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.2,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 0,
+    "fog_color": 3158064,
+    "water_color": 2105376,
+    "water_fog_color": 1052688,
+    "foliage_color": 4210752,
+    "grass_color": 4210752,
+    "ambient_particle": {
+      "probability": 0.05,
+      "options": {
+        "type": "endesium:void_crown_mote"
+      }
+    },
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "endesium:ambient.void_crown_low",
+      "tick_delay": 5600
+    }
+  },
+  "spawners": {
+    "monster": [
+      {
+        "type": "minecraft:enderman",
+        "weight": 10,
+        "minCount": 4,
+        "maxCount": 4
+      },
+      {
+        "type": "endesium:void_stalker",
+        "weight": 4,
+        "minCount": 1,
+        "maxCount": 2
+      },
+      {
+        "type": "endesium:crown_sentinel",
+        "weight": 2,
+        "minCount": 1,
+        "maxCount": 1
+      }
+    ],
+    "creature": [],
+    "ambient": [],
+    "axolotls": [],
+    "underground_water_creature": [],
+    "water_creature": [],
+    "water_ambient": [],
+    "misc": []
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [
+      "minecraft:end_gateway_return"
+    ],
+    [],
+    [],
+    [],
+    [
+      "endesium:biome_terrain"
+    ],
+    [
+      "endesium:biome_vegetation",
+      "endesium:biome_structure",
+            "endesium:biome_landmark"],
+    []
+  ]
+}

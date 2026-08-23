@@ -1,0 +1,17 @@
+{
+  "parent": "endesium:golem_felled",
+  "display": {
+    "icon": { "id": "endesium:golem_core" },
+    "title": { "translate": "advancements.endesium.core_absorbed.title" },
+    "description": { "translate": "advancements.endesium.core_absorbed.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "core_absorbed": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

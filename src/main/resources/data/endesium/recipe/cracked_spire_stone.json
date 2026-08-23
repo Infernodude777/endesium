@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "HH",
+    "HH"
+  ],
+  "key": {
+    "H": { "item": "endesium:highland_stone" }
+  },
+  "result": { "id": "endesium:cracked_spire_stone", "count": 4 }
+}

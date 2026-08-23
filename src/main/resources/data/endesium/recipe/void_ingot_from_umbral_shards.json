@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": { "item": "endesium:umbral_shard" },
+  "result": { "id": "endesium:void_ingot" },
+  "experience": 0.6,
+  "cookingtime": 100
+}

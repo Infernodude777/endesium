@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:beyond_the_edge",
+  "display": {
+    "icon": { "id": "endesium:highland_grappler" },
+    "title": { "translate": "advancements.endesium.highland_hook.title" },
+    "description": { "translate": "advancements.endesium.highland_hook.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_highland_grappler": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:highland_grappler" }
+        ]
+      }
+    }
+  }
+}

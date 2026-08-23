@@ -1,0 +1,45 @@
+{
+    "type":  "minecraft:chest",
+    "pools":  [
+                  {
+                      "entries":  [
+                                      {
+                                          "name":  "endesium:highland_feather",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "name":  "endesium:void_membrane",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "name":  "endesium:skyglass_shard",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "type":  "minecraft:empty",
+                                          "weight":  3
+                                      }
+                                  ],
+                      "rolls":  2
+                  },
+                  {
+                      "entries":  [
+                                      {
+                                          "conditions":  [
+                                                             {
+                                                                 "condition":  "minecraft:random_chance",
+                                                                 "chance":  0.25
+                                                             }
+                                                         ],
+                                          "name":  "endesium:echo_shard",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "type":  "minecraft:empty",
+                                          "weight":  5
+                                      }
+                                  ],
+                      "rolls":  1
+                  }
+              ]
+}

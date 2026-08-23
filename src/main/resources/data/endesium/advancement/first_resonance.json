@@ -1,0 +1,17 @@
+{
+  "parent": "minecraft:story/root",
+  "display": {
+    "icon": { "id": "endesium:resonance_lens" },
+    "title": { "translate": "advancements.endesium.first_resonance.title" },
+    "description": { "translate": "advancements.endesium.first_resonance.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "activate_mechanism": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

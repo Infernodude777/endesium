@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "endesium:burrower_plate" }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:crystal_core",
+          "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.15 } ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:crystal_fang",
+          "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.04 } ]
+        },
+        { "type": "minecraft:empty", "weight": 8 }
+      ]
+    }
+  ]
+}

@@ -17,25 +17,18 @@ public final class RecipeUnlockEvents {
 	private RecipeUnlockEvents() {
 	}
 
-	/** Every Endesium recipe unlock id under recipes/. Keep in sync with datagen. */
-	private static final String[] RECIPE_PATHS = {
-			"ashen_crust", "ashwalker_boots", "crown_needle", "crown_seal", "echo_compass",
-			"ember_charm", "lumen_graft", "mire_bell_clapper", "null_quill", "prism_seed",
-			"resonance_lens", "resonant_wings", "threshold_key", "void_anchor", "void_axe",
-			"void_brick", "void_brick_slab", "void_brick_stairs", "void_brick_wall",
-			"void_boots", "void_chestplate", "void_compass", "void_dash", "void_helmet",
-			"void_hoe", "void_ingot_from_nuggets", "void_ingot_from_smelting",
-			"void_lantern", "void_leggings", "void_nugget_from_ingot", "void_pickaxe",
-			"void_shovel", "void_sword", "windscar_winch"
-	};
-
 	public static void register() {
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayer player = handler.getPlayer();
 			var advancements = server.getAdvancements();
-			for (String path : RECIPE_PATHS) {
-				var holder = advancements.get(Endesium.id("recipes/" + path));
-				if (holder == null) continue;
+			// Derived from the loaded advancement registry instead of a
+			// hand-maintained list, so datagen can add or rename recipe
+			// unlocks without this class drifting out of sync.
+			for (var holder : advancements.getAllAdvancements()) {
+				if (holder.id().getNamespace() != Endesium.MOD_ID
+						|| !holder.id().getPath().startsWith("recipes/")) {
+					continue;
+				}
 				AdvancementProgress progress = player.getAdvancements().getOrStartProgress(holder);
 				if (!progress.isDone()) {
 					for (String criterion : progress.getRemainingCriteria()) {

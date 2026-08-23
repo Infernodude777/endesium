@@ -1,0 +1,26 @@
+{
+  "parent": "endesium:into_the_wastes",
+  "display": {
+    "icon": { "id": "endesium:dust_chitin" },
+    "title": { "translate": "advancements.endesium.scavengers_end.title" },
+    "description": { "translate": "advancements.endesium.scavengers_end.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "killed_crawler": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": { "type": "endesium:dust_crawler" }
+          }
+        ]
+      }
+    }
+  }
+}

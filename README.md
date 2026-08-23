@@ -1,150 +1,171 @@
 # Endesium
 
-A restrained, ancient continuation of the End.
+An ancient, restrained continuation of the End - grown into ten regions, guarded by wardens, and ruled by something older than the dragon.
 
-Endesium is a Fabric mod for Minecraft Java Edition 1.21.1 that expands the End into a quiet, weathered frontier. It adds the sparse End Wastes biome, handcrafted End Ruins, the Void Shard and Resonance Lens, and the Void Stalker — a predator that watches before it strikes.
+Endesium is a Fabric mod for Minecraft Java Edition 1.21.1 that expands the End into a hand-authored frontier: ten distinct regions layered onto vanilla End generation, structures in three tiers, a discovery-driven resonance system, thirteen custom creatures with individual combat identities, and two boss fights with rewards that permanently change your character.
 
-The mod is built around a simple idea: the End should reward observation and interpretation, not map markers and particle storms. Signals are quiet, sources are server-authoritative, and every visual accent means something.
-
-> **Status:** first vertical slice. The scope is deliberately small, and the design is locked before gameplay implementation (see `docs/ENDESIUM_VERTICAL_SLICE_DESIGN.md`).
+> **Status:** the 10x overhaul is complete - landmarks, bosses, regional ecology, and the post-Dragon transformation. See `docs/ROADMAP.md` for what is next and `docs/TESTING_RUNBOOK.md` for QA gates.
 
 ## Table of contents
 
-- [Features](#features)
-- [The first vertical slice](#the-first-vertical-slice)
+- [The ten regions](#the-ten-regions)
+- [Structures](#structures)
+- [Resonance and progression](#resonance-and-progression)
+- [Creatures](#creatures)
+- [Bosses and permanent rewards](#bosses-and-permanent-rewards)
+- [Post-Dragon transformation](#post-dragon-transformation)
 - [Getting started](#getting-started)
 - [Building from source](#building-from-source)
 - [Project structure](#project-structure)
 - [Design principles](#design-principles)
-- [Technical notes](#technical-notes)
 - [Documentation](#documentation)
 - [License](#license)
 
-## Features
+## The ten regions
 
-### End Wastes
+A seed-driven lattice divides the outer End into ten continent-scale biomes, each with its own blocks, plants, particles, ambience, creatures, and structures:
 
-A sparse transition biome layered on top of vanilla End generation rather than replacing it. End islands remain familiar, but shelves become fractured, void gaps grow wider, and occasional dark seams cut through the ground. End Wastes currently occupies a small share of eligible outer-End biome samples, keeping the central island and Dragon arena untouched.
+| Region | Identity |
+|---|---|
+| End Wastes | The mineral grave: fractured shelves, dead mechanisms, dust reeds |
+| Chorus Wilds | The living forest: elder chorus trees, blooms, blink-stalking predators |
+| Shattered Highlands | Wind and stone: sky lakes, lensstone towers, gliding rays |
+| Void Marshes | Drowned ground: black water, tide iron, tendril-pulling ambushers |
+| Luminous Groves | Starlit atoll: glowing flora, prism canopies, lumen moths |
+| Ashen Expanse | The caldera country: volcanoes, ember shrines, ash wraiths |
+| Crystal Barrens | Shattered geodes: crystal spires, burrowers, shard volleys |
+| Void Skirts | The prison yard: void slate flats, wisps, the tallest spire in the End |
+| Void Crown | The sealed ziggurat: crown needles, sentinels, observatory orbs |
+| Umbral Reach | The deepest dark: null archives, sound-mimicking watchers |
 
-### End Ruin
+Find them with `/locate biome endesium:<region_name>`.
 
-A small, handcrafted observation station built into an End island shelf — broken pillars, a collapsed corner, and a low resonant plate. The ruin is placed by the mod on world tick at a fixed origin in the End, using End Ruin Block and vanilla End Stone Bricks. It is a place to look around, not a quest destination.
+## Structures
 
-### Void Shard
+Three tiers, all hand-authored block by block:
 
-A fractured, inert fragment of an older End material. It is not glowing crystal and not ore: it is a physical remnant that becomes useful only when paired with the Resonance Lens. Shards are scarce; the first slice does not provide a farm. They can be crafted from an Ender Pearl as a bridge for early testing, but the intended source is ruin loot.
+- **Flagships** - one grand build per region (Dust Cathedral, Elderwood Sanctum, Skyrend Keep, Great Caldera, ...), each with multi-level interiors, environmental hazards, curated loot, and an End Warden guarding its vault. Vault bars retract only when the warden falls.
+- **Landmarks** - medium builds on a ~256-block grid per region: fossil arches, windvane watchtowers, mire bell cairns, shard spire clusters, and more. Each carries loot plus a wakeable mini-mechanism.
+- **Ruins and micro-sites** - weighted ruin variants (Intact / Fractured / Sunken) and small scatter sites keep every walk interesting.
 
-### Resonance Lens
+## Resonance and progression
 
-A small, dark-framed instrument with a pale mineral aperture. Crafted from four Void Shards around an Ender Eye, the Lens reads nearby resonance and reports it as a qualitative pulse — never as coordinates, an arrow, or a distance. It works in the End, is reusable, and has a short activation cooldown.
+Progression is understanding, not mining tiers:
 
-### Void Stalker
+```
+EXPLORE -> NOTICE a structure -> CRAFT the Resonance Lens
+  -> READ the signal (band + direction, never coordinates)
+  -> WAKE the mechanism (Token + fragment + loot)
+  -> BUILD the Echo Compass to track stronger sources
+  -> GEAR UP from the regions -> KILL THE DRAGON
+  -> the End transforms, permanently
+```
 
-A low, four-legged predator that prefers to observe before it engages. The Void Stalker keeps a preferred combat distance, uses a readable side reposition to punish simple backpedaling, and only commits when it has line of sight. Its body stays dark mineral and desaturated; a single cyan signal appears only during attack commitment. Modeled and animated with GeckoLib.
+Waking mechanisms earns Resonance Tokens; tokens gate the Echo Compass and other tools. The system is fully server-authoritative.
 
-### Resonance system
+## Creatures
 
-A small server-side registry of discoverable signals. A player's resonance level persists as an attachment; the Lens reports a bounded, qualitative response. The client never learns exact source positions, and one player's discovery never reveals coordinates to another.
+Thirteen GeckoLib-modeled creatures, each with its own silhouette and combat identity:
 
-### Discovery advancement
+- **Void Stalker** - the flagship predator: observes, flanks, commits. Ten-state AI.
+- **Dust Crawler** - armored scarab; kicks up blinding dust, burrow-escapes at low health.
+- **Chorus Stalker** - blinks behind you through the wilds.
+- **Marsh Crawler** - crocodilian ambusher; tendril pull and pounce.
+- **Lumen Moth** - luminous ambience; follows lantern light.
+- **Ash Wraith** - telegraphed ash bolts; enrages below half health and its bolts ignite.
+- **Crystal Burrower** - erupts from the ground, fires homing crystal shards.
+- **Void Ray** - wildlife glider that dive-bombs when provoked.
+- **Nullwalker** - rare watcher of the Umbral Reach; mimics sounds, vanishes when approached, suppresses mortal vigor.
+- **Void Wisp** - lure predator of the Skirts; drifts like a mote, lunges and drags.
+- **Crown Sentinel** - construct guardian with a telegraphed area slam.
+- **End Warden** and **End Golem** - see below.
 
-Entering the End Wastes earns "A Resonance in the Wastes", rewarding the first step of exploration with a named confirmation of the discovery.
+## Bosses and permanent rewards
 
-## The first vertical slice
+### End Wardens (minibosses, x10)
 
-In scope:
+One per flagship vault, wearing its region's colors and accessory bones, with a region-tinted boss bar and a signature attack per region. It raises guard (frontal immunity - flank it), calls local kin at 66% health, and enrages below half.
 
-- End Wastes biome (extension of vanilla End selection)
-- End Ruin Block and the first End Ruin structure
-- Void Shard and Resonance Lens items with recipes
-- Void Stalker entity with GeckoLib geometry, textures, and animations
-- Basic Resonance system with persistent player state
-- "A Resonance in the Wastes" advancement
-- Generated language, loot tables, and recipe data
+Its **Warden Sigil** is the temptation: carried, it grants regeneration in the End. Used, it permanently grants +1 heart - up to +10. Attune all ten regions to become a hidden **Warden Ascendant** with a visible aura and a lasting regeneration pulse.
 
-Out of scope (deliberately):
+### The End Golem (major boss)
 
-- Deep End, new bosses, or post-dragon progression
-- Complete End replacement or a custom terrain generator
-- Additional mobs and structures
-- Renewable shard farming
+Wakes where the dragon falls. Three phases (purple / yellow / red bar): slams, homing resonance barrages with minion summons, beam sweeps, shockwaves, an arena tether, and burning ground. Deal 60+ damage within 8 seconds to trigger the **stagger** - five seconds of double damage while it kneels.
+
+It drops **Golem Cores**: carried, they grant Resistance in the End; absorbed, they permanently grant +1 heart and +0.25 attack damage (max +10 / +4). Ten cores unlock **Golem's Resolve** - once per day, death refuses you. Craft a **Golem Effigy** to summon another golem whenever one is ready to fall. The Golem also guarantees a **Void Pearl** - a safe short-range teleport with durability that accepts Unbreaking and Mending.
+
+## Post-Dragon transformation
+
+The first dragon death is a world event: a permanent, restart-proof transformation stored in `SavedData`. Mechanisms reach farther, the Resonant Archive unseals, the respawned dragon fights a four-phase Endesium controller, and the Golem awakens.
 
 ## Getting started
 
-Requirements:
-
 - Minecraft Java Edition 1.21.1
-- Fabric Loader 0.19.3+
-- Fabric API 0.116.15+1.21.1
-- Java 21
-- GeckoLib 4.9.2 (bundled as a dependency)
+- Fabric Loader 0.19.3+, Fabric API 0.116.15+1.21.1
+- Java 21, GeckoLib 4.9.2 (declared dependency)
 
-Install the mod like any Fabric mod: drop the built JAR into your `mods` folder, along with Fabric API and GeckoLib, and launch through the Fabric loader profile.
+Drop the built JAR into `mods` with Fabric API and launch.
+
+In-game, craft the **Guidebook** (book + Resonance Token) and the **Progression Guide** for full coverage.
 
 ## Building from source
 
-The project uses Fabric Loom with official Mojang mappings.
-
 ```sh
-# Generate Minecraft sources and set up the workspace
-./gradlew genSources
-
-# Run a client or dedicated server
-./gradlew runClient
-./gradlew runServer
-
-# Regenerate data (recipes, loot tables, advancements, lang)
-./gradlew runDatagen
-
-# Build the mod JAR
-./gradlew build
+./gradlew genSources      # Minecraft sources
+./gradlew runClient       # dev client
+./gradlew runDatagen      # regenerate recipes/loot/lang
+./gradlew build           # mod JAR
 ```
 
-On Windows, use `gradlew.bat` or run from Git Bash as shown above.
+Windows: use `gradlew.bat`.
 
 ## Project structure
 
 ```
 src/
   main/java/com/infernodude777/endesium/
-    entity/          Void Stalker entity and AI
-    item/            Void Shard and Resonance Lens item behavior
-    mixin/           TheEndBiomeSourceMixin (End Wastes selection)
-    registry/        Blocks, items, entities, sounds registration
-    resonance/       Resonance system and persistent player state
-    world/           End Wastes biome definition and End world extensions
-  main/resources/
-    assets/endesium/ Models, textures, GeckoLib geometry and animations
-    data/endesium/   Worldgen biome definition and advancement
-    fabric.mod.json  Mod metadata
-  client/java/com/infernodude777/endesium/client/
-    entity/          Void Stalker GeckoLib model and renderer
-    datagen/         Language, loot table, and recipe data providers
-docs/
-  ENDESIUM_VISUAL_DESIGN.md          Visual language, palette, and material rules
-  ENDESIUM_VERTICAL_SLICE_DESIGN.md  Vertical slice design specification
+    block/       plant blocks, inscribed slate, resonant mechanism
+    command/     development-only /endesium commands
+    dragon/      respawned-dragon fight controller
+    entity/      13 custom entities incl. End Warden and End Golem
+    item/        lenses, tokens, relics, sigils, cores, effigies
+    mixin/       biome source extension + dragon fight hooks
+    registry/    blocks, items, entities, sounds, tabs
+    resonance/   signal manager and source types
+    state/       persistent world + player-reward state
+    world/       regions, terrain, flagship + landmark features
+  main/resources/assets/endesium/   models, textures, GeckoLib geo/animations
+  main/resources/data/endesium/     biomes, features, loot, recipes, advancements
+  client/java/...                   renderers, models, screens, datagen providers
+docs/             design docs, devlogs, runbooks (see Documentation)
 ```
 
 ## Design principles
 
-- **Restraint.** The palette stays desaturated — charcoal, End gray, and End stone cream dominate. Saturated purple, pure black, and neon effects are not part of the working palette.
-- **Meaningful signals.** Resonance Cyan means active energy. Ancient Gold means rare history. A bright accent must have a gameplay or lore reason.
-- **Vanilla relationship.** The vanilla End remains recognizable: its stone, its emptiness, its scale. Endesium adds things that do not belong, quietly.
-- **Server authority.** Detection, signal strength, and rewards are computed server-side. Clients receive bounded responses, never source coordinates.
-- **Readable movement.** The Void Stalker's intent is readable through animation — observe, position, commit — before any damage happens.
-
-## Technical notes
-
-- **Biome selection:** a mixin extends the vanilla End biome source instead of replacing it, so vanilla End generation, the Dragon fight, and Enderman behavior remain unchanged.
-- **Resonance state:** per-player resonance is stored with the Fabric attachment API using a persistent `Codec.INT` attachment, surviving reloads.
-- **Mob rendering:** the Void Stalker uses GeckoLib 4.9.2 with a Blockbench geometry model and authored animations.
-- **Data generation:** recipes, loot tables, advancements, and language entries are generated by the `fabric-datagen` entrypoint and committed under `src/main/generated`.
+- **Restraint.** A desaturated working palette; saturated color must mean something.
+- **Observation over waypoints.** Qualitative signals, never coordinates.
+- **Server authority.** The client asks; the server decides.
+- **Rewards you keep.** Permanent hearts, damage, and saves - all heavily guarded.
+- **Readable combat.** Every attack telegraphs before it lands.
+- **Vanilla stays vanilla underneath.** Mixins extend, not replace.
 
 ## Documentation
 
-- `docs/ENDESIUM_VISUAL_DESIGN.md` — the finalized palette, material language, and pixel-art rules for every asset.
-- `docs/ENDESIUM_VERTICAL_SLICE_DESIGN.md` — the locked design for the first slice, including mechanics, AI behavior, and the resonance discovery sequence.
+Start here:
+
+- `docs/GAMEPLAY_GUIDE.md` and `docs/PROGRESSION_GUIDE.md`
+- `docs/FEATURE_REFERENCE.md` and `docs/CRAFTING_REFERENCE.md`
+
+Then the deep cuts:
+
+- `docs/ARCHITECTURE.md` and `docs/CODE_WALKTHROUGH.md`
+- `docs/WORLDGEN.md` - regions, spacing grids, feature wiring
+- `docs/VOID_STALKER_AI.md` - the 10-state combat machine
+- `docs/MEANINGFUL_STRUCTURES_PLAN.md` and `docs/10X_OVERHAUL_PLAN.md`
+- `docs/BALANCE_NOTES.md`, `docs/TESTING_RUNBOOK.md`, `docs/QA_REPORT.md`
+- `docs/CHANGELOG.md` and `docs/DEVLOG_12.md` / `DEVLOG_13.md`
+- `ABOUT.md` - the short version of why this mod exists
 
 ## License
 
-This project is licensed under CC0-1.0 (public domain dedication), matching the template it was built from. See `fabric.mod.json`.
+CC0-1.0 (public domain), matching the template this project grew from. See `fabric.mod.json`.

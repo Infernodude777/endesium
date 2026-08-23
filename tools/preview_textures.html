@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Endesium texture review</title>
+<style>
+  body { background: #1a1a22; color: #ddd; font-family: monospace; padding: 24px; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px; margin-bottom: 24px; }
+  .cell { text-align: center; }
+  .cell .label { margin-top: 6px; font-size: 12px; color: #9aa; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; background: repeating-conic-gradient(#2a2a35 0% 25%, #20202a 0% 50%) 0 0/16px 16px; }
+  .big canvas { width: 160px; height: 160px; }
+  h2 { color: #7ea7a6; font-weight: normal; }
+  .tilegrid canvas { width: 256px; height: 256px; }
+</style>
+</head>
+<body>
+<h1>Endesium textures — review sheet</h1>
+<div id="sheet"></div>
+<script>
+const ITEMS = ['void_shard', 'resonance_lens'];
+const BLOCKS = ['resonant_slate', 'end_gray', 'dormant_resonant_crystal', 'end_ruin_mechanism'];
+const PLANTS = ['chorus_sprout', 'wild_tendril'];
+
+function load(name) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width; canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas);
+    };
+    img.src = 'DogSprite/mcp-server/output/' + name + '_prev.png';
+  });
+}
+
+async function section(title, names) {
+  const h = document.createElement('h2');
+  h.textContent = title;
+  document.getElementById('sheet').appendChild(h);
+  const row = document.createElement('div');
+  row.className = 'row';
+  for (const name of names) {
+    const canvas = await load(name);
+    const cell = document.createElement('div');
+    cell.className = 'cell big';
+    const clone = canvas.cloneNode();
+    cell.appendChild(clone);
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = name;
+    cell.appendChild(label);
+    row.appendChild(cell);
+  }
+  document.getElementById('sheet').appendChild(row);
+}
+
+(async () => {
+  await section('Items', ITEMS);
+  await section('Blocks', BLOCKS);
+  await section('Plants', PLANTS);
+  // tiled preview of block textures to check tileability
+  const h = document.createElement('h2');
+  h.textContent = 'Blocks tiled 2x2 (tileability check)';
+  document.getElementById('sheet').appendChild(h);
+  const row = document.createElement('div');
+  row.className = 'row';
+  for (const name of BLOCKS) {
+    const canvas = await load(name);
+    const tile = document.createElement('canvas');
+    tile.width = 256; tile.height = 256;
+    const ctx = tile.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    for (let ty = 0; ty < 2; ty++) for (let tx = 0; tx < 2; tx++) ctx.drawImage(canvas, tx * 128, ty * 128);
+    const cell = document.createElement('div');
+    cell.className = 'cell tilegrid';
+    cell.appendChild(tile);
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = name;
+    cell.appendChild(label);
+    row.appendChild(cell);
+  }
+  document.getElementById('sheet').appendChild(row);
+})();
+</script>
+</body>
+</html>

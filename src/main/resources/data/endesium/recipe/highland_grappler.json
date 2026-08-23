@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " H ",
+    "HHH",
+    " S "
+  ],
+  "key": {
+    "H": { "item": "endesium:highland_feather" },
+    "S": { "item": "minecraft:string" }
+  },
+  "result": { "id": "endesium:highland_grappler", "count": 1 }
+}

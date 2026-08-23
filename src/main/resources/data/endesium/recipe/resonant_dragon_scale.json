@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "endesium:dragonbone" },
+    { "item": "endesium:echo_shard" }
+  ],
+  "result": { "id": "endesium:resonant_dragon_scale", "count": 1 }
+}

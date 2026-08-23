@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "endesium:dragonbone"
+    },
+    "E": {
+      "item": "endesium:ender_essence"
+    },
+    "S": {
+      "item": "endesium:resonant_dragon_scale"
+    },
+    "W": {
+      "item": "minecraft:elytra"
+    }
+  },
+  "pattern": [
+    "ESE",
+    "SWS",
+    "BSB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:resonant_wings"
+  }
+}

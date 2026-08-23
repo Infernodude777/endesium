@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IGI",
+    "GEG",
+    "IGI"
+  ],
+  "key": {
+    "I": { "item": "endesium:void_ingot" },
+    "G": { "item": "endesium:void_gem" },
+    "E": { "item": "endesium:ender_essence" }
+  },
+  "result": { "id": "endesium:void_core", "count": 1 }
+}

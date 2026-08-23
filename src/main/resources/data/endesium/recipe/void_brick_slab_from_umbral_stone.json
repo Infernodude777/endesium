@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SSS"
+  ],
+  "key": {
+    "S": { "item": "endesium:umbral_stone" }
+  },
+  "result": { "id": "endesium:void_brick_slab", "count": 6 }
+}

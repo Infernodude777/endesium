@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "endesium:block/crystal_shard_block"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:archive_awakened",
+  "display": {
+    "icon": { "id": "endesium:archive_key" },
+    "title": { "translate": "advancements.endesium.archive_seeker.title" },
+    "description": { "translate": "advancements.endesium.archive_seeker.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_archive_key": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:archive_key" }
+        ]
+      }
+    }
+  }
+}

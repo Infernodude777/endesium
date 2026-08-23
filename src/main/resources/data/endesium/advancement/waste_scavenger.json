@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:into_the_wastes",
+  "display": {
+    "icon": { "id": "endesium:wastes_compass" },
+    "title": { "translate": "advancements.endesium.waste_scavenger.title" },
+    "description": { "translate": "advancements.endesium.waste_scavenger.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_wastes_compass": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:wastes_compass" }
+        ]
+      }
+    }
+  }
+}

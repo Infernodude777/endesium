@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    " S ",
+    " S ",
+    " S "
+  ],
+  "key": {
+    "S": { "item": "endesium:void_slate" }
+  },
+  "result": { "id": "endesium:void_spire", "count": 3 }
+}

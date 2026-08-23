@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:where_everything_died",
+  "display": {
+    "icon": { "id": "endesium:ash_sifter" },
+    "title": { "translate": "advancements.endesium.ash_prospector.title" },
+    "description": { "translate": "advancements.endesium.ash_prospector.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_ash_sifter": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:ash_sifter" }
+        ]
+      }
+    }
+  }
+}

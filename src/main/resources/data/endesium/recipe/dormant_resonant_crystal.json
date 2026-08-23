@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "minecraft:amethyst_block" },
+    { "item": "endesium:echo_shard" }
+  ],
+  "result": { "id": "endesium:dormant_resonant_crystal", "count": 1 }
+}

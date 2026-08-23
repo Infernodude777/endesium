@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "B",
+    "B",
+    "S"
+  ],
+  "key": {
+    "B": { "item": "minecraft:bone" },
+    "S": { "item": "endesium:void_shard" }
+  },
+  "result": { "id": "endesium:dragonbone", "count": 1 }
+}

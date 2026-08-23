@@ -208,7 +208,7 @@ The recipe communicates that the Lens is built from scarce End material around a
 | 16–32 blocks | Three-pulse cadence every 2 seconds; stronger hand shimmer and directional stereo bias | The player can triangulate by turning and comparing cadence, not by reading coordinates. |
 | 0–16 blocks | Rapid but restrained pulse; a brief cyan seam appears on the Lens and nearby mechanism | The source is close enough to find by looking for the ruin or mechanism. |
 
-The Lens never displays a compass needle, waypoint, beam, coordinates, or destination distance.
+The Lens never displays a compass needle, waypoint, coordinates, or destination distance. During the brief, server-validated mechanism activation only, a white particle line may travel from the Lens to the mechanism as a confirmation effect; it is not a locator beam and does not persist.
 
 ### Player feedback
 
@@ -291,19 +291,21 @@ Entering the ruin should make the End quieter for a moment. The player sees a lo
 
 ### Appearance
 
-The Void Stalker must not resemble an Enderman, Shulker, Phantom, or existing vanilla silhouette.
+The Void Stalker is a tall, slender, non-human biped. It may create the same unease as a distant slender humanoid silhouette, but it must not be an Enderman, Shulker, Phantom, or a humanoid reskin.
 
-- Height: approximately 1.5 blocks.
-- Width: approximately 0.9 blocks.
-- Body: low, forward-leaning torso with a raised rear carapace.
-- Legs: four short jointed legs, with the front pair slightly longer and used for probing movement.
-- Head: compact wedge set forward from the torso, not a humanoid cube.
+- Height: approximately 3.0–3.5 blocks.
+- Width: approximately 0.75–1.0 blocks across the torso and shoulders.
+- Body: narrow vertical torso with a slightly hunched forward posture, long center of mass, and a restrained rear resonance structure.
+- Legs: two long, jointed, digitigrade legs with narrow lower sections and clear grounded feet.
+- Arms: two unusually long, jointed forelimbs that hang below the torso and end in compact hooked claws; they must remain visibly non-human in proportion and joint direction.
+- Head: compact wedge or faceted mask integrated into a short neck, not a featureless humanoid cube.
 - Eyes: two small pale-lavender points that become cyan only during attack commitment.
 - Mouth: a narrow horizontal split visible during attack anticipation, not a permanent open monster mouth.
-- Claws: two forward hooked claws, kept close to the body at rest.
-- Appendage: one short rear sensing filament or split tail that reacts to resonance; it must not resemble a phantom wing or Enderman arm.
-- Silhouette: low, angular, asymmetrical, and predatory. The player should recognize it from its crouched profile before seeing its texture.
+- Secondary structure: one short rear sensing filament or split dorsal appendage that reacts to resonance; it must not resemble a phantom wing.
+- Silhouette: tall, narrow, angular, asymmetrical, and predatory. The player should recognize the head, torso, hanging arms, long legs, and forward direction at a distance.
 - Model texture: 32x32 RGBA creature texture, with no full-body glow.
+
+This is an intentional revision of the original low quadruped direction. The creature remains distinctly Endesium through mineral anatomy, non-human joints, sparse resonance signals, and a non-Enderman head and posture.
 
 ### Creature palette
 
@@ -318,16 +320,16 @@ The Void Stalker must not resemble an Enderman, Shulker, Phantom, or existing va
 
 | Animation | Duration | Movement and intent |
 |---|---:|---|
-| Idle listen | 2.4 s loop | Low body rises one pixel, head makes a small scan, rear filament follows late. |
-| Observe | 1.2 s | Head locks onto target, front claws lower, body becomes still. |
-| Walk | 0.8 s loop | Alternating front/rear leg groups, body stays low, no bouncing cartoon motion. |
-| Run/pursuit | 0.55 s loop | Longer front stride, rear carapace compresses, readable acceleration. |
-| Attack anticipation | 0.45 s | Mouth seam opens, front body draws back, cyan eye signal appears. |
-| Attack impact | 0.25 s | One claw thrusts forward; damage occurs at the impact frame. |
-| Attack recovery | 0.5 s | Claw retracts, body settles, short vulnerability window. |
+| Idle listen | 2.4 s loop | Narrow torso suspends and shifts one pixel, head makes a small scan, rear filament follows late. |
+| Observe | 1.2 s | Head locks onto target, long arms lower asymmetrically, body becomes still. |
+| Walk | 0.8 s loop | Long alternating leg stride with a delayed arm swing; posture remains eerie and controlled. |
+| Run/pursuit | 0.55 s loop | Narrow torso leans forward, long legs extend, arms trail with readable acceleration. |
+| Attack anticipation | 0.45 s | Mouth seam opens, shoulders draw back, cyan eye signal appears. |
+| Attack impact | 0.25 s | One elongated claw thrusts forward; damage occurs at the impact frame. |
+| Attack recovery | 0.5 s | Claw retracts, spine settles, short vulnerability window. |
 | Hurt | 0.3 s | Side recoil and stagger; cyan signal extinguishes. |
-| Reposition | 0.7 s | Body compresses into a dark violet silhouette, two cyan pixels remain, then it unfolds at the new position. |
-| Death | 1.1 s | Legs release, carapace collapses, particles fall inward rather than exploding outward. |
+| Reposition | 0.7 s | Tall body compresses into a narrow dark-violet silhouette, two cyan pixels remain, then it unfolds at the new position. |
+| Death | 1.1 s | Long limbs release and fold inward; particles fall toward the torso rather than exploding outward. |
 
 ### AI behavior state machine
 
@@ -385,7 +387,7 @@ RETREAT
 - Target selection: nearest survival-mode player who enters detection range, with existing target retained until lost or dead.
 - Despawn: normal hostile-mob distance rules; persistent only if named or manually placed.
 - Spawn: End Wastes only, low weight, on valid solid End terrain below the normal hostile light threshold. No central End island spawning in the first slice.
-- Drops: low chance of Void Shard, otherwise a small amount of vanilla-compatible experience. It must not become the primary shard farm.
+- Drops: one Resonance Lens, plus a low chance of Void Shard. The creature must not become the primary shard farm.
 
 The reposition behavior exists specifically to stop continuous backward walking from being a complete strategy, while retaining readable cooldowns and counterplay.
 
@@ -584,7 +586,7 @@ Each must be generated or refined with DogSprite MCP and pass the alpha and pale
 
 ## Exact Blockbench model list
 
-1. `void_stalker.geo.json` — low four-legged wedge predator.
+1. `void_stalker_v2.geo.json` — approved tall, slender, non-human biped production model. The retained low quadruped export is reference-only.
 2. `end_ruin_mechanism.geo.json` — low floor mechanism with sockets and central seam.
 3. Optional `resonant_crystal.geo.json` — only if a block model cannot communicate the crystal silhouette clearly.
 

@@ -1,0 +1,45 @@
+{
+    "type":  "minecraft:chest",
+    "pools":  [
+                  {
+                      "entries":  [
+                                      {
+                                          "name":  "endesium:chorus_eye",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "name":  "endesium:stalker_tendril",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "name":  "endesium:lumen_dust",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "type":  "minecraft:empty",
+                                          "weight":  3
+                                      }
+                                  ],
+                      "rolls":  2
+                  },
+                  {
+                      "entries":  [
+                                      {
+                                          "conditions":  [
+                                                             {
+                                                                 "condition":  "minecraft:random_chance",
+                                                                 "chance":  0.08
+                                                             }
+                                                         ],
+                                          "name":  "endesium:chorus_pruner",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "type":  "minecraft:empty",
+                                          "weight":  8
+                                      }
+                                  ],
+                      "rolls":  1
+                  }
+              ]
+}

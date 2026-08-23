@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "endesium:lumen_dust"
+    },
+    "L": {
+      "item": "endesium:lumen_graft_block"
+    }
+  },
+  "pattern": [
+    " D ",
+    "DLD",
+    " D "
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:lumen_graft"
+  }
+}

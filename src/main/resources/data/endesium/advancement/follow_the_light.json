@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:end/root",
+  "display": {
+    "icon": { "id": "endesium:lumen_stone" },
+    "title": { "translate": "advancements.endesium.follow_the_light.title" },
+    "description": { "translate": "advancements.endesium.follow_the_light.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "entered_groves": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": { "location": { "biomes": "endesium:luminous_groves" } }
+          }
+        ]
+      }
+    }
+  }
+}

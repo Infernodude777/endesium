@@ -10,9 +10,6 @@
 	"license": "CC0-1.0",
 	"icon": "assets/endesium/icon.png",
 	"environment": "*",
-	"mixins": [
-		"endesium.mixins.json"
-	],
 	"entrypoints": {
 		"main": [
 			"com.infernodude777.endesium.Endesium"
@@ -24,6 +21,15 @@
 			"com.infernodude777.endesium.client.EndesiumDataGenerator"
 		]
 	},
+	"mixins": [
+		{
+			"config": "endesium.mixins.json"
+		},
+		{
+			"config": "endesium.client.mixins.json",
+			"environment": "client"
+		}
+	],
 	"depends": {
 		"fabricloader": ">=0.19.3",
 		"minecraft": "~1.21.1",

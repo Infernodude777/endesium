@@ -1,0 +1,17 @@
+{
+  "parent": "endesium:what_remains",
+  "display": {
+    "icon": { "id": "endesium:resonance_lens" },
+    "title": { "translate": "advancements.endesium.the_long_resonance.title" },
+    "description": { "translate": "advancements.endesium.the_long_resonance.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "chain_complete": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

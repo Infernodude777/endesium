@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "S",
+    "S",
+    "S"
+  ],
+  "key": {
+    "S": { "item": "endesium:resonant_slate" }
+  },
+  "result": { "id": "endesium:resonant_pillar", "count": 3 }
+}

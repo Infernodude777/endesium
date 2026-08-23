@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:coal" },
+    { "item": "minecraft:blaze_powder" }
+  ],
+  "result": { "id": "endesium:ashen_ember", "count": 2 }
+}

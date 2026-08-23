@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:paper" },
+    { "item": "endesium:echo_shard" }
+  ],
+  "result": { "id": "endesium:archive_fragment", "count": 2 }
+}

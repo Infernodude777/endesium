@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " F ",
+    "FCF",
+    " F "
+  ],
+  "key": {
+    "F": { "item": "endesium:archive_fragment" },
+    "C": { "item": "endesium:resonance_core" }
+  },
+  "result": { "id": "endesium:archive_sigil", "count": 1 }
+}

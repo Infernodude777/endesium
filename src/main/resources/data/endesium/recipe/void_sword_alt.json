@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    " I ",
+    " I ",
+    " D "
+  ],
+  "key": {
+    "I": { "item": "endesium:void_ingot" },
+    "D": { "item": "endesium:dragonbone" }
+  },
+  "result": { "id": "endesium:void_sword", "count": 1 }
+}

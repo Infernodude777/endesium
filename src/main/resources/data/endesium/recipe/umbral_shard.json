@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "endesium:void_nugget" },
+    { "item": "minecraft:amethyst_shard" }
+  ],
+  "result": { "id": "endesium:umbral_shard", "count": 2 }
+}

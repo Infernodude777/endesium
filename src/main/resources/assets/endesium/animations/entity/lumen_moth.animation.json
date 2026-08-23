@@ -1,0 +1,139 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.lumen_moth.fly": {
+      "animation_length": 0.9,
+      "bones": {
+        "wing_left": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              12
+            ],
+            "0.45": [
+              0,
+              0,
+              -12
+            ],
+            "0.9": [
+              0,
+              0,
+              12
+            ]
+          }
+        },
+        "wing_right": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              -12
+            ],
+            "0.45": [
+              0,
+              0,
+              12
+            ],
+            "0.9": [
+              0,
+              0,
+              -12
+            ]
+          }
+        },
+        "body": {
+          "position": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.45": [
+              0,
+              1,
+              0
+            ],
+            "0.9": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "loop": true
+    },
+    "animation.lumen_moth.hurt": {
+      "animation_length": 0.3,
+      "bones": {
+        "body": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.15": [
+              0,
+              0,
+              16
+            ],
+            "0.3": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.lumen_moth.death": {
+      "animation_length": 1.0,
+      "bones": {
+        "body": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "1.0": [
+              90,
+              0,
+              0
+            ]
+          }
+        },
+        "wing_left": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              12
+            ],
+            "1.0": [
+              0,
+              0,
+              40
+            ]
+          }
+        },
+        "wing_right": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              -12
+            ],
+            "1.0": [
+              0,
+              0,
+              -40
+            ]
+          }
+        }
+      }
+    }
+  }
+}

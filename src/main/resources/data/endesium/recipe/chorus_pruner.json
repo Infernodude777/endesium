@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " C ",
+    " C ",
+    " S "
+  ],
+  "key": {
+    "C": { "item": "endesium:chorus_eye" },
+    "S": { "item": "minecraft:stick" }
+  },
+  "result": { "id": "endesium:chorus_pruner", "count": 1 }
+}

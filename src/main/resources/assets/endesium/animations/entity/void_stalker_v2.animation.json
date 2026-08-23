@@ -1,0 +1,84 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.void_stalker.idle_listen": {
+      "loop": true,
+      "animation_length": 2.4,
+      "bones": {
+        "body": { "position": { "0.0": [0, 0, 0], "1.2": [0, 1, 0], "2.4": [0, 0, 0] } },
+        "head": { "rotation": { "0.0": [0, -3, 0], "1.2": [0, 3, 0], "2.4": [0, -3, 0] } }
+      }
+    },
+    "animation.void_stalker.observe": {
+      "animation_length": 1.2,
+      "bones": {
+        "head": { "rotation": { "0.0": [0, -8, 0], "0.7": [0, 0, 0], "1.2": [0, 0, 0] } },
+        "left_arm": { "rotation": { "0.0": [0, 0, -4], "0.6": [0, 0, -10], "1.2": [0, 0, -4] } },
+        "right_arm": { "rotation": { "0.0": [0, 0, 4], "0.6": [0, 0, 10], "1.2": [0, 0, 4] } }
+      }
+    },
+    "animation.void_stalker.walk": {
+      "loop": true,
+      "animation_length": 0.8,
+      "bones": {
+        "left_leg": { "rotation": { "0.0": [24, 0, 0], "0.4": [-20, 0, 0], "0.8": [24, 0, 0] } },
+        "right_leg": { "rotation": { "0.0": [-20, 0, 0], "0.4": [24, 0, 0], "0.8": [-20, 0, 0] } },
+        "left_arm": { "rotation": { "0.0": [-16, 0, 0], "0.4": [14, 0, 0], "0.8": [-16, 0, 0] } },
+        "right_arm": { "rotation": { "0.0": [14, 0, 0], "0.4": [-16, 0, 0], "0.8": [14, 0, 0] } }
+      }
+    },
+    "animation.void_stalker.run": {
+      "loop": true,
+      "animation_length": 0.55,
+      "bones": {
+        "body": { "rotation": { "0.0": [5, 0, 0], "0.275": [-4, 0, 0], "0.55": [5, 0, 0] } },
+        "left_leg": { "rotation": { "0.0": [36, 0, 0], "0.275": [-30, 0, 0], "0.55": [36, 0, 0] } },
+        "right_leg": { "rotation": { "0.0": [-30, 0, 0], "0.275": [36, 0, 0], "0.55": [-30, 0, 0] } }
+      }
+    },
+    "animation.void_stalker.attack_anticipation": {
+      "animation_length": 0.45,
+      "bones": {
+        "body": { "rotation": { "0.0": [0, 0, 0], "0.45": [8, 0, 0] } },
+        "head": { "rotation": { "0.0": [0, 0, 0], "0.45": [-8, 0, 0] } },
+        "left_arm": { "rotation": { "0.0": [0, 0, -8], "0.45": [-16, 0, -14] } },
+        "right_arm": { "rotation": { "0.0": [0, 0, 8], "0.45": [-16, 0, 14] } }
+      }
+    },
+    "animation.void_stalker.attack_impact": {
+      "animation_length": 0.25,
+      "bones": {
+        "left_forearm": { "rotation": { "0.0": [-16, 0, -14], "0.12": [35, 0, -20], "0.25": [0, 0, -8] } }
+      }
+    },
+    "animation.void_stalker.attack_recovery": {
+      "animation_length": 0.5,
+      "bones": {
+        "body": { "rotation": { "0.0": [6, 0, 0], "0.5": [0, 0, 0] } },
+        "left_arm": { "rotation": { "0.0": [-16, 0, -14], "0.5": [0, 0, -8] } },
+        "right_arm": { "rotation": { "0.0": [-16, 0, 14], "0.5": [0, 0, 8] } }
+      }
+    },
+    "animation.void_stalker.hurt": {
+      "animation_length": 0.3,
+      "bones": {
+        "body": { "rotation": { "0.0": [0, 0, 0], "0.15": [0, 0, -16], "0.3": [0, 0, 0] } },
+        "head": { "rotation": { "0.0": [0, 0, 0], "0.15": [0, 0, 12], "0.3": [0, 0, 0] } }
+      }
+    },
+    "animation.void_stalker.reposition": {
+      "animation_length": 0.7,
+      "bones": {
+        "body": { "scale": { "0.0": [1, 1, 1], "0.35": [0.45, 0.25, 0.45], "0.7": [1, 1, 1] } }
+      }
+    },
+    "animation.void_stalker.death": {
+      "animation_length": 1.1,
+      "bones": {
+        "body": { "rotation": { "0.0": [0, 0, 0], "0.55": [18, 0, -12], "1.1": [70, 0, -35] } },
+        "left_leg": { "rotation": { "0.0": [0, 0, 0], "1.1": [65, 0, -25] } },
+        "right_leg": { "rotation": { "0.0": [0, 0, 0], "1.1": [65, 0, 25] } }
+      }
+    }
+  }
+}

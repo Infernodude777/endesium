@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "minecraft:end_stone" },
+    { "item": "endesium:void_shard" }
+  ],
+  "result": { "id": "endesium:voidstone", "count": 1 }
+}

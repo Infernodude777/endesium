@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "tools",
+  "ingredients": [
+    { "item": "minecraft:compass" },
+    { "item": "endesium:echo_shard" }
+  ],
+  "result": { "id": "endesium:echo_compass", "count": 1 }
+}

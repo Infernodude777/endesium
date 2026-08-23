@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:dragon_transformation",
+  "display": {
+    "icon": { "id": "endesium:dragonbone" },
+    "title": { "translate": "advancements.endesium.dragonbone_carver.title" },
+    "description": { "translate": "advancements.endesium.dragonbone_carver.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_dragonbone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:dragonbone" }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "display": {
+    "icon": {
+      "id": "endesium:void_chestplate"
+    },
+    "title": {
+      "translate": "advancements.endesium.void_armorer.title"
+    },
+    "description": {
+      "translate": "advancements.endesium.void_armorer.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "endesium:into_the_skirts",
+  "criteria": {
+    "has_helmet": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "endesium:void_helmet"
+          }
+        ]
+      }
+    },
+    "has_chest": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "endesium:void_chestplate"
+          }
+        ]
+      }
+    },
+    "has_legs": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "endesium:void_leggings"
+          }
+        ]
+      }
+    },
+    "has_boots": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "endesium:void_boots"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_helmet",
+      "has_chest",
+      "has_legs",
+      "has_boots"
+    ]
+  ]
+}

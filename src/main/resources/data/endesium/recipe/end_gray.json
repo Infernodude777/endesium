@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SS",
+    "SS"
+  ],
+  "key": {
+    "S": { "item": "endesium:resonant_slate" }
+  },
+  "result": { "id": "endesium:end_gray", "count": 4 }
+}

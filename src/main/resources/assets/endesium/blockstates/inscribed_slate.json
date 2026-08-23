@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "symbol=0": { "model": "endesium:block/inscribed_slate_0" },
+    "symbol=1": { "model": "endesium:block/inscribed_slate_1" },
+    "symbol=2": { "model": "endesium:block/inscribed_slate_2" },
+    "symbol=3": { "model": "endesium:block/inscribed_slate_3" }
+  }
+}

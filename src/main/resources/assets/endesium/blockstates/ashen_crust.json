@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "level=0": { "model": "endesium:block/ashen_crust" },
+    "level=1": { "model": "endesium:block/ashen_crust" },
+    "level=2": { "model": "endesium:block/ashen_crust" },
+    "level=3": { "model": "endesium:block/ashen_crust" },
+    "level=4": { "model": "endesium:block/ashen_crust" },
+    "level=5": { "model": "endesium:block/ashen_crust" },
+    "level=6": { "model": "endesium:block/ashen_crust" },
+    "level=7": { "model": "endesium:block/ashen_crust" },
+    "level=8": { "model": "endesium:block/ashen_crust" },
+    "level=9": { "model": "endesium:block/ashen_crust" },
+    "level=10": { "model": "endesium:block/ashen_crust" },
+    "level=11": { "model": "endesium:block/ashen_crust" },
+    "level=12": { "model": "endesium:block/ashen_crust" },
+    "level=13": { "model": "endesium:block/ashen_crust" },
+    "level=14": { "model": "endesium:block/ashen_crust" },
+    "level=15": { "model": "endesium:block/ashen_crust" }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "parent": "endesium:first_resonance",
+  "display": {
+    "icon": { "id": "endesium:resonant_pillar" },
+    "title": { "translate": "advancements.endesium.what_remains.title" },
+    "description": { "translate": "advancements.endesium.what_remains.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "activate_spire": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

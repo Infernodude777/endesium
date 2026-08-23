@@ -1,0 +1,17 @@
+{
+  "parent": "endesium:first_resonance",
+  "display": {
+    "icon": { "id": "endesium:dormant_resonant_crystal" },
+    "title": { "translate": "advancements.endesium.sunken_archive.title" },
+    "description": { "translate": "advancements.endesium.sunken_archive.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "activate_sunken": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "endesium:void_core"
+    },
+    "I": {
+      "item": "endesium:void_ingot"
+    }
+  },
+  "pattern": [
+    "I I",
+    " C ",
+    "I I"
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:void_anchor"
+  }
+}

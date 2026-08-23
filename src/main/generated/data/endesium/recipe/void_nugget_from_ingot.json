@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "endesium:void_ingot"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "endesium:void_nugget"
+  }
+}

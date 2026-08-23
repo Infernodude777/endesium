@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " S ",
+    "SES",
+    " S "
+  ],
+  "key": {
+    "S": { "item": "endesium:wastes_stone" },
+    "E": { "item": "minecraft:compass" }
+  },
+  "result": { "id": "endesium:wastes_compass", "count": 1 }
+}

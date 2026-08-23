@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:end/root",
+  "display": {
+    "icon": { "id": "endesium:chorus_moss" },
+    "title": { "translate": "advancements.endesium.into_the_wilds.title" },
+    "description": { "translate": "advancements.endesium.into_the_wilds.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "entered_wilds": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": { "location": { "biomes": "endesium:chorus_wilds" } }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:heart_of_the_volcano",
+  "display": {
+    "icon": { "id": "endesium:ashwalker_boots" },
+    "title": { "translate": "advancements.endesium.ember_walker.title" },
+    "description": { "translate": "advancements.endesium.ember_walker.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "wore_boots": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:ashwalker_boots" }
+        ]
+      }
+    }
+  }
+}

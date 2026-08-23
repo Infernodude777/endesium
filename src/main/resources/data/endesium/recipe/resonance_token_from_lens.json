@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "LSL",
+    "SES",
+    "LSL"
+  ],
+  "key": {
+    "L": { "item": "endesium:resonance_lens" },
+    "S": { "item": "endesium:void_shard" },
+    "E": { "item": "endesium:ender_essence" }
+  },
+  "result": { "id": "endesium:resonance_token", "count": 1 }
+}

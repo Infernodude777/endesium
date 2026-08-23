@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:first_resonance",
+  "display": {
+    "icon": { "id": "endesium:echo_compass" },
+    "title": { "translate": "advancements.endesium.echo_sight.title" },
+    "description": { "translate": "advancements.endesium.echo_sight.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_echo_compass": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:echo_compass" }
+        ]
+      }
+    }
+  }
+}

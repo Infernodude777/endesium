@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "endesium:mire_bell_clapper"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_tide_iron": {
+      "conditions": {
+        "items": [
+          {
+            "items": "endesium:tide_iron"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_tide_iron"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "endesium:mire_bell_clapper"
+    ]
+  }
+}

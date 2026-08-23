@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:wardens_bane",
+  "display": {
+    "icon": { "id": "endesium:void_core" },
+    "title": { "translate": "advancements.endesium.golem_felled.title" },
+    "description": { "translate": "advancements.endesium.golem_felled.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "golem_killed": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": {
+          "type": "endesium:end_golem"
+        }
+      }
+    }
+  }
+}

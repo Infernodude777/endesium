@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "endesium:block/end_ruin_mechanism"
+  }
+}

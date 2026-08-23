@@ -1,0 +1,38 @@
+{
+  "display": {
+    "icon": {
+      "id": "endesium:umbral_stone"
+    },
+    "title": {
+      "translate": "advancements.endesium.void_crown.title"
+    },
+    "description": {
+      "translate": "advancements.endesium.void_crown.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "endesium:into_the_skirts",
+  "criteria": {
+    "in_biome": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "biomes": "endesium:void_crown"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "in_biome"
+    ]
+  ]
+}

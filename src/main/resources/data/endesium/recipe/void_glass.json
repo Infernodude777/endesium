@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    " S ",
+    "SGS",
+    " S "
+  ],
+  "key": {
+    "S": { "item": "endesium:void_shard" },
+    "G": { "item": "minecraft:glass" }
+  },
+  "result": { "id": "endesium:void_glass", "count": 2 }
+}

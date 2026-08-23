@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": {
+      "item": "endesium:void_ingot"
+    },
+    "M": {
+      "item": "minecraft:phantom_membrane"
+    }
+  },
+  "pattern": [
+    " I ",
+    "IMI",
+    " I "
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:void_dash"
+  }
+}

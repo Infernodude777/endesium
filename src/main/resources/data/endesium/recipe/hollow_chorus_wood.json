@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "W W",
+    "   ",
+    "W W"
+  ],
+  "key": {
+    "W": { "item": "endesium:elder_chorus_wood" }
+  },
+  "result": { "id": "endesium:hollow_chorus_wood", "count": 2 }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "endesium:item/endesium_gui",
+  "textures": {
+    "layer0": "endesium:item/echo_compass"
+  }
+}

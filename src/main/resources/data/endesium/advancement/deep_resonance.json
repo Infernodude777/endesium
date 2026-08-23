@@ -1,0 +1,20 @@
+{
+  "parent": "endesium:heart_of_stone",
+  "display": {
+    "icon": { "id": "endesium:crystal_core" },
+    "title": { "translate": "advancements.endesium.deep_resonance.title" },
+    "description": { "translate": "advancements.endesium.deep_resonance.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_crystal_core": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [ { "items": "endesium:crystal_core" } ]
+      }
+    }
+  }
+}

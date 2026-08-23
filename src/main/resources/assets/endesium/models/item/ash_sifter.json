@@ -1,0 +1,6 @@
+{
+  "parent": "endesium:item/endesium_tool",
+  "textures": {
+    "layer0": "endesium:item/ash_sifter"
+  }
+}

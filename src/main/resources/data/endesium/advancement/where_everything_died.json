@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:end/root",
+  "display": {
+    "icon": { "id": "endesium:ash_stone" },
+    "title": { "translate": "advancements.endesium.where_everything_died.title" },
+    "description": { "translate": "advancements.endesium.where_everything_died.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "entered_ash": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": { "location": { "biomes": "endesium:ashen_expanse" } }
+          }
+        ]
+      }
+    }
+  }
+}

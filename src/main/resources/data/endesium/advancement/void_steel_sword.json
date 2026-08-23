@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:void_ingot_smith",
+  "display": {
+    "icon": { "id": "endesium:void_sword" },
+    "title": { "translate": "advancements.endesium.void_steel_sword.title" },
+    "description": { "translate": "advancements.endesium.void_steel_sword.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_void_sword": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:void_sword" }
+        ]
+      }
+    }
+  }
+}

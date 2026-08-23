@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "A": {
+      "item": "endesium:ash_stone"
+    },
+    "E": {
+      "item": "endesium:ashen_ember"
+    }
+  },
+  "pattern": [
+    " A ",
+    "AEA",
+    " A "
+  ],
+  "result": {
+    "count": 4,
+    "id": "endesium:ashen_crust"
+  }
+}

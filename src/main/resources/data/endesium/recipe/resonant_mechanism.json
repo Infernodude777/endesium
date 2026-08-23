@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    " S ",
+    "SRS",
+    " S "
+  ],
+  "key": {
+    "S": { "item": "endesium:resonant_slate" },
+    "R": { "item": "minecraft:redstone" }
+  },
+  "result": { "id": "endesium:resonant_mechanism", "count": 1 }
+}

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.infernodude777.endesium.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ElytraLayerMixin",
+    "EnderDragonRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

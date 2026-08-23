@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": [
+    "II",
+    "ID",
+    " D"
+  ],
+  "key": {
+    "I": { "item": "endesium:void_ingot" },
+    "D": { "item": "endesium:dragonbone" }
+  },
+  "result": { "id": "endesium:void_axe", "count": 1 }
+}

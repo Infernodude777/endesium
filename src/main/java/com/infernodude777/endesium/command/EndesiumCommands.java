@@ -44,6 +44,11 @@ public final class EndesiumCommands {
 								.then(Commands.literal("get")
 										.executes(EndesiumCommands::getDragonState))
 								.then(Commands.literal("set")
+										// Mutating world progression is dev-only: it must
+										// be enabled explicitly with
+										// -Dendesium.devcommands=true, never available
+										// on a production server by accident.
+										.requires(source -> DEV_COMMANDS_ENABLED)
 										.then(Commands.argument("active", BoolArgumentType.bool())
 												.executes(ctx -> setDragonState(ctx,
 														BoolArgumentType.getBool(ctx, "active"))))))
@@ -65,6 +70,10 @@ public final class EndesiumCommands {
 												.executes(ctx -> locateStructure(ctx,
 														StringArgumentType.getString(ctx, "structure"))))))));
 	}
+
+	/** True only when the JVM was started with -Dendesium.devcommands=true. */
+	private static final boolean DEV_COMMANDS_ENABLED =
+			Boolean.getBoolean("endesium.devcommands");
 
 	private static int locateBiome(CommandContext<CommandSourceStack> ctx, String biomeId) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerLevel level = ctx.getSource().getLevel();

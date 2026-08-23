@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "endesium:void_membrane" }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:highland_feather",
+          "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.15 } ]
+        },
+        { "type": "minecraft:empty", "weight": 6 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SES",
+    "ETE",
+    "SES"
+  ],
+  "key": {
+    "S": { "item": "endesium:echo_shard" },
+    "E": { "item": "endesium:ender_essence" },
+    "T": { "item": "endesium:resonance_token" }
+  },
+  "result": { "id": "endesium:resonance_core", "count": 1 }
+}

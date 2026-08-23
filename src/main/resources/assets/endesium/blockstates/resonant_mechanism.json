@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "active=false": {
+      "model": "endesium:block/resonant_mechanism"
+    },
+    "active=true": {
+      "model": "endesium:block/resonant_mechanism"
+    }
+  }
+}

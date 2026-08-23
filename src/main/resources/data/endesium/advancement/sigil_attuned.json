@@ -1,0 +1,17 @@
+{
+  "parent": "endesium:dragon_transformation",
+  "display": {
+    "icon": { "id": "endesium:warden_sigil" },
+    "title": { "translate": "advancements.endesium.sigil_attuned.title" },
+    "description": { "translate": "advancements.endesium.sigil_attuned.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "sigil_used": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

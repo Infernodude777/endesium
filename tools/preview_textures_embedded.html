@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Endesium texture review</title>
+<style>
+  body { background: #1a1a22; color: #ddd; font-family: monospace; padding: 24px; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px; margin-bottom: 24px; }
+  .cell { text-align: center; }
+  .cell .label { margin-top: 6px; font-size: 12px; color: #9aa; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; background: repeating-conic-gradient(#2a2a35 0% 25%, #20202a 0% 50%) 0 0/16px 16px; }
+  .big canvas { width: 160px; height: 160px; }
+  h2 { color: #7ea7a6; font-weight: normal; }
+  .tilegrid canvas { width: 256px; height: 256px; }
+</style>
+<script>
+const IMG_void_shard = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAACeklEQVR4Ae3BIW4cBxzF4d88D17JuYHRZs1GGjRH6BFG1krmBSEpCDTYA/QCkaIoPKBkDzBopGVumW9QUGIZWNMb/MlolbXf+z4iIiIiIiIiwkZDnFXfDQsrzKep4YxEWBNhTYQ1EdZEWBNhTYS1hlil74aFwvevX1jj7v5AZT5NDSuIsCbCmghrIqyJsCbCmghrDVHqu2Gh8P3rFy7Z3f2BighrIqyJsCbCmghrIqyJsNZiru+GhcLtTc97JsKaCGsirImwJsKaCGsirLW8c303LBT++vknlc+fvnHJDg9H1hBhTYQ1EdZEWBNhTYQ1EdZa3ri+GxYKtzc9lc+fvnHJDg9HzkmENRHWRFgTYU2ENRHWRFhruXB9NywUbm96zmncb3nPRFgTYU2ENRHWRFgTYU2EtZZY5cff/1EZdxsumQhrIqyJsCbCmghrIqyJsNbyi/XdsFC4vek5p3G/pTI9X1MZdxveMhHWRFgTYU2ENRHWRFgTYa3lzPpuWCi8vlxxTuN+S2V6vqYy7jac0+HhyBqPTzOV+TQ1FERYE2FNhDUR1kRYE2FNhDUR1kRYE2FNhDUR1kRYE2FNhLWWlfpuWCi8vlxxTuN+S2V6vqYy7jZU/v3nB5UPH0cqh4cjazw+zVTm09SwgghrIqyJsCbCmghrIqyJsNZy4cb9lsr0fE1l3G1Y48PHkcrh4cgaj08zlfk0NZyRCGsirImwJsKaCGsirImw1rLSfJoaCn03LBReX654yx6fZirzaWq4YCKsibAmwpoIayKsibAmwlrDL9Z3w0Lhtz9+Z41xt6Fyd3+gMp+mhndMhDUR1kRYE2FNhDUR1kRY+x8h6GSf4v2oDAAAAABJRU5ErkJggg==";
+const IMG_resonance_lens = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAACY0lEQVR4Ae3BsYpaWwCF4f8sbMJwj03KTIo0V0ghgoVYpPEVbj/dwLR5kLQDdr5GwCaFWAhiEyZNApm8gAfClN4nyG42oidrfR8RERERERERYaOh56aT+Yke2+03DRckwpoIayKsibAmwpoIayKsNVzYdDI/UaHrjvRZ2w6psdtvGiqIsCbCmghrIqyJsCbCmghrDWc2ncxPFHTdkRqz8YI+2x7W1GjbISW7/aahQIQ1EdZEWBNhTYQ1EdZEWBtQaTqZnyjouiMls/ECZ7PxgpLtYc05ibAmwpoIayKsibAmwpoIawPObDZecM3uH+6osXxccU6z8YKSrz921BBhTYQ1EdZEWBNhTYQ1EdYGXLn7hztqPL36Tcnn52/U+PDxP0pGLzfUWD6uOCcR1kRYE2FNhDUR1kRYE2FtQM89vfpNyT/vbil5/+6Wc3r6/kzJ6OWGSxJhTYQ1EdZEWBNhTYQ1EdYG9Nzo5YaSp+/PlPx8/kWNt7dvKBm93HDNRFgTYU2ENRHWRFgTYU2EtQFXbvm4osb9wx0lo9f/UmP5aUXJF66bCGsirImwJsKaCGsirImwNuAvt3xcEX8mwpoIayKsibAmwpoIayKsDTiz7WFNyWy8IP5se1hT0rZDaoiwJsKaCGsirImwJsKaCGsNZzadzE8UdN2RGrPxgmu2Payp0bZDSnb7TUMFEdZEWBNhTYQ1EdZEWBNhreHCppP5iQpdd6TP2nZIjd1+01BBhDUR1kRYE2FNhDUR1kRYa+i56WR+osd2+03DBYmwJsKaCGsirImwJsKaiIiIiIiIiIgIC/8Db4pe1H4w3oUAAAAASUVORK5CYII=";
+const IMG_resonant_slate = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAADP0lEQVR4Ae3BMWtdBRzG4V9e7hDOgRsipOSmCoGWIs0ggoHi4Adw6FIC7p1cA1KIHW0XoatTdHEodHd1tJBFh4hohk5JIBC4B87hbvEb/AseLkl83+dZ+ezTz69Yoq6bU5lO17jJzs5PGWO2ucUYXTenMp2uMYYIayKsibAmwpoIayKsibA2YaSum1OZTteodN2cynS6xhhn56dUZptbjDHb3GKMrptT6YeeMfqhpyLCmghrIqyJsCbCmghrIqxNum7OMnXdnDHOzk+ptE1LpW1aKmfnp1TapqXy808HVB4/ecYYbdMyRtu0VERYE2FNhDUR1kRYE2FNhLWVB/d2roj/rX7oqYiwJsKaCGsirImwJsKaCGsT3mN76yGVzY0Zle29R1ReP3/BbTadrlHpujnXqW1aKiKsibAmwpoIayKsibAmwtqkH3oq707/ZJQ3b6l89d23jPH6+Qsq/dBTaZuWynS6RuXs/JRK27Rcp37oqYiwJsKaCGsirImwJsKaCGsrD+7tXFHoh55l2rm/S2VzY0Zle+8RYxzuH+BMhDUR1kRYE2FNhDUR1kRYW7k7277iFtu5v0tlc2NGZXvvEWMc7h9wm4mwJsKaCGsirImwJsKaCGsTbrnjkyNqu5TevGWMp69eMsbh/gFjDIuBSrPaUBFhTYQ1EdZEWBNhTYQ1EdYmLFnbtFT6oWeZjk+OqLw7balsbz2k9M/flH6/pPL01Usqh/sHVJrVhjFEWBNhTYQ1EdZEWBNhTYS1Ce9x+MM3VJ5+/T2Vfui5yfqhp3J8ckTl+OSIys79XSpffPQh10mENRHWRFgTYU2ENRHWRFhbuTvbvuIGa5uWSj/03GRt01K5uLyg0qw2LJMIayKsibAmwpoIayKsibA2GRYDN9mwGLjNhsXAGMNiYJlEWBNhTYQ1EdZEWBNhTYS1Cdfst19/pPL4yTMqF5cXxH8nwpoIayKsibAmwpoIayKsrayv37lihGa1oTIsBiobH2xQubi8YJma1YbKsBi4Tn/98QuVjz/5kjFEWBNhTYQ1EdZEWBNhTYS1lfX1O1fcYs1qQ2VYDNxmzWpDZVgMjCHCmghrIqyJsCbCmghrIqz9C1oPqWMbuDqrAAAAAElFTkSuQmCC";
+const IMG_end_gray = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAADHklEQVR4Ae3BIW5baRiF4bdH3kEKbJPrNcQgMmhRkWWDwUUlZZUqDZsFdKSRKnVUVjJocEGibMEKcNZwf2Ib+K6hs4J+AZblZs55nhd//fn3D56xYThS2TxsqKyWa/7Pto9bKiKsibAmwpoIayKsibAmwtqIC7u7v6WyWq6p9K1RWS3XVIbhSOXq6iXndHd/yylWyzWV+fWcighrIqyJsCbCmghrIqyJsDbiRNvHLZX59ZxzmnUdle3jlsr8ek7l7v6Wymq5prJ93FJZLddckghrIqyJsCbCmghrIqyJsDYahiOn2B921OacYhiOnGLWdVSG4UhlcbOgMgxHKrOuo3J3f0tlcbPgnERYE2FNhDUR1kRYE2FNhLVR3xqVWddRWdwsqAzDkeesb43KrOt4zkRYE2FNhDUR1kRYE2FNhLURT+hb45L61viV9a1xTn1rnJMIayKsibAmwpoIayKsibA2mnUdl7Q/7KjMuo5z6lujMus6zml/2FGZdR3nJMKaCGsirImwJsKaCGsirI14Qt8alVnX8Su7unrJJW0eNlRWyzWVYThyTiKsibAmwpoIayKsibAmwtqob43KrOuoXF29pLJ93FKZjKdUNg8bTjEZT/mVbR+3XJIIayKsibAmwpoIayKsibA24gl9a1T61jinyXjKKfaHHZXJeMpzNus6Kn1rVERYE2FNhDUR1kRYE2FNhLURJ5p1HZW+NS5pMp5SmV/PqWwft5zTrOuo9K1R6VvjFCKsibAmwpoIayKsibAmwtqL16/e/OAZ++P336h8+vyd+DkR1kRYE2FNhDUR1kRYE2FtNBlPec7++feBymQ85ZL2hx2VyXjKJYmwJsKaCGsirImwJsKaCGsjnrA/7DinyXhK5d3bGyqfPn+n8u3rRyrvP3zhkvaHHZckwpoIayKsibAmwpoIayKsjfaHHZXVcs0p7u5vqbx7e0Pl0+fvVL59/Ujl/YcvxM+JsCbCmghrIqyJsCbCmghrL16/evODC1rcLKhsHjacYjKeUtkfdlRWyzWVu/tbnjMR1kRYE2FNhDUR1kRYE2HtP3WOrS1J9pjsAAAAAElFTkSuQmCC";
+const IMG_dormant_resonant_crystal = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAADPElEQVR4Ae3BQYtVBRzG4Z8vJ4hz6A5c5zTlIgKjCL+A3yEIXLh1wJWzENo4RrqwhULjoqBgZiWMK0F3fQnbtI8KYpRArk7dA+duWtQn6D+Lw8WR932eMx+fv/Av8b8Wxwsq/bznTSbCmghrIqyJsCbCmghrIqw1RKmf96zTuBqpdG3HFONqpCLCmghrIqyJsCbCmghrIqw1RGlcjVS6tmOK9987R2UYllTG1UilazsqIqyJsCbCmghrIqyJsCbCWsNrNq5GKl3bUXlw8JDK5tZZKp9f+oxK13as0zAsmaJrOyrjaqQiwpoIayKsibAmwpoIayKsNbxmXdtRGVcjU5z74C0qDw4eUrl67QqVxfGCyv0fn1DZ295hisXxgko/76mIsCbCmghrIqyJsCbCmghrzbgaqXRtxxTjaqTy809PqPz19yaVly9eUfnz6B+muHH9FpXdr7+gcvTsOet0/sOPmEKENRHWRFgTYU2ENRHWRFhrurZjne7cvEfl11/OUNnc4o326PZdKruH+1T2tneo/P7Hb1T6eU9FhDUR1kRYE2FNhDUR1kRYazjBbLZBZRiWTHH12hUqDw4eUtncOstpdnH7MuvUz3sqs9kGFRHWRFgTYU2ENRHWRFgTYa3hBMOwZIo733xF5c7Nezg7evacyu7hPpW97R0qw7CkIsKaCGsirImwJsKaCGsirDWcYDbboDIMSypd2xGnlwhrIqyJsCbCmghrIqyJsNZwgmFYcpq9fPGKyubWWU6zR7fvUtk93GedRFgTYU2ENRHWRFgTYU2EtYaJZrMNKsOwpHL/+7tUbly/ReXTC59wmj09fEzl4vZlXicR1kRYE2FNhDUR1kRYE2GtYaJhWOKsfbtlnY6ePaeye7hPZW97h4oIayKsibAmwpoIayKsibDWLI4XVPp5zzo1Zzoq3/7wHafZRvcuUzw9fEzlKbXdw32mEGFNhDUR1kRYE2FNhDUR1pp+3jPFuBqpdG1HpX2noTIMS5wtjhdUDq5/yRQirImwJsKaCGsirImwJsJaw0Rd21EZVyOVxfGCSj/vqSyOF1T6ec+brJ/3VIZhyRQirImwJsKaCGsirImwJsLafzyzpKmsPpWUAAAAAElFTkSuQmCC";
+const IMG_end_ruin_mechanism = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAACuklEQVR4Ae3BsWqbdxjF4V8PnxeDO1jypKUh1EMiNAksD22HlKxBSy7BS8BzbsEXkOvwkslbuwiD1nxDS5FmYU0GT4bmCvx6+GMi+5zn+en33/78n7AlwpoIayKsibAmwpoIayKsdTQ6PTmlMhgMabHd3tBiMBjSYru9ocVgMKTFdntDZXG9oIUIayKsibAmwpoIayKsibDW8YjTk1Mqr3/+m8r41YjK+cWaeNjZfI/Kh08jKp+/bKiIsCbCmghrIqyJsCbCmghrHY3GxyMqh8MjamviYePjEZXD4RG1DRUR1kRYE2FNhDUR1kRYE2Gto9H5xZramsrd7T0tppMZlX615Cnd3d7TYjqZUTm/WFJ59+41LURYE2FNhDUR1kRYE2FNhLWOHTedzHjOppMZu0yENRHWRFgTYU2ENRHWRFjr+MH2Dzoq/WpJizfz97ToL6+o7B90VPrVkl0mwpoIayKsibAmwpoIayKsdTxzb+bvqfzy6zFN5pT6yyueMxHWRFgTYU2ENRHWRFgTYa3jhXv7xykt1v/+w0smwpoIayKsibAmwpoIayKsdbxw3/5aEA8TYU2ENRHWRFgTYU2ENRHWOp65/vKK0pwm/eUVL5kIayKsibAmwpoIayKsibDW8YPd3d7TYjqZUekvr3hKd7f3tJhOZlT61ZKnJMKaCGsirImwJsKaCGsirHXsuOlkxnM2nczYZSKsibAmwpoIayKsibAmwlpHo7P5HpXx8YjK+cWaSr9assv2Dzoq/WpJi7P5HpXx8X9UFteURFgTYU2ENRHWRFgTYU2EtY5HLK4XVD58GlE5HB5R+fjxhMp2e0OLwWBIi+32hhaDwZAW41fXVA6HR9Q2VERYE2FNhDUR1kRYE2FNhLWORp+/bKhtqH0jHvaVx2xoIcKaCGsirImwJsKaCGsirH0HIZpp6jFTKVcAAAAASUVORK5CYII=";
+const IMG_chorus_sprout = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAB2UlEQVR4Ae3BsY3rSABEwceGEpErj8BYzB+0CNCTq1D4I7gxTlistP2qkCRJkiRJkiRJkiRJkiRJkiRJX2vhy411u3jDce4LxYKqBVULqhZULahaULWgagsfbqzbxcTjPnjH83Uwc5z7wh8WVC2oWlC1oGpB1YKqBVVb+GVj3S4mHvfBb3q+DmaOc1/4YkHVgqoFVQuqFlQtqFpQtRv6UWPdLiaOc1/4RUHVgqoFVQuqFlQtqFpQtYUPN9btYuJxH8w8XwfvOM59YWKs28XE4z6Yeb4OZo5zX/hBQdWCqgVVC6oWVC2oWlC1Gx/uOPeFuYs3HOe+MDHW7WLicR98s6BqQdWCqgVVC6oWVC2o2sIfN9btYuJxH/yk5+tg5jj3hV8UVC2oWlC1oGpB1YKqBVW78eXGul1MPO4D/begakHVgqoFVQuqFlQtqNqNDzfW7WLicR+84/k6eMfjPvhmQdWCqgVVC6oWVC2oWlC1G79srNvFxOM+eMfzdTBznPvCxFi3iz8sqFpQtaBqQdWCqgVVC6p248s9Xwczx7kv/KDn62DmOPeFDxZULahaULWgakHVgqoFVVv4cGPdLiaOc1/Q/xZULahaULWgakHVgqoFSZIkSZIkVfgHk9tRRU/yF0YAAAAASUVORK5CYII=";
+const IMG_wild_tendril = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAB3klEQVR4Ae3BMYrrSABF0atHb8SpM0FF2j+KCpQ59VI0K5gaGNP0//3uOUiSJEmSJEmSJEmSJEmSJEmSpL/Wxg8b+3GzMK9z4xcb+3GzMK9z4xsFVQuqFlQtqFpQtaBqQdU2vtnYj5uF52Ow8npPVuZ1bvzBxn7cLDwfg5XXe7Iyr3PjA0HVgqoFVQuqFlQtqFpQtS8+NPbjZuH5GOj/ez4G/+FmYV7nxkJQtaBqQdWCqgVVC6oWVC2oWlC1oGpB1YKqBVULqhZU7YsPzevcWLtZeD4G+nev92RlXufGB4KqBVULqhZULahaULWgahs/bOzHzcK8zo1fbOzHzcK8zo1vFFQtqFpQtaBqQdWCqgVV++KHPR+DlXmd/GbPx2BlXiffKahaULWgakHVgqoFVQuq9sU3G/txU2zsx80fLKhaULWgakHVgqoFVQuqtvGhsR83C8/H4BOv92RlXufGDxr7cbPwfAw+8XpPVuZ1bnwgqFpQtaBqQdWCqgVVC6oWVC2oWlC1oGpB1YKqBVULqvbFh+Z1bqzdLDwfg2av92RlXufGNwqqFlQtqFpQtaBqQdWCqm38sLEfNwvzOjf+YmM/bhbmdW78oKBqQdWCqgVVC6oWVC1IkiRJkiSpwj/x/1VF4qS5HwAAAABJRU5ErkJggg==";
+window.__IMGS__ = { void_shard: IMG_void_shard, resonance_lens: IMG_resonance_lens, resonant_slate: IMG_resonant_slate, end_gray: IMG_end_gray, dormant_resonant_crystal: IMG_dormant_resonant_crystal, end_ruin_mechanism: IMG_end_ruin_mechanism, chorus_sprout: IMG_chorus_sprout, wild_tendril: IMG_wild_tendril };
+</script></head>
+<body>
+<h1>Endesium textures — review sheet</h1>
+<div id="sheet"></div>
+<script>
+const ITEMS = ['void_shard', 'resonance_lens'];
+const BLOCKS = ['resonant_slate', 'end_gray', 'dormant_resonant_crystal', 'end_ruin_mechanism'];
+const PLANTS = ['chorus_sprout', 'wild_tendril'];
+
+function load(name) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width; canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas);
+    };
+    img.src = window.__IMGS__[name];
+  });
+}
+
+async function section(title, names) {
+  const h = document.createElement('h2');
+  h.textContent = title;
+  document.getElementById('sheet').appendChild(h);
+  const row = document.createElement('div');
+  row.className = 'row';
+  for (const name of names) {
+    const canvas = await load(name);
+    const cell = document.createElement('div');
+    cell.className = 'cell big';
+    const clone = canvas.cloneNode();
+    cell.appendChild(clone);
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = name;
+    cell.appendChild(label);
+    row.appendChild(cell);
+  }
+  document.getElementById('sheet').appendChild(row);
+}
+
+(async () => {
+  await section('Items', ITEMS);
+  await section('Blocks', BLOCKS);
+  await section('Plants', PLANTS);
+  // tiled preview of block textures to check tileability
+  const h = document.createElement('h2');
+  h.textContent = 'Blocks tiled 2x2 (tileability check)';
+  document.getElementById('sheet').appendChild(h);
+  const row = document.createElement('div');
+  row.className = 'row';
+  for (const name of BLOCKS) {
+    const canvas = await load(name);
+    const tile = document.createElement('canvas');
+    tile.width = 256; tile.height = 256;
+    const ctx = tile.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    for (let ty = 0; ty < 2; ty++) for (let tx = 0; tx < 2; tx++) ctx.drawImage(canvas, tx * 128, ty * 128);
+    const cell = document.createElement('div');
+    cell.className = 'cell tilegrid';
+    cell.appendChild(tile);
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = name;
+    cell.appendChild(label);
+    row.appendChild(cell);
+  }
+  document.getElementById('sheet').appendChild(row);
+})();
+</script>
+</body>
+</html>

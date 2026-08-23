@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " C ",
+    "CVC",
+    " C "
+  ],
+  "key": {
+    "C": { "item": "endesium:crystal_core" },
+    "V": { "item": "endesium:void_shard" }
+  },
+  "result": { "id": "endesium:crystal_resonator", "count": 1 }
+}

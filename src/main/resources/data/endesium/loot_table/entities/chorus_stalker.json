@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "endesium:stalker_tendril" }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:chorus_eye",
+          "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.12 } ]
+        },
+        { "type": "minecraft:empty", "weight": 7 }
+      ]
+    }
+  ]
+}

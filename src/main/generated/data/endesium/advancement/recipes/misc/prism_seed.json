@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_chorus_eye": {
+      "conditions": {
+        "items": [
+          {
+            "items": "endesium:chorus_eye"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "endesium:prism_seed"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_chorus_eye"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "endesium:prism_seed"
+    ]
+  }
+}

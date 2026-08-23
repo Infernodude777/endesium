@@ -64,9 +64,9 @@ Blocks should read as Minecraft blocks first. Prefer broad, quiet planes with a 
 
 ## 5. Mob texture language
 
-Endesium creatures should be recognizable through silhouette and posture before texture detail. Void Stalker surfaces should be dark mineral or desaturated organic forms with a small, controlled resonance signal. Eyes, joints, or a core may carry Resonance Cyan; the entire body must not glow cyan or purple.
+Endesium creatures should be recognizable through silhouette and posture before texture detail. The revised Void Stalker is a tall, slender, non-human biped with elongated limbs, a narrow mineral torso, and an integrated faceted head. It may evoke the unease of a distant slender figure, but it must not become an Enderman copy or a smooth humanoid reskin. Void Stalker surfaces should be dark mineral or desaturated organic forms with a small, controlled resonance signal. Eyes, joints, or a core may carry Resonance Cyan; the entire body must not glow cyan or purple.
 
-Animation should communicate intent: slow suspended idle motion, purposeful movement, and readable attack preparation. Motion is part of the creature's material identity and should not be decorative jitter.
+Animation should communicate intent: slow suspended idle motion, purposeful long-limbed movement, and readable attack preparation. Motion is part of the creature's material identity and should not be decorative jitter.
 
 ## 6. Structure material language
 

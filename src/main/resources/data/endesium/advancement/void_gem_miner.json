@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:first_void_shard",
+  "display": {
+    "icon": { "id": "endesium:void_gem" },
+    "title": { "translate": "advancements.endesium.void_gem_miner.title" },
+    "description": { "translate": "advancements.endesium.void_gem_miner.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_void_gem": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:void_gem" }
+        ]
+      }
+    }
+  }
+}

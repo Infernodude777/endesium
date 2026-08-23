@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "endesium:dust_chitin" }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:wastes_seed_pod",
+          "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.25 } ]
+        },
+        { "type": "minecraft:empty", "weight": 3 }
+      ]
+    }
+  ]
+}

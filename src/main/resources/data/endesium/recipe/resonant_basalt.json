@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "minecraft:basalt" },
+    { "item": "endesium:void_shard" }
+  ],
+  "result": { "id": "endesium:resonant_basalt", "count": 1 }
+}

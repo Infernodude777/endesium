@@ -1,0 +1,45 @@
+{
+    "type":  "minecraft:chest",
+    "pools":  [
+                  {
+                      "entries":  [
+                                      {
+                                          "name":  "endesium:lumen_wing",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "name":  "endesium:lumen_dust",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "name":  "endesium:prism_seed",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "type":  "minecraft:empty",
+                                          "weight":  3
+                                      }
+                                  ],
+                      "rolls":  2
+                  },
+                  {
+                      "entries":  [
+                                      {
+                                          "conditions":  [
+                                                             {
+                                                                 "condition":  "minecraft:random_chance",
+                                                                 "chance":  0.1
+                                                             }
+                                                         ],
+                                          "name":  "endesium:lumen_lantern",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "type":  "minecraft:empty",
+                                          "weight":  7
+                                      }
+                                  ],
+                      "rolls":  1
+                  }
+              ]
+}

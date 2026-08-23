@@ -1,0 +1,17 @@
+{
+  "parent": "endesium:sigil_attuned",
+  "display": {
+    "icon": { "id": "endesium:warden_sigil" },
+    "title": { "translate": "advancements.endesium.warden_ascendant.title" },
+    "description": { "translate": "advancements.endesium.warden_ascendant.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "ascended": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

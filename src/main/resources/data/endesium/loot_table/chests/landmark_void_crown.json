@@ -1,0 +1,45 @@
+{
+    "type":  "minecraft:chest",
+    "pools":  [
+                  {
+                      "entries":  [
+                                      {
+                                          "name":  "endesium:crown_seal",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "name":  "endesium:umbral_shard",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "name":  "endesium:void_core",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "type":  "minecraft:empty",
+                                          "weight":  3
+                                      }
+                                  ],
+                      "rolls":  2
+                  },
+                  {
+                      "entries":  [
+                                      {
+                                          "conditions":  [
+                                                             {
+                                                                 "condition":  "minecraft:random_chance",
+                                                                 "chance":  0.08
+                                                             }
+                                                         ],
+                                          "name":  "endesium:crown_needle",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "type":  "minecraft:empty",
+                                          "weight":  8
+                                      }
+                                  ],
+                      "rolls":  1
+                  }
+              ]
+}

@@ -1,0 +1,17 @@
+{
+  "parent": "endesium:dragon_transformation",
+  "display": {
+    "icon": { "id": "endesium:archive_sigil" },
+    "title": { "translate": "advancements.endesium.archive_awakened.title" },
+    "description": { "translate": "advancements.endesium.archive_awakened.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "woke_archive": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

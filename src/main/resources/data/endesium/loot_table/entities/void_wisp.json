@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "endesium:void_shard" }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:ender_essence",
+          "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.3 } ]
+        },
+        { "type": "minecraft:empty", "weight": 5 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "parent": "endesium:golem_felled",
+  "display": {
+    "icon": { "id": "endesium:golem_effigy" },
+    "title": { "translate": "advancements.endesium.effigy_ignited.title" },
+    "description": { "translate": "advancements.endesium.effigy_ignited.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "effigy_used": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

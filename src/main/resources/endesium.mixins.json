@@ -4,7 +4,11 @@
   "package": "com.infernodude777.endesium.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "TheEndBiomeSourceMixin"
+    "TheEndBiomeSourceMixin",
+    "RandomStateMixin",
+    "EndDragonFightMixin",
+    "EnderDragonMixin",
+    "LivingEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

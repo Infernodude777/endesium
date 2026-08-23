@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    " G ",
+    "GIG",
+    " G "
+  ],
+  "key": {
+    "G": { "item": "endesium:void_glass" },
+    "I": { "item": "endesium:void_ingot" }
+  },
+  "result": { "id": "endesium:void_lamp", "count": 1 }
+}

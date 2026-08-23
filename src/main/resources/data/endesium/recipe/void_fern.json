@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "endesium:void_grass" },
+    { "item": "minecraft:bone_meal" }
+  ],
+  "result": { "id": "endesium:void_fern", "count": 1 }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "endesium:item/void_tool_base",
+  "textures": {
+    "layer0": "endesium:item/void_hoe"
+  }
+}

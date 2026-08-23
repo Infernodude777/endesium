@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:end/root",
+  "display": {
+    "icon": { "id": "endesium:void_marsh_soil" },
+    "title": { "translate": "advancements.endesium.below_the_surface.title" },
+    "description": { "translate": "advancements.endesium.below_the_surface.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "entered_marshes": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": { "location": { "biomes": "endesium:void_marshes" } }
+          }
+        ]
+      }
+    }
+  }
+}

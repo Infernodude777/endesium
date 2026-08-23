@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:heart_of_stone",
+  "display": {
+    "icon": { "id": "endesium:crystal_resonator" },
+    "title": { "translate": "advancements.endesium.crystal_tuner.title" },
+    "description": { "translate": "advancements.endesium.crystal_tuner.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_crystal_resonator": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:crystal_resonator" }
+        ]
+      }
+    }
+  }
+}

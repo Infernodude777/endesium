@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "endesium:void_ingot_from_nuggets"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_void_nugget": {
+      "conditions": {
+        "items": [
+          {
+            "items": "endesium:void_nugget"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_void_nugget"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "endesium:void_ingot_from_nuggets"
+    ]
+  }
+}

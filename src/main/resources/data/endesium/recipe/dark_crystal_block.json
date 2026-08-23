@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SS",
+    "SS"
+  ],
+  "key": {
+    "S": { "item": "minecraft:amethyst_shard" }
+  },
+  "result": { "id": "endesium:dark_crystal_block", "count": 1 }
+}

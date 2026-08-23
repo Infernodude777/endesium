@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:end/root",
+  "display": {
+    "icon": { "id": "endesium:crystal_shard_block" },
+    "title": { "translate": "advancements.endesium.heart_of_stone.title" },
+    "description": { "translate": "advancements.endesium.heart_of_stone.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "entered_barrens": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": { "location": { "biomes": "endesium:crystal_barrens" } }
+          }
+        ]
+      }
+    }
+  }
+}

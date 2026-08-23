@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SSS",
+    "SSS",
+    "SSS"
+  ],
+  "key": {
+    "S": { "item": "endesium:void_shard" }
+  },
+  "result": { "id": "endesium:void_gem", "count": 1 }
+}

@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "endesium:void_grass" },
+    { "item": "endesium:void_nugget" }
+  ],
+  "result": { "id": "endesium:umbral_grass", "count": 1 }
+}

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [
+    "W W",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": { "item": "endesium:void_ingot" },
+    "W": { "item": "endesium:void_weave" }
+  },
+  "result": { "id": "endesium:void_chestplate", "count": 1 }
+}

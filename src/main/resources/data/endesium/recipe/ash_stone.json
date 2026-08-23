@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "minecraft:end_stone" },
+    { "item": "minecraft:coal" }
+  ],
+  "result": { "id": "endesium:ash_stone", "count": 1 }
+}

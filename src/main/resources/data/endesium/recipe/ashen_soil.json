@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "endesium:ash_stone" },
+    { "item": "minecraft:sand" }
+  ],
+  "result": { "id": "endesium:ashen_soil", "count": 2 }
+}

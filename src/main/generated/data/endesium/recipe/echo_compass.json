@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "S": {
+      "item": "endesium:void_shard"
+    },
+    "T": {
+      "item": "endesium:resonance_token"
+    }
+  },
+  "pattern": [
+    "S S",
+    " T ",
+    "S S"
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:echo_compass"
+  }
+}

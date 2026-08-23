@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:where_everything_died",
+  "display": {
+    "icon": { "id": "endesium:magma_core" },
+    "title": { "translate": "advancements.endesium.heart_of_the_volcano.title" },
+    "description": { "translate": "advancements.endesium.heart_of_the_volcano.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_magma_core": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:magma_core" }
+        ]
+      }
+    }
+  }
+}

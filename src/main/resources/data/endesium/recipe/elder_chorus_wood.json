@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "minecraft:chorus_fruit" },
+    { "item": "minecraft:chorus_fruit" },
+    { "item": "endesium:chorus_root" }
+  ],
+  "result": { "id": "endesium:elder_chorus_wood", "count": 2 }
+}

@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:follow_the_light",
+  "display": {
+    "icon": { "id": "endesium:lumen_lantern" },
+    "title": { "translate": "advancements.endesium.lumen_beacon.title" },
+    "description": { "translate": "advancements.endesium.lumen_beacon.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_lumen_lantern": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:lumen_lantern" }
+        ]
+      }
+    }
+  }
+}

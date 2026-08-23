@@ -1,0 +1,45 @@
+{
+    "type":  "minecraft:chest",
+    "pools":  [
+                  {
+                      "entries":  [
+                                      {
+                                          "name":  "endesium:crystal_fang",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "name":  "endesium:crystal_core",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "name":  "endesium:crawler_eye",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "type":  "minecraft:empty",
+                                          "weight":  3
+                                      }
+                                  ],
+                      "rolls":  2
+                  },
+                  {
+                      "entries":  [
+                                      {
+                                          "conditions":  [
+                                                             {
+                                                                 "condition":  "minecraft:random_chance",
+                                                                 "chance":  0.08
+                                                             }
+                                                         ],
+                                          "name":  "endesium:crystal_resonator",
+                                          "type":  "minecraft:item"
+                                      },
+                                      {
+                                          "type":  "minecraft:empty",
+                                          "weight":  8
+                                      }
+                                  ],
+                      "rolls":  1
+                  }
+              ]
+}

@@ -1,0 +1,17 @@
+{
+  "parent": "endesium:first_resonance",
+  "display": {
+    "icon": { "id": "endesium:void_shard" },
+    "title": { "translate": "advancements.endesium.fractured_station.title" },
+    "description": { "translate": "advancements.endesium.fractured_station.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "activate_fractured": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

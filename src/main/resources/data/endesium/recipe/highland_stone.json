@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "minecraft:end_stone" },
+    { "item": "minecraft:flint" }
+  ],
+  "result": { "id": "endesium:highland_stone", "count": 2 }
+}

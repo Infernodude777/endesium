@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "endesium:ashen_ember"
+    },
+    "S": {
+      "item": "minecraft:string"
+    }
+  },
+  "pattern": [
+    " E ",
+    "ESE",
+    " E "
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:ember_charm"
+  }
+}

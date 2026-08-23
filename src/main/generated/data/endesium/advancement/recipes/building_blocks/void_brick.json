@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "endesium:void_brick"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_void_slate": {
+      "conditions": {
+        "items": [
+          {
+            "items": "endesium:void_slate"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_void_slate"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "endesium:void_brick"
+    ]
+  }
+}

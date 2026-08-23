@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:item/generated",
+  "gui_light": "front",
+  "textures": {
+    "layer0": "minecraft:item/book",
+    "layer1": "endesium:item/archive_sigil"
+  },
+  "display": {
+    "gui": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 0, 0],
+      "scale": [1.0, 1.0, 1.0]
+    },
+    "ground": {
+      "rotation": [0, 0, 8],
+      "translation": [0, 2.5, 0],
+      "scale": [0.72, 0.72, 0.72]
+    },
+    "fixed": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 0, 0],
+      "scale": [1.0, 1.0, 1.0]
+    },
+    "thirdperson_righthand": {
+      "rotation": [0, 90, -18],
+      "translation": [0, 1.5, 0.5],
+      "scale": [0.84, 0.84, 0.84]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [0, -90, 18],
+      "translation": [0, 1.5, 0.5],
+      "scale": [0.84, 0.84, 0.84]
+    }
+  }
+}

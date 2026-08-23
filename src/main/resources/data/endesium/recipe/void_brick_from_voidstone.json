@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SS",
+    "SS"
+  ],
+  "key": {
+    "S": { "item": "endesium:voidstone" }
+  },
+  "result": { "id": "endesium:void_brick", "count": 4 }
+}

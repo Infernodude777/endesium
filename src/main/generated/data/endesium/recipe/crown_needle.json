@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "endesium:void_core"
+    },
+    "N": {
+      "item": "endesium:crown_needle_block"
+    },
+    "V": {
+      "item": "endesium:void_ingot"
+    }
+  },
+  "pattern": [
+    " N ",
+    "VCV",
+    " V "
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:crown_needle"
+  }
+}

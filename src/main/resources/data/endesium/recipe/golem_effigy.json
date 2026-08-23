@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "DVD",
+    "VCV",
+    "DVD"
+  ],
+  "key": {
+    "D": { "item": "endesium:dragonbone" },
+    "V": { "item": "endesium:void_brick" },
+    "C": { "item": "endesium:golem_core" }
+  },
+  "result": {
+    "id": "endesium:golem_effigy",
+    "count": 1
+  }
+}

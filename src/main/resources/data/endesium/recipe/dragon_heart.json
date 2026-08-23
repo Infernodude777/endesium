@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "endesium:dragonbone" },
+    { "item": "endesium:void_core" }
+  ],
+  "result": { "id": "endesium:dragon_heart", "count": 1 }
+}

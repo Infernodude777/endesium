@@ -84,6 +84,20 @@ public final class RegionLandmarkFeature extends Feature<NoneFeatureConfiguratio
         try {
             int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, bx, bz);
             BlockPos base = new BlockPos(bx, y, bz);
+            // Per-column support: sample a ring around the anchor and reject
+            // sites where the ground falls away, so compact builds never
+            // float over a slope or straddle a cliff edge.
+            int lowest = y;
+            int highest = y;
+            for (int i = 0; i < 8; i++) {
+                double ang = Math.PI / 4.0D * i;
+                int sx = bx + (int) Math.round(Math.cos(ang) * 5.0D);
+                int sz = bz + (int) Math.round(Math.sin(ang) * 5.0D);
+                int sy = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, sx, sz);
+                if (sy < lowest) lowest = sy;
+                if (sy > highest) highest = sy;
+            }
+            if (highest - lowest > 6) return false;
             for (int i = 0; i < 8; i++) {
                 double ang = Math.PI / 4.0D * i;
                 BlockPos edge = base.offset((int) Math.round(Math.cos(ang) * 10),
@@ -123,7 +137,8 @@ public final class RegionLandmarkFeature extends Feature<NoneFeatureConfiguratio
     }
 
     /** Hashes one slot inside a grid cell; varies per cell, region, and seed. */
-    private static int cellSlot(long worldSeed, int region, long salt, int cellX, int cellZ) {        long h = worldSeed ^ (region * 0x9E3779B97F4A7C15L) ^ (salt * 0xBF58476D1CE4E5B9L);
+    private static int cellSlot(long worldSeed, int region, long salt, int cellX, int cellZ) {
+        long h = worldSeed ^ (region * 0x9E3779B97F4A7C15L) ^ (salt * 0xBF58476D1CE4E5B9L);
         h ^= cellX * 0x9E3779B97F4A7C15L;
         h ^= cellZ * 0xBF58476D1CE4E5B9L;
         h ^= h >>> 33;

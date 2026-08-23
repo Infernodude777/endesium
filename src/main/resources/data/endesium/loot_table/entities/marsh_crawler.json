@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "endesium:marsh_tendril" }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:void_sap",
+          "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.4 } ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:crawler_eye",
+          "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.08 } ]
+        },
+        { "type": "minecraft:empty", "weight": 6 }
+      ]
+    }
+  ]
+}

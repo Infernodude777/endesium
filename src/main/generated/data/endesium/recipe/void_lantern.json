@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "item": "endesium:void_glass"
+    },
+    "I": {
+      "item": "endesium:void_ingot"
+    }
+  },
+  "pattern": [
+    " G ",
+    "GIG",
+    " G "
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:void_lantern"
+  }
+}

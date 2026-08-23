@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:string" },
+    { "item": "endesium:void_shard" }
+  ],
+  "result": { "id": "endesium:abyssal_thread", "count": 3 }
+}

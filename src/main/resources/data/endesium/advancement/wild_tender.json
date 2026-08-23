@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:into_the_wilds",
+  "display": {
+    "icon": { "id": "endesium:chorus_pruner" },
+    "title": { "translate": "advancements.endesium.wild_tender.title" },
+    "description": { "translate": "advancements.endesium.wild_tender.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_chorus_pruner": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:chorus_pruner" }
+        ]
+      }
+    }
+  }
+}

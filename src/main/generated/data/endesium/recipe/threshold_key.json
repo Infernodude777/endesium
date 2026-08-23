@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "endesium:archive_fragment"
+    },
+    "C": {
+      "item": "endesium:void_core"
+    },
+    "S": {
+      "item": "endesium:crown_seal"
+    }
+  },
+  "pattern": [
+    " S ",
+    "CAC",
+    " C "
+  ],
+  "result": {
+    "count": 1,
+    "id": "endesium:threshold_key"
+  }
+}

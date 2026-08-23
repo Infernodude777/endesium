@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_resonance_token": {
+      "conditions": {
+        "items": [
+          {
+            "items": "endesium:resonance_token"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "endesium:echo_compass"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_resonance_token"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "endesium:echo_compass"
+    ]
+  }
+}

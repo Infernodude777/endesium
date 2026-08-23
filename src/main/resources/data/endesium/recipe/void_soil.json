@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "endesium:void_gravel" },
+    { "item": "minecraft:dirt" }
+  ],
+  "result": { "id": "endesium:void_soil", "count": 2 }
+}

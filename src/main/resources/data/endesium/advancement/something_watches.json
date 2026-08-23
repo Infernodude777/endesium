@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:end/root",
+  "display": {
+    "icon": { "id": "endesium:null_fragment" },
+    "title": { "translate": "advancements.endesium.something_watches.title" },
+    "description": { "translate": "advancements.endesium.something_watches.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "encountered_nullwalker": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": { "type": "endesium:nullwalker" }
+          }
+        ]
+      }
+    }
+  }
+}

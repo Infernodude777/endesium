@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:into_the_skirts",
+  "display": {
+    "icon": { "id": "endesium:void_slate" },
+    "title": { "translate": "advancements.endesium.void_skirt_foothold.title" },
+    "description": { "translate": "advancements.endesium.void_skirt_foothold.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "got_void_slate": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "endesium:void_slate" }
+        ]
+      }
+    }
+  }
+}

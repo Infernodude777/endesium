@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " I ",
+    "IFI",
+    " I "
+  ],
+  "key": {
+    "I": { "item": "endesium:void_ingot" },
+    "F": { "item": "endesium:archive_fragment" }
+  },
+  "result": { "id": "endesium:archive_key", "count": 1 }
+}

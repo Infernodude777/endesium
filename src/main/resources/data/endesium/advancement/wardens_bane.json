@@ -1,0 +1,22 @@
+{
+  "parent": "endesium:dragon_transformation",
+  "display": {
+    "icon": { "id": "endesium:warden_sigil" },
+    "title": { "translate": "advancements.endesium.wardens_bane.title" },
+    "description": { "translate": "advancements.endesium.wardens_bane.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "warden_killed": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": {
+          "type": "endesium:end_warden"
+        }
+      }
+    }
+  }
+}

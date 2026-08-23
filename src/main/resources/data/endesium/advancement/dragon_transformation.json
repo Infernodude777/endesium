@@ -1,0 +1,17 @@
+{
+  "parent": "minecraft:end/kill_dragon",
+  "display": {
+    "icon": { "id": "endesium:resonance_lens" },
+    "title": { "translate": "advancements.endesium.dragon_transformation.title" },
+    "description": { "translate": "advancements.endesium.dragon_transformation.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "transformed": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

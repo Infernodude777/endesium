@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "minecraft:end_stone" },
+    { "item": "minecraft:gravel" }
+  ],
+  "result": { "id": "endesium:wastes_stone", "count": 2 }
+}

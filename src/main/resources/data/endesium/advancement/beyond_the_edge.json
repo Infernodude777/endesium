@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:end/root",
+  "display": {
+    "icon": { "id": "endesium:highland_stone" },
+    "title": { "translate": "advancements.endesium.beyond_the_edge.title" },
+    "description": { "translate": "advancements.endesium.beyond_the_edge.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "entered_highlands": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": { "location": { "biomes": "endesium:shattered_highlands" } }
+          }
+        ]
+      }
+    }
+  }
+}

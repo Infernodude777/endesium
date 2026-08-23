@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "endesium:resonant_dragon_scale" }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "endesium:void_pearl" }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:archive_sigil",
+          "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.35 } ]
+        },
+        { "type": "minecraft:empty", "weight": 2 }
+      ]
+    }
+  ]
+}

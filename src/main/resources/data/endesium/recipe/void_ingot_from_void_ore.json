@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": { "item": "endesium:void_ore" },
+  "result": { "id": "endesium:void_ingot" },
+  "experience": 1.0,
+  "cookingtime": 200
+}
