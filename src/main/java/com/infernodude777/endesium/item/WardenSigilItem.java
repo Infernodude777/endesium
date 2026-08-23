@@ -80,8 +80,8 @@ public final class WardenSigilItem extends Item {
 		AttributeInstance health = serverPlayer.getAttribute(Attributes.MAX_HEALTH);
 		double currentBonus = sumBonus(health);
 		if (currentBonus >= MAX_BONUS_HEALTH) {
-			serverPlayer.displayClientMessage(Component.literal(
-					"\u00A77Your soul can hold no more of the wardens' light."), true);
+			serverPlayer.displayClientMessage(Component.translatable(
+					"endesium.sigil.maxed").withStyle(net.minecraft.ChatFormatting.GRAY), true);
 			return InteractionResultHolder.fail(stack);
 		}
 		int region = regionOf(stack);
@@ -95,8 +95,8 @@ public final class WardenSigilItem extends Item {
 		serverPlayer.heal(4.0F);
 		level.playSound(null, serverPlayer.blockPosition(), SoundEvents.TOTEM_USE,
 				SoundSource.PLAYERS, 0.8F, 1.2F);
-		serverPlayer.displayClientMessage(Component.literal(
-				"\u00A76The sigil burns into your soul. \u00A7c+" + (int) (amount / 2.0D) + " heart(s), forever."), true);
+		serverPlayer.displayClientMessage(Component.translatable(
+				"endesium.sigil.attuned", (int) (amount / 2.0D)).withStyle(net.minecraft.ChatFormatting.GOLD), true);
 		var holder = serverPlayer.server.getAdvancements().get(Endesium.id("sigil_attuned"));
 		if (holder != null) {
 			serverPlayer.getAdvancements().award(holder, "sigil_used");
@@ -110,8 +110,8 @@ public final class WardenSigilItem extends Item {
 			if (ascend != null) {
 				serverPlayer.getAdvancements().award(ascend, "ascended");
 			}
-			serverPlayer.displayClientMessage(Component.literal(
-					"\u00A7bWARDEN ASCENDANT \u2014 every region's light lives in you now."), false);
+			serverPlayer.displayClientMessage(Component.translatable(
+					"endesium.sigil.ascendant").withStyle(net.minecraft.ChatFormatting.AQUA), false);
 			serverPlayer.level().playSound(null, serverPlayer.blockPosition(),
 					SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0F, 1.2F);
 			serverPlayer.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,

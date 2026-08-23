@@ -126,10 +126,10 @@ public final class PostDragonEvents {
 				SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 1.6F, 0.6F);
 		for (ServerPlayer player : endLevel.players()) {
 			player.connection.send(new ClientboundSetTitleTextPacket(
-					net.minecraft.network.chat.Component.literal("\u00A75Something Older Stirs")));
+					net.minecraft.network.chat.Component.translatable("endesium.event.something_older_stirs")
+							.withStyle(net.minecraft.ChatFormatting.DARK_PURPLE)));
 			player.connection.send(new ClientboundSetSubtitleTextPacket(
-					net.minecraft.network.chat.Component.literal(
-							"The Golem wakes where the dragon fell")));
+					net.minecraft.network.chat.Component.translatable("endesium.event.golem_wakes")));
 		}
 	}
 }

@@ -255,34 +255,14 @@ public final class DragonFightController {
 		int phase = phaseFor(fraction);
 
 		// Transformed Dragons announce different phases.
-		String title;
-		String subtitle;
+		net.minecraft.network.chat.Component title;
+		net.minecraft.network.chat.Component subtitle;
 		if (state.transformed) {
-			title = switch (phase) {
-				case 2 -> "The Awakened Hunts";
-				case 3 -> "The Deep Resonance Trembles";
-				case 4 -> "The End's Eternal Fury";
-				default -> "The Awakened Watches";
-			};
-			subtitle = switch (phase) {
-				case 2 -> "Resonance sharpens its ancient hunt";
-				case 3 -> "The island remembers its wounds";
-				case 4 -> "Nothing was ever held back";
-				default -> "It remembers you";
-			};
+			title = Component.translatable("endesium.dragon.awakened.phase" + phase + ".title");
+			subtitle = Component.translatable("endesium.dragon.awakened.phase" + phase + ".subtitle");
 		} else {
-			title = switch (phase) {
-				case 2 -> "The Dragon Hunts";
-				case 3 -> "The Wastes Tremble";
-				case 4 -> "The End's Fury";
-				default -> "The Dragon Watches";
-			};
-			subtitle = switch (phase) {
-				case 2 -> "Resonance sharpens its hunting";
-				case 3 -> "The island answers the wounds";
-				case 4 -> "Nothing is held back";
-				default -> "";
-			};
+			title = Component.translatable("endesium.dragon.phase" + phase + ".title");
+			subtitle = Component.translatable("endesium.dragon.phase" + phase + ".subtitle");
 		}
 		if (phase == state.phase) return;
 		state.phase = phase;
@@ -304,8 +284,8 @@ public final class DragonFightController {
 		level.sendParticles(ParticleTypes.CRIMSON_SPORE, dragon.getX(), dragon.getY() + 2.0D, dragon.getZ(),
 				60, 9.0D, 5.0D, 9.0D, 0.10D);
 		for (ServerPlayer player : level.players()) {
-			player.connection.send(new ClientboundSetTitleTextPacket(Component.literal(title)));
-			player.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(subtitle)));
+			player.connection.send(new ClientboundSetTitleTextPacket(title));
+			player.connection.send(new ClientboundSetSubtitleTextPacket(subtitle));
 		}
 	}
 
@@ -485,7 +465,9 @@ public final class DragonFightController {
 			}
 			case CATASTROPHE -> {
 				level.playSound(null, dragon.blockPosition(), ModSounds.DRAGON_ROAR, SoundSource.HOSTILE, 1.3F, 0.6F);
-				level.sendParticles(ModParticles.RESONANCE_PULSE, 0.0D, 72.0D, 0.0D, 80, 14.0D, 2.0D, 14.0D, 0.05D);
+				level.sendParticles(ModParticles.RESONANCE_PULSE, com.infernodude777.endesium.world.ArenaGeometry.ARENA_CENTER_X,
+				com.infernodude777.endesium.world.ArenaGeometry.ARENA_SURFACE_Y + 6.0D,
+				com.infernodude777.endesium.world.ArenaGeometry.ARENA_CENTER_Z, 80, 14.0D, 2.0D, 14.0D, 0.05D);
 			}
 			case VOID_RIFT -> {
 				// Transformed-exclusive: tears a resonance rift across the ground.
@@ -884,8 +866,13 @@ public final class DragonFightController {
 
 	private static void catastrophe(EnderDragon dragon, ServerLevel level, State state) {
 		level.playSound(null, dragon.blockPosition(), ModSounds.DRAGON_ROAR, SoundSource.HOSTILE, 1.8F, 0.5F);
-		level.sendParticles(ModParticles.RESONANCE_PULSE, 0.0D, 66.0D, 0.0D, 160, 26.0D, 3.0D, 26.0D, 0.14D);
-		level.sendParticles(ParticleTypes.CRIMSON_SPORE, 0.0D, 66.0D, 0.0D, 90, 20.0D, 3.0D, 20.0D, 0.12D);
+		level.sendParticles(ModParticles.RESONANCE_PULSE, com.infernodude777.endesium.world.ArenaGeometry.ARENA_CENTER_X,
+				com.infernodude777.endesium.world.ArenaGeometry.ARENA_SURFACE_Y,
+				com.infernodude777.endesium.world.ArenaGeometry.ARENA_CENTER_Z, 160, 26.0D, 3.0D, 26.0D, 0.14D);
+		level.sendParticles(ParticleTypes.CRIMSON_SPORE,
+				com.infernodude777.endesium.world.ArenaGeometry.ARENA_CENTER_X,
+				com.infernodude777.endesium.world.ArenaGeometry.ARENA_SURFACE_Y,
+				com.infernodude777.endesium.world.ArenaGeometry.ARENA_CENTER_Z, 90, 20.0D, 3.0D, 20.0D, 0.12D);
 		// The Resonance Ring is the safe zone: inside radius 8 nothing happens.
 		for (ServerPlayer player : level.players()) {
 			if (!player.isAlive() || player.isSpectator()) continue;

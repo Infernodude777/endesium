@@ -69,8 +69,8 @@ public final class GolemCoreItem extends Item {
 		boolean maxedHealth = healthBonus >= MAX_HEALTH_BONUS;
 		boolean maxedDamage = damageBonus >= MAX_DAMAGE_BONUS;
 		if (maxedHealth && maxedDamage) {
-			serverPlayer.displayClientMessage(Component.literal(
-					"\u00A77You are already more than the golem ever was."), true);
+			serverPlayer.displayClientMessage(Component.translatable(
+					"endesium.golem_core.maxed").withStyle(net.minecraft.ChatFormatting.GRAY), true);
 			return InteractionResultHolder.fail(stack);
 		}
 		long seq = SEQUENCE.incrementAndGet();
@@ -86,8 +86,8 @@ public final class GolemCoreItem extends Item {
 		serverPlayer.heal(6.0F);
 		level.playSound(null, serverPlayer.blockPosition(), SoundEvents.END_PORTAL_FRAME_FILL,
 				SoundSource.PLAYERS, 1.0F, 0.6F);
-		serverPlayer.displayClientMessage(Component.literal(
-				"\u00A75The core collapses into your chest. You feel heavier, and stronger."), true);
+		serverPlayer.displayClientMessage(Component.translatable(
+				"endesium.golem_core.absorbed").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
 
 		// Resolve tracking: ten absorbed cores unlock the once-per-day save.
 		com.infernodude777.endesium.state.AttunementState state =
@@ -97,8 +97,8 @@ public final class GolemCoreItem extends Item {
 			if (resolve != null) {
 				serverPlayer.getAdvancements().award(resolve, "resolved");
 			}
-			serverPlayer.displayClientMessage(Component.literal(
-					"\u00A75GOLEM'S RESOLVE \u2014 death itself will hesitate. Once a day."), false);
+			serverPlayer.displayClientMessage(Component.translatable(
+					"endesium.golem_core.resolve_unlocked").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), false);
 			serverPlayer.level().playSound(null, serverPlayer.blockPosition(),
 					SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0F, 0.8F);
 		}

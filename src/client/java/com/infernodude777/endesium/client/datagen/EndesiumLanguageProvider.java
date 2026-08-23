@@ -32,6 +32,38 @@ public final class EndesiumLanguageProvider extends FabricLanguageProvider {
 		translationBuilder.add(ModItems.ARCHIVE_FRAGMENT, "Archive Fragment");
 		translationBuilder.add("key.categories.endesium", "Endesium");
 		translationBuilder.add("key.endesium.sonic_boom", "Sonic Boom");
+
+		// Dragon fight phase titles/subtitles (transformed and first-fight arcs).
+		translationBuilder.add("endesium.dragon.awakened.phase1.title", "The Awakened Watches");
+		translationBuilder.add("endesium.dragon.awakened.phase1.subtitle", "It remembers you");
+		translationBuilder.add("endesium.dragon.awakened.phase2.title", "The Awakened Hunts");
+		translationBuilder.add("endesium.dragon.awakened.phase2.subtitle", "Resonance sharpens its ancient hunt");
+		translationBuilder.add("endesium.dragon.awakened.phase3.title", "The Deep Resonance Trembles");
+		translationBuilder.add("endesium.dragon.awakened.phase3.subtitle", "The island remembers its wounds");
+		translationBuilder.add("endesium.dragon.awakened.phase4.title", "The End's Eternal Fury");
+		translationBuilder.add("endesium.dragon.awakened.phase4.subtitle", "Nothing was ever held back");
+		translationBuilder.add("endesium.dragon.phase1.title", "The Dragon Watches");
+		translationBuilder.add("endesium.dragon.phase2.title", "The Dragon Hunts");
+		translationBuilder.add("endesium.dragon.phase2.subtitle", "Resonance sharpens its hunting");
+		translationBuilder.add("endesium.dragon.phase3.title", "The Wastes Tremble");
+		translationBuilder.add("endesium.dragon.phase3.subtitle", "The island answers the wounds");
+		translationBuilder.add("endesium.dragon.phase4.title", "The End's Fury");
+		translationBuilder.add("endesium.dragon.phase4.subtitle", "Nothing is held back");
+
+		// Post-Dragon transformation and boss reward feedback.
+		translationBuilder.add("endesium.event.something_older_stirs", "Something Older Stirs");
+		translationBuilder.add("endesium.event.golem_wakes", "The Golem wakes where the dragon fell");
+		translationBuilder.add("endesium.golem_resolve.saved", "The golem's core holds your soul together. Until tomorrow.");
+		translationBuilder.add("endesium.golem_core.maxed", "You are already more than the golem ever was.");
+		translationBuilder.add("endesium.golem_core.absorbed", "The core collapses into your chest. You feel heavier, and stronger.");
+		translationBuilder.add("endesium.golem_core.resolve_unlocked", "GOLEM'S RESOLVE — death itself will hesitate. Once a day.");
+		translationBuilder.add("endesium.sigil.maxed", "Your soul can hold no more of the wardens' light.");
+		translationBuilder.add("endesium.sigil.attuned", "The sigil burns into your soul. +%s heart(s), forever.");
+		translationBuilder.add("endesium.sigil.ascendant", "WARDEN ASCENDANT — every region's light lives in you now.");
+		translationBuilder.add("endesium.effigy.wrong_dimension", "The effigy is silent. It answers only to the End.");
+		translationBuilder.add("endesium.effigy.golem_exists", "A golem already walks. It must fall first.");
+		translationBuilder.add("endesium.effigy.no_ground", "The stone finds no purchase here. Seek open ground.");
+		translationBuilder.add("endesium.effigy.wakes", "The effigy crumbles. The engine wakes.");
 		translationBuilder.add(ModItems.RESONANCE_TOKEN, "Resonance Token");
 		translationBuilder.add(ModItems.ECHO_COMPASS, "Echo Compass");
 		translationBuilder.add(ModItems.ARCHIVE_SIGIL, "Archive Sigil");

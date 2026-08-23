@@ -55,8 +55,8 @@ public final class BossRewardEvents {
 			player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.TOTEM_OF_UNDYING,
 					player.getX(), player.getY() + 1.0D, player.getZ(),
 					40, 0.6D, 0.8D, 0.6D, 0.08D);
-			player.displayClientMessage(Component.literal(
-					"\u00A75The golem's core holds your soul together. Until tomorrow."), true);
+			player.displayClientMessage(Component.translatable(
+					"endesium.golem_resolve.saved").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
 			return false;
 		});
 

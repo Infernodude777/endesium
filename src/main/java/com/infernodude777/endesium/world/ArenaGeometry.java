@@ -14,6 +14,11 @@ import java.util.List;
  * then adds basins, cliffs, meso relief, and a small number of fractures.</p>
  */
 public final class ArenaGeometry {
+	/** The arena is architecturally anchored at the world origin. */
+	public static final double ARENA_CENTER_X = 0.0D;
+	public static final double ARENA_CENTER_Z = 0.0D;
+	/** Typical surface height at the arena plateau, for origin-anchored FX. */
+	public static final double ARENA_SURFACE_Y = 66.0D;
 	/** Safe zone for the catastrophic Resonance attack. */
 	public static final double SAFE_ZONE_RADIUS = 8.0D;
 	/** Small, incomplete ancient marking around the portal. */

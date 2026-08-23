@@ -42,8 +42,8 @@ public final class GolemEffigyItem extends Item {
 		}
 		ServerLevel serverLevel = serverPlayer.serverLevel();
 		if (serverLevel.dimension() != Level.END) {
-			serverPlayer.displayClientMessage(Component.literal(
-					"\u00A77The effigy is silent. It answers only to the End."), true);
+			serverPlayer.displayClientMessage(Component.translatable(
+					"endesium.effigy.wrong_dimension").withStyle(net.minecraft.ChatFormatting.GRAY), true);
 			return InteractionResultHolder.fail(stack);
 		}
 		// One golem at a time, across the whole dimension.
@@ -53,8 +53,8 @@ public final class GolemEffigyItem extends Item {
 				player.getBoundingBox().inflate(radius),
 				g -> g.isAlive());
 		if (!existing.isEmpty()) {
-			serverPlayer.displayClientMessage(Component.literal(
-					"\u00A77A golem already walks. It must fall first."), true);
+			serverPlayer.displayClientMessage(Component.translatable(
+					"endesium.effigy.golem_exists").withStyle(net.minecraft.ChatFormatting.GRAY), true);
 			return InteractionResultHolder.fail(stack);
 		}
 		var type = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.get(Endesium.id("end_golem"));
@@ -76,8 +76,8 @@ public final class GolemEffigyItem extends Item {
 		if (!settled) {
 			// No open ground anywhere nearby: refuse WITHOUT consuming the
 			// effigy instead of spawning an engine embedded in stone.
-			serverPlayer.displayClientMessage(Component.literal(
-					"\u00A77The stone finds no purchase here. Seek open ground."), true);
+			serverPlayer.displayClientMessage(Component.translatable(
+					"endesium.effigy.no_ground").withStyle(net.minecraft.ChatFormatting.GRAY), true);
 			return InteractionResultHolder.fail(stack);
 		}
 		serverLevel.addFreshEntity(mob);
@@ -91,8 +91,8 @@ public final class GolemEffigyItem extends Item {
 		serverLevel.sendParticles(ParticleTypes.REVERSE_PORTAL, gx, gy + 3.0D, gz, 60, 2.0D, 2.5D, 2.0D, 0.08D);
 		serverLevel.playSound(null, player.blockPosition(), SoundEvents.WITHER_SPAWN,
 				SoundSource.HOSTILE, 1.4F, 0.6F);
-		serverPlayer.displayClientMessage(Component.literal(
-				"\u00A75The effigy crumbles. The engine wakes."), true);
+		serverPlayer.displayClientMessage(Component.translatable(
+				"endesium.effigy.wakes").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
 
 		var holder = serverPlayer.server.getAdvancements().get(Endesium.id("effigy_ignited"));
 		if (holder != null) {
