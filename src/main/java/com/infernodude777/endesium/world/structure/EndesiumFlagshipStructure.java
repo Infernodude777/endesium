@@ -99,7 +99,6 @@ public final class EndesiumFlagshipStructure extends Structure {
 			return true;
 		}
 	}
-	}
 
 	@Override
 	public StructureType<?> type() {

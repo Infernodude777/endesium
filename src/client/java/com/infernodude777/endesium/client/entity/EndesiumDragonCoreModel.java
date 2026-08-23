@@ -63,7 +63,9 @@ public final class EndesiumDragonCoreModel extends EntityModel<EnderDragon> {
 		// unstable resonance in the final stage.
 		float beat = (float) Math.sin(ageInTicks * 0.15F) * 0.06F
 				+ (float) Math.sin(ageInTicks * 0.42F) * 0.03F;
-		core.scale(1.0F + beat, 1.0F - beat, 1.0F + beat);
+		core.xScale = 1.0F + beat;
+		core.yScale = 1.0F - beat;
+		core.zScale = 1.0F + beat;
 		shardA.zRot = 0.35F + (float) Math.sin(ageInTicks * 0.23F) * 0.10F;
 		shardB.zRot = -0.28F + (float) Math.sin(ageInTicks * 0.19F + 1.7F) * 0.10F;
 	}
