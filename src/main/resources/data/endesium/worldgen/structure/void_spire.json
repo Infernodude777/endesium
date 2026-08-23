@@ -1,0 +1,8 @@
+{
+  "type": "endesium:flagship",
+  "biomes": "endesium:void_skirts",
+  "region": 7,
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

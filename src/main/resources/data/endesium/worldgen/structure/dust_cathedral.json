@@ -1,0 +1,8 @@
+{
+  "type": "endesium:flagship",
+  "biomes": "endesium:end_wastes",
+  "region": 0,
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

@@ -1,0 +1,8 @@
+{
+  "type": "endesium:landmark",
+  "biomes": "endesium:shattered_highlands",
+  "region": 1,
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

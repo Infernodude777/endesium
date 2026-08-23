@@ -1,5 +1,52 @@
 # Changelog
 
+## Unreleased — Structures Migration & Polish Pass
+
+### Worldgen
+- **Flagships and landmarks migrated to registered vanilla Structures.**
+  New `endesium:flagship` and `endesium:landmark` structure types (region
+  codec field), twenty data-driven structure JSONs, and two `random_spread`
+  structure sets (`endesium_flagships` 24-chunk spacing, `endesium_landmarks`
+  16-chunk). Generation runs from a single anchor-chunk piece with bounding-box
+  write clipping; every candidate logs seam/support rejection reasons.
+- Retired the `biome_structure`/`biome_landmark` Feature placements from all
+  ten biome JSONs and removed their configured/placed feature files.
+- `/endesium locate structure` now resolves through the vanilla registry;
+  vanilla `/locate structure` also finds every Endesium anchor.
+- Landmarks gained per-column terrain support checks (rejects cliff edges).
+- `StructurePlacement` accepts full-strength levels so `/place structure` works.
+
+### Mobs & bosses
+- Flying physics fixed: Void Ray, Lumen Moth, and Ash Wraith use
+  `FlyingMoveControl`; Void Ray's conflicting ground melee goal removed.
+- End Warden special/guard cooldowns actually tick down (they previously froze
+  after first use), spectator boss-bar leak fixed.
+- End Golem: beam sweep cooldown, self-inflicted upkeep damage no longer feeds
+  its own stagger meter, stagger animation reachable, barrage fan real
+  (per-axis shard starts), direct entity-type summons.
+- Reversible enrage for Void Stalker; hurt animations play on all eight
+  creatures that define them; goal cooldowns are poll-frequency independent.
+- Marsh Crawler embraces its marshes (no water avoidance, +40% surge speed).
+
+### Visual & UX
+- All sixteen particle types render client-side with region-keyed tints.
+- Dragon regalia assembles per combat phase (horns, neck bands, plates,
+  mantle, braces, tail crown) plus an emissive chest core model.
+- Mechanical tooltips on all 24 previously-silent utility items.
+- Creative inventory: dedicated tab is canonical; vanilla-tab flooding removed.
+- `/endesium dragonstate set` requires `-Dendesium.devcommands=true`.
+
+### Engineering
+- Pure JUnit suite: resonance direction buckets, anchor expiry, dragon phase
+  thresholds, fracture-distance math (`gradlew test`).
+- Shared `AirWanderGoal`, shared fracture-distance helper, recipe-book unlocks
+  derived from the registry instead of a hardcoded list.
+- Resonance cache prunes unloaded sources; entity data-fixer noise documented.
+- Thirteen orphaned prototype assets removed; dust/marsh crawler textures made
+  POT (48→64) with matching geo declarations.
+- Validators repaired and extended: resource checker asserts the structures
+  migration contract; audit script back to 15/15.
+
 ## Unreleased — 10x Overhaul (Structures, Mobs, Bosses)
 
 ### Structures

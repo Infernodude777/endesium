@@ -68,7 +68,7 @@ public final class VoidAnchorItem extends Item {
 		long boundAt = tag.getLong(TAG_BOUND_TIME);
 		// Anchors created before the timestamp field was introduced are treated
 		// as expired rather than silently becoming permanent bookmarks.
-		if (boundAt <= 0L || server.getGameTime() - boundAt > LIFETIME_TICKS) {
+		if (isExpired(boundAt, server.getGameTime())) {
 			tag.remove(TAG_BOUND);
 			tag.remove(TAG_BOUND_TIME);
 			stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
@@ -89,6 +89,11 @@ public final class VoidAnchorItem extends Item {
 					.withStyle(ChatFormatting.RED), true);
 		}
 		return InteractionResultHolder.sidedSuccess(stack, true);
+	}
+
+	/** True when an anchor bound at {@code boundAt} has outlived its lifetime. */
+	public static boolean isExpired(long boundAt, long now) {
+		return boundAt <= 0L || now - boundAt > LIFETIME_TICKS;
 	}
 
 	@Override

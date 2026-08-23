@@ -52,6 +52,7 @@ public class EndesiumClient implements ClientModInitializer {
         EntityRendererRegistry.register(ModEntities.END_WARDEN, EndWardenRenderer::new);
         EntityRendererRegistry.register(ModEntities.END_GOLEM, EndGolemRenderer::new);
         EntityModelLayerRegistry.registerModelLayer(EndesiumDragonArmorModel.LAYER, EndesiumDragonArmorModel::createBodyLayer);
+        EntityModelLayerRegistry.registerModelLayer(EndesiumDragonCoreModel.LAYER, EndesiumDragonCoreModel::createBodyLayer);
         BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.VOID_GLASS, RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.MIREGLASS, RenderType.translucent());
         // Every particle type needs a client factory, or the server can emit

@@ -2,12 +2,15 @@ package com.infernodude777.endesium.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.infernodude777.endesium.client.entity.EndesiumDragonArmorModel;
+import com.infernodude777.endesium.client.entity.EndesiumDragonCoreModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.EnderDragonRenderer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -19,20 +22,40 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * it preserves hitbox readability while making the awakened model feel heavier
  * and more unstable as it approaches death. It is injected after the renderer's
  * first pushPose so vanilla's matching popPose removes the transform cleanly.
+ *
+ * <p>The regalia assembles per combat phase ({@code setStage}): crown only in
+ * the first fight, then horns/neck, dorsal plates, mantle and braces, and
+ * finally the tail crown plus an emissive chest core that renders full-bright
+ * through the vanilla body.</p>
  */
 @Mixin(EnderDragonRenderer.class)
 public abstract class EnderDragonRendererMixin {
-	@org.spongepowered.asm.mixin.Unique
+	@Unique
 	private EndesiumDragonArmorModel endesium$armorModel;
 
-	@org.spongepowered.asm.mixin.Unique
-	private static final net.minecraft.resources.ResourceLocation ENDESIUM_DRAGON_TEXTURE =
-			net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/enderdragon/enderdragon.png");
+	@Unique
+	private EndesiumDragonCoreModel endesium$coreModel;
+
+	@Unique
+	private static final ResourceLocation ENDESIUM_DRAGON_TEXTURE =
+			ResourceLocation.withDefaultNamespace("textures/entity/enderdragon/enderdragon.png");
+
+	@Unique
+	private static final ResourceLocation ENDESIUM_CORE_TEXTURE =
+			ResourceLocation.withDefaultNamespace("textures/entity/endesium/dragon_core.png");
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void endesium$createArmorModel(EntityRendererProvider.Context context, CallbackInfo ci) {
 		endesium$armorModel = new EndesiumDragonArmorModel(
 				context.bakeLayer(EndesiumDragonArmorModel.LAYER));
+		endesium$coreModel = new EndesiumDragonCoreModel(
+				context.bakeLayer(EndesiumDragonCoreModel.LAYER));
+	}
+
+	@Unique
+	private int endesium$stageOf(EnderDragon dragon) {
+		float healthFraction = dragon.getMaxHealth() <= 0.0F ? 1.0F : dragon.getHealth() / dragon.getMaxHealth();
+		return healthFraction > 0.75F ? 1 : healthFraction > 0.45F ? 2 : healthFraction > 0.20F ? 3 : 4;
 	}
 
 	@Inject(
@@ -41,8 +64,7 @@ public abstract class EnderDragonRendererMixin {
 					ordinal = 0, shift = At.Shift.AFTER))
 	private void endesium$stageTransform(EnderDragon dragon, float yaw, float tickDelta, PoseStack pose,
 			MultiBufferSource buffers, int light, CallbackInfo ci) {
-		float healthFraction = dragon.getMaxHealth() <= 0.0F ? 1.0F : dragon.getHealth() / dragon.getMaxHealth();
-		int stage = healthFraction > 0.75F ? 1 : healthFraction > 0.45F ? 2 : healthFraction > 0.20F ? 3 : 4;
+		int stage = endesium$stageOf(dragon);
 		boolean awakened = dragon.getScale() > 1.1F;
 		// Keep the first fight's scale and pitch nearly vanilla; the restrained
 		// armor overlay is safe to show in both fights, while stronger transforms
@@ -63,18 +85,16 @@ public abstract class EnderDragonRendererMixin {
 		}
 	}
 
-	/** Render the Blockbench-shaped overlay after vanilla's model has rendered.
-	 * The first fight receives the restrained armor silhouette; awakened Dragons
-	 * receive the heavier stage scaling and more pronounced motion. */
+	/** Render the regalia overlay after vanilla's model has rendered. */
 	@Inject(
 			method = "render(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
 			at = @At("TAIL"))
 	private void endesium$renderArmor(EnderDragon dragon, float yaw, float tickDelta, PoseStack pose,
 			MultiBufferSource buffers, int light, CallbackInfo ci) {
 		if (endesium$armorModel == null) return;
-		float healthFraction = dragon.getMaxHealth() <= 0.0F ? 1.0F : dragon.getHealth() / dragon.getMaxHealth();
-		int stage = healthFraction > 0.75F ? 1 : healthFraction > 0.45F ? 2 : healthFraction > 0.20F ? 3 : 4;
+		int stage = endesium$stageOf(dragon);
 		boolean awakened = dragon.getScale() > 1.1F;
+		endesium$armorModel.setStage(stage, awakened);
 		float stageScale = awakened
 				? 1.0F + (stage - 1) * 0.045F
 				: 1.0F + (stage - 1) * 0.018F;
@@ -90,6 +110,14 @@ public abstract class EnderDragonRendererMixin {
 		endesium$armorModel.renderToBuffer(pose,
 				buffers.getBuffer(RenderType.entityCutoutNoCull(ENDESIUM_DRAGON_TEXTURE)),
 				light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
+		if (endesium$coreModel != null && endesium$armorModel.coreVisible(stage, awakened)) {
+			// Same transform chain; the core renders full-bright through the
+			// vanilla chest with an eyes-style buffer.
+			endesium$coreModel.setupAnim(dragon, 0.0F, 0.0F, dragon.tickCount + tickDelta, 0.0F, 0.0F);
+			endesium$coreModel.renderToBuffer(pose,
+					buffers.getBuffer(RenderType.eyes(ENDESIUM_CORE_TEXTURE)),
+					0xF000F0, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
+		}
 		pose.popPose();
 	}
 }

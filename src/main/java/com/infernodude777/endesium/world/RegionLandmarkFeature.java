@@ -24,66 +24,32 @@ import net.minecraft.world.level.storage.loot.LootTable;
 /**
  * The landmark tier of Endesium worldgen: medium, hand-authored builds placed
  * an order of magnitude more often than flagships (one attempt-cell per
- * {@link #SPACING_GRID}-chunk block, roughly every 256 blocks per region) so a
- * player always has something to find within a few minutes of exploration.
+ * 16-chunk block via the {@code endesium_landmarks} structure set, roughly
+ * every 256 blocks per region) so a player always has something to find within
+ * a few minutes of exploration.
  *
  * <p>Every landmark is small but characterful: biome-native materials, at
  * least one loot container, and exactly one mechanism or trap element.</p>
+ *
+ * <p>Generation entry: {@link com.infernodude777.endesium.world.structure.EndesiumLandmarkStructure}
+ * (a registered vanilla Structure) calls {@link #generateInto} from its piece;
+ * the old Feature lattice was retired in the structures migration.</p>
  */
-public final class RegionLandmarkFeature extends Feature<NoneFeatureConfiguration> {
-    public RegionLandmarkFeature() {
-        super(NoneFeatureConfiguration.CODEC);
-    }
+public final class RegionLandmarkFeature {
 
-    /** 16 chunks = 256 blocks between same-region landmark attempts. */
-    public static final int SPACING_GRID = 16;
-
-    @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
-        WorldGenLevel level = ctx.level();
-        RandomSource random = ctx.random();
-        BlockPos origin = ctx.origin();
-        if (origin.getX() * origin.getX() + origin.getZ() * origin.getZ() < 160 * 160) return false;
-
-        Holder<Biome> biome = level.getBiome(origin);
-        int region = EndBiomeProfiles.regionOf(biome);
-        if (region < 0) return false;
-
-        int chunkX = Math.floorDiv(origin.getX(), 16);
-        int chunkZ = Math.floorDiv(origin.getZ(), 16);
-        long worldSeed = EndesiumWorldgenSeeds.get();
-
-        // Deterministic organic spacing: every grid cell hashes to exactly one
-        // host chunk per region, and the slot moves cell by cell, so landmarks
-        // scatter naturally instead of marching in straight mod-aligned rows.
-        int cellX = Math.floorDiv(chunkX, SPACING_GRID);
-        int cellZ = Math.floorDiv(chunkZ, SPACING_GRID);
-        if (cellSlot(worldSeed, region, 0x1A4DL, cellX, cellZ) != Math.floorMod(chunkX, SPACING_GRID)
-                || cellSlot(worldSeed, region, 0x6E21L, cellX, cellZ) != Math.floorMod(chunkZ, SPACING_GRID)) {
-            return false;
-        }
-
-        // Keep clear of every nearby flagship pick (including adjacent cells)
-        // so landmarks never butt up against a grand structure or straddle its
-        // probe ring.
-        int flagCellX = Math.floorDiv(chunkX, BiomeStructureFeature.SPACING_GRID);
-        int flagCellZ = Math.floorDiv(chunkZ, BiomeStructureFeature.SPACING_GRID);
-        for (int dcx = -1; dcx <= 1; dcx++) {
-            for (int dcz = -1; dcz <= 1; dcz++) {
-                int[] fp = BiomeStructureFeature.flagshipChunk(worldSeed, region,
-                        flagCellX + dcx, flagCellZ + dcz);
-                if (Math.abs(chunkX - fp[0]) <= 2 && Math.abs(chunkZ - fp[1]) <= 2) return false;
-            }
-        }
-
-        int bx = (origin.getX() & ~15) + 8;
-        int bz = (origin.getZ() & ~15) + 8;
+    /**
+     * Validates the site around {@code base} and builds this region's landmark.
+     * Called from StructurePiece generation; every write is clipped to the
+     * active piece box by {@link StructurePlacement}.
+     */
+    public static boolean generateInto(WorldGenLevel level, BlockPos base, int region, RandomSource random) {
+        int bx = base.getX();
+        int bz = base.getZ();
 
         // Landmarks keep compact footprints so they never leave the guarded
         // generation region; probe a modest ring for biome seams anyway.
         try {
             int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, bx, bz);
-            BlockPos base = new BlockPos(bx, y, bz);
             // Per-column support: sample a ring around the anchor and reject
             // sites where the ground falls away, so compact builds never
             // float over a slope or straddle a cliff edge.
@@ -97,12 +63,22 @@ public final class RegionLandmarkFeature extends Feature<NoneFeatureConfiguratio
                 if (sy < lowest) lowest = sy;
                 if (sy > highest) highest = sy;
             }
-            if (highest - lowest > 6) return false;
+            if (highest - lowest > 6) {
+                Endesium.LOGGER.info("Landmark site [{}, {}] skipped: slope spread {} blocks",
+                        bx, bz, highest - lowest);
+                return false;
+            }
             for (int i = 0; i < 8; i++) {
                 double ang = Math.PI / 4.0D * i;
                 BlockPos edge = base.offset((int) Math.round(Math.cos(ang) * 10),
                         0, (int) Math.round(Math.sin(ang) * 10));
-                if (EndBiomeProfiles.regionOf(level.getBiome(edge)) != region) return false;
+                int edgeRegion = EndBiomeProfiles.regionOf(level.getBiome(edge));
+                if (edgeRegion != region) {
+                    Endesium.LOGGER.info(
+                            "Landmark site [{}, {}] skipped: biome seam (edge region {} != {})",
+                            bx, bz, edgeRegion, region);
+                    return false;
+                }
             }
             switch (region) {
                 case EndesiumRegions.END_WASTES -> duneFossilArch(level, base, random);
@@ -122,29 +98,6 @@ public final class RegionLandmarkFeature extends Feature<NoneFeatureConfiguratio
             return false;
         }
         return true;
-    }
-
-    /**
-     * The chunk (as [chunkX, chunkZ]) where this region's landmark would
-     * generate inside the given grid cell. Pure math, so commands can point
-     * players at landmarks without touching the world.
-     */
-    public static int[] landmarkChunk(long worldSeed, int region, int cellX, int cellZ) {
-        return new int[]{
-                cellX * SPACING_GRID + cellSlot(worldSeed, region, 0x1A4DL, cellX, cellZ),
-                cellZ * SPACING_GRID + cellSlot(worldSeed, region, 0x6E21L, cellX, cellZ)
-        };
-    }
-
-    /** Hashes one slot inside a grid cell; varies per cell, region, and seed. */
-    private static int cellSlot(long worldSeed, int region, long salt, int cellX, int cellZ) {
-        long h = worldSeed ^ (region * 0x9E3779B97F4A7C15L) ^ (salt * 0xBF58476D1CE4E5B9L);
-        h ^= cellX * 0x9E3779B97F4A7C15L;
-        h ^= cellZ * 0xBF58476D1CE4E5B9L;
-        h ^= h >>> 33;
-        h *= 0xFF51AFD7ED558CCDL;
-        h ^= h >>> 33;
-        return (int) Math.floorMod(h, SPACING_GRID);
     }
 
     // =====================================================================

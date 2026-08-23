@@ -189,10 +189,15 @@ public final class ResonanceManager {
 	}
 
 	private static int directionBucket(ServerPlayer player, BlockPos source) {
-		double dx = source.getX() + 0.5D - player.getX();
-		double dz = source.getZ() + 0.5D - player.getZ();
-		// atan2 uses +X=east and +Z=south, which matches CARDINALS[0..7].
-		// Adding PI here rotated every Lens and Compass direction by 180 degrees.
+		return bucketFor(source.getX() + 0.5D - player.getX(), source.getZ() + 0.5D - player.getZ());
+	}
+
+	/**
+	 * Maps a world-space offset to one of eight direction buckets.
+	 * atan2 uses +X=east and +Z=south, which matches CARDINALS[0..7].
+	 * Adding PI here rotated every Lens and Compass direction by 180 degrees.
+	 */
+	public static int bucketFor(double dx, double dz) {
 		int bucket = (int) Math.floor(Math.atan2(dz, dx) / (Math.PI * 2.0D) * 8.0D + 0.5D);
 		return Math.floorMod(bucket, 8);
 	}

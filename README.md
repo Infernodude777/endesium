@@ -4,7 +4,10 @@ An ancient, restrained continuation of the End - grown into ten regions, guarded
 
 Endesium is a Fabric mod for Minecraft Java Edition 1.21.1 that expands the End into a hand-authored frontier: ten distinct regions layered onto vanilla End generation, structures in three tiers, a discovery-driven resonance system, thirteen custom creatures with individual combat identities, and two boss fights with rewards that permanently change your character.
 
-> **Status:** the 10x overhaul is complete - landmarks, bosses, regional ecology, and the post-Dragon transformation. See `docs/ROADMAP.md` for what is next and `docs/TESTING_RUNBOOK.md` for QA gates.
+> **Status:** the 10x overhaul is complete and the worldgen backbone now runs
+> on registered vanilla Structures (native `/locate`, chunk-safe generation).
+> See `docs/ROADMAP.md` for what is next and `docs/TESTING_RUNBOOK.md` for QA
+> gates.
 
 ## Table of contents
 
@@ -114,6 +117,7 @@ In-game, craft the **Guidebook** (book + Resonance Token) and the **Progression 
 ./gradlew genSources      # Minecraft sources
 ./gradlew runClient       # dev client
 ./gradlew runDatagen      # regenerate recipes/loot/lang
+./gradlew test            # pure-logic unit tests
 ./gradlew build           # mod JAR
 ```
 

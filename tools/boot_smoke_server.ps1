@@ -1,0 +1,1 @@
+Set-Location "C:\Users\Nikhil\Desktop\endesium"; Start-Process -FilePath ".\gradlew.bat" -ArgumentList "runServer","--console=plain" -RedirectStandardOutput "run\smoke_out.log" -RedirectStandardError "run\smoke_err.log" -NoNewWindow | Out-Null; Write-Output "booting detached"

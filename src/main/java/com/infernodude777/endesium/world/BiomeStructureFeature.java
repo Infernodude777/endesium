@@ -30,71 +30,27 @@ import net.minecraft.world.level.storage.loot.LootTable;
  * be seen from far across the void. Every flagship houses a resonant mechanism
  * whose {@link EndRuinVariant} carries that region's Lens signature and its
  * share of the discovery progression.
+ *
+ * <p>Generation entry: {@link com.infernodude777.endesium.world.structure.EndesiumFlagshipStructure}
+ * (a registered vanilla Structure) validates the site per generating chunk and
+ * calls {@link #generateInto}. The old Feature lattice was retired when
+ * flagships migrated to {@code random_spread} structure sets, which give every
+ * candidate proper chunk ownership and a bounding box.
  */
-public final class BiomeStructureFeature extends Feature<NoneFeatureConfiguration> {
-    public BiomeStructureFeature() {
-        super(NoneFeatureConfiguration.CODEC);
-    }
+public final class BiomeStructureFeature {
 
-    /** One flagship attempt-cell per SPACING_GRID-chunk block: ~384 blocks between
-     * same-region flagship attempts, scattered organically so no two flagships
-     * ever line up into the straight rows the old fixed-mod lattice produced. */
-    public static final int SPACING_GRID = 24;
+    /** Largest half-footprint across all ten flagships, including skirts. */
+    public static final int MAX_FOOTPRINT_RADIUS = 16;
 
     /**
-     * The chunk (as [chunkX, chunkZ]) where this region's flagship would
-     * generate inside the given grid cell. Pure math - no world access - so
-     * commands can point players at landmarks cheaply. The slot inside each
-     * cell is hashed from the cell itself, which scatters attempts organically
-     * instead of locking every structure to the same mod-aligned column.
+     * Validates the site around {@code base} and builds this region's flagship.
+     * Called from StructurePiece generation; every write is clipped to the
+     * active piece box by {@link StructurePlacement}. Returns false (writing
+     * nothing) when the site fails support or biome-seam checks.
      */
-    public static int[] flagshipChunk(long worldSeed, int region, int cellX, int cellZ) {
-        return new int[]{
-                cellX * SPACING_GRID + cellSlot(worldSeed, region, 0x51L, cellX, cellZ),
-                cellZ * SPACING_GRID + cellSlot(worldSeed, region, 0x9D7L, cellX, cellZ)
-        };
-    }
-
-    /** Hashes one slot inside a grid cell; varies per cell, region, and seed. */
-    private static int cellSlot(long worldSeed, int region, long salt, int cellX, int cellZ) {
-        long h = worldSeed ^ (region * 0x9E3779B97F4A7C15L) ^ (salt * 0xBF58476D1CE4E5B9L);
-        h ^= cellX * 0x9E3779B97F4A7C15L;
-        h ^= cellZ * 0xBF58476D1CE4E5B9L;
-        h ^= h >>> 33;
-        h *= 0xFF51AFD7ED558CCDL;
-        h ^= h >>> 33;
-        return (int) Math.floorMod(h, SPACING_GRID);
-    }
-
-    @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
-        WorldGenLevel level = ctx.level();
-        RandomSource random = ctx.random();
-        BlockPos origin = ctx.origin();
-        if (origin.getX() * origin.getX() + origin.getZ() * origin.getZ() < 160 * 160) return false;
-
-        Holder<Biome> biome = level.getBiome(origin);
-        int region = EndBiomeProfiles.regionOf(biome);
-        if (region < 0) return false;
-
-        // Deterministic organic spacing: every SPACING_GRID x SPACING_GRID
-        // chunk cell hashes to exactly ONE host chunk per region, and that
-        // slot moves cell by cell, so flagships scatter naturally across the
-        // region instead of forming the old straight mod-rows.
-        int chunkX = Math.floorDiv(origin.getX(), 16);
-        int chunkZ = Math.floorDiv(origin.getZ(), 16);
-        long worldSeed = EndesiumWorldgenSeeds.get();
-        int[] pick = flagshipChunk(worldSeed, region,
-                Math.floorDiv(chunkX, SPACING_GRID), Math.floorDiv(chunkZ, SPACING_GRID));
-        if (pick[0] != chunkX || pick[1] != chunkZ) {
-            return false;
-        }
-
-        // Pin the base to the chunk's true center regardless of where the
-        // placement origin landed inside it (in_square picks a random point),
-        // so geometry never drifts toward a region boundary between attempts.
-        int bx = (origin.getX() & ~15) + 8;
-        int bz = (origin.getZ() & ~15) + 8;
+    public static boolean generateInto(WorldGenLevel level, BlockPos base, int region, RandomSource random) {
+        int bx = base.getX();
+        int bz = base.getZ();
 
         int footprintRadius = switch (region) {
             case EndesiumRegions.SHATTERED_HIGHLANDS, EndesiumRegions.ASHEN_EXPANSE -> 16;
@@ -106,9 +62,6 @@ public final class BiomeStructureFeature extends Feature<NoneFeatureConfiguratio
         // query that grazes outside the generation region must degrade to
         // "skip this attempt", never kill the chunk pipeline.
         try {
-            int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, bx, bz);
-            BlockPos base = new BlockPos(bx, y, bz);
-
             // Never straddle a biome border: sample a full ring around the
             // entire footprint (including the terrace skirt). If any sample
             // falls in a different region, skip rather than build half a
@@ -119,10 +72,19 @@ public final class BiomeStructureFeature extends Feature<NoneFeatureConfiguratio
                 int px = (int) Math.round(Math.cos(ang) * probeDist);
                 int pz = (int) Math.round(Math.sin(ang) * probeDist);
                 BlockPos edge = base.offset(px, 0, pz);
-                if (EndBiomeProfiles.regionOf(level.getBiome(edge)) != region) return false;
+                int edgeRegion = EndBiomeProfiles.regionOf(level.getBiome(edge));
+                if (edgeRegion != region) {
+                    Endesium.LOGGER.info(
+                            "Flagship site [{}, {}] skipped: biome seam (edge region {} != {})",
+                            bx, bz, edgeRegion, region);
+                    return false;
+                }
             }
 
-            if (!hasSolidFootprint(level, base, footprintRadius)) return false;
+            if (!hasSolidFootprint(level, base, footprintRadius)) {
+                Endesium.LOGGER.info("Flagship site [{}, {}] skipped: unsupportive footprint", bx, bz);
+                return false;
+            }
             switch (region) {
                 case EndesiumRegions.END_WASTES -> dustCathedral(level, base, random);
                 case EndesiumRegions.CHORUS_WILDS -> elderwoodSanctum(level, base, random);

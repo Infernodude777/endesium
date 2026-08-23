@@ -252,7 +252,7 @@ public final class DragonFightController {
 		// Keep the server thresholds identical to the client renderer and the
 		// documented 75/45/20 stage bands. Divergent thresholds made a visual
 		// stage change arrive before the attack pool changed.
-		int phase = fraction > 0.75F ? 1 : fraction > 0.45F ? 2 : fraction > 0.20F ? 3 : 4;
+		int phase = phaseFor(fraction);
 
 		// Transformed Dragons announce different phases.
 		String title;
@@ -972,7 +972,8 @@ public final class DragonFightController {
 		}
 		for (ServerPlayer player : level.players()) {
 			if (!player.isAlive() || player.isSpectator()) continue;
-			double distance = distanceToFracture(state.fracturePoints, player.getX(), player.getZ());
+			double distance = com.infernodude777.endesium.world.ArenaGeometry.distanceToNearest(
+				state.fracturePoints, player.getX(), player.getZ());
 			if (distance > 2.5D) continue;
 			player.hurt(level.damageSources().mobAttack(dragon), 2.0F);
 			player.knockback(0.3D, player.getX(), player.getZ());
@@ -1000,18 +1001,12 @@ public final class DragonFightController {
 		}
 	}
 
-	private static double distanceToFracture(List<double[]> points, double x, double z) {
-		double nearest = Double.MAX_VALUE;
-		for (double[] point : points) {
-			double dx = x - point[0];
-			double dz = z - point[1];
-			nearest = Math.min(nearest, dx * dx + dz * dz);
-		}
-		return Math.sqrt(nearest);
+	/** Pure phase band: 75/45/20 thresholds shared with the client renderer. */
+	public static int phaseFor(float healthFraction) {
+		return healthFraction > 0.75F ? 1 : healthFraction > 0.45F ? 2 : healthFraction > 0.20F ? 3 : 4;
 	}
 
-	private static void telegraphCircle(ServerLevel level, Vec3 center, int ticks, net.minecraft.core.particles.ParticleOptions particle) {
-		for (int angle = 0; angle < 360; angle += 15) {
+	private static void telegraphCircle(ServerLevel level, Vec3 center, int ticks, net.minecraft.core.particles.ParticleOptions particle) {		for (int angle = 0; angle < 360; angle += 15) {
 			double radians = Math.toRadians(angle);
 			level.sendParticles(particle, center.x + Math.cos(radians) * 3.2D, center.y + 0.6D,
 					center.z + Math.sin(radians) * 3.2D, 1, 0.0D, 0.0D, 0.0D, 0.0D);

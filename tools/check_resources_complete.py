@@ -188,16 +188,29 @@ for region, builder in landmark_contracts.items():
         problems.append(f"landmark contract {region}: missing dispatch ({builder})")
 
 biome_root = os.path.join(ROOT, "src", "main", "resources", "data", "endesium", "worldgen", "biome")
+structure_root = os.path.join(ROOT, "src", "main", "resources", "data", "endesium", "worldgen", "structure")
 for biome in ("end_wastes", "chorus_wilds", "void_marshes", "ashen_expanse", "crystal_barrens",
               "void_skirts", "void_crown", "shattered_highlands", "luminous_groves", "umbral_reach"):
     path = os.path.join(biome_root, biome + ".json")
     try:
         data = json.load(open(path, encoding="utf-8"))
         features = json.dumps(data.get("features", []))
-        if "endesium:biome_structure" not in features:
-            problems.append(f"worldgen contract {biome}: missing biome_structure placed feature")
+        if "biome_structure" in features or "biome_landmark" in features:
+            problems.append(f"worldgen contract {biome}: retired feature placement still wired")
     except Exception as exc:
         problems.append(f"worldgen contract {biome}: invalid or missing biome JSON ({exc})")
+
+# Structures migration contract: twenty registered structures + two sets.
+for sid in ("dust_cathedral", "elderwood_sanctum", "skyrend_keep", "drowned_cathedral",
+            "lumen_cathedral", "great_caldera", "sunken_geode", "void_spire",
+            "crown_observatory", "null_archive", "dune_fossil_arch", "hollow_stump",
+            "windvane_watchtower", "mire_bell_cairn", "lightwell_gazebo", "ember_shrine",
+            "shard_spire_cluster", "anchor_ruin", "needle_circle", "null_obelisk"):
+    if not os.path.exists(os.path.join(structure_root, sid + ".json")):
+        problems.append(f"structures migration: missing worldgen/structure/{sid}.json")
+for sset in ("endesium_flagships", "endesium_landmarks"):
+    if not os.path.exists(os.path.join(structure_root, "..", "structure_set", sset + ".json")):
+        problems.append(f"structures migration: missing structure_set/{sset}.json")
 
 dragon_mixin = open(os.path.join(JAVA, "mixin", "EnderDragonMixin.java"), encoding="utf-8").read()
 dragon_fight = open(os.path.join(JAVA, "mixin", "EndDragonFightMixin.java"), encoding="utf-8").read()

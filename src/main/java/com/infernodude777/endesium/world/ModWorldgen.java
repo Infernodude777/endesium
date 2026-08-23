@@ -16,20 +16,18 @@ public final class ModWorldgen {
 	public static final Feature<NoneFeatureConfiguration> CHORUS_WILDS_VEGETATION_FEATURE = Registry.register(BuiltInRegistries.FEATURE, Endesium.id("chorus_wilds_vegetation"), new ChorusWildsVegetationFeature());
 	public static final Feature<NoneFeatureConfiguration> DRAGON_ARENA_FEATURE = Registry.register(BuiltInRegistries.FEATURE, Endesium.id("dragon_arena"), new DragonArenaFeature());
 
-	// The ecology overhaul: one terrain, one vegetation, and one landmark
-	// feature dispatch on the biome at placement time. The landmark feature is
-	// BiomeStructureFeature: exactly one grand flagship per region.
+	// The ecology overhaul: one terrain and one vegetation feature dispatch on
+	// the biome at placement time. Flagships and landmarks are registered
+	// vanilla Structures now (EndesiumStructureTypes) - they get proper chunk
+	// ownership, bounding boxes, and native /locate support.
 	public static final Feature<NoneFeatureConfiguration> BIOME_TERRAIN_FEATURE = Registry.register(BuiltInRegistries.FEATURE, Endesium.id("biome_terrain"), new BiomeTerrainFeature());
 	public static final Feature<NoneFeatureConfiguration> BIOME_VEGETATION_FEATURE = Registry.register(BuiltInRegistries.FEATURE, Endesium.id("biome_vegetation"), new BiomeVegetationFeature());
-	public static final Feature<NoneFeatureConfiguration> BIOME_STRUCTURE_FEATURE = Registry.register(BuiltInRegistries.FEATURE, Endesium.id("biome_structure"), new BiomeStructureFeature());
-	// The landmark tier: medium hand-authored builds on a ~256-block grid,
-	// an order of magnitude more common than flagships.
-	public static final Feature<NoneFeatureConfiguration> BIOME_LANDMARK_FEATURE = Registry.register(BuiltInRegistries.FEATURE, Endesium.id("biome_landmark"), new RegionLandmarkFeature());
 
 	private ModWorldgen() {
 	}
 
 	public static void register() {
+		com.infernodude777.endesium.world.structure.EndesiumStructureTypes.register();
 		// Resolve the Endesium biome holders from the server registry before any
 		// level is created, so the biome-source mixin can rely on them even for
 		// TheEndBiomeSource instances built through the dimension codec path.
@@ -70,6 +68,6 @@ public final class ModWorldgen {
 			// in the same JVM; the next RandomState creation re-captures it.
 			EndesiumWorldgenSeeds.clear();
 		});
-		Endesium.LOGGER.info("Registered Endesium biome, ruin, landmark, and ecology worldgen features");
+		Endesium.LOGGER.info("Registered Endesium biome, ecology, and structure worldgen");
 	}
 }

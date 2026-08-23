@@ -68,9 +68,8 @@
       "endesium:biome_terrain"
     ],
     [
-      "endesium:biome_vegetation",
-      "endesium:biome_structure",
-            "endesium:biome_landmark"],
+      "endesium:biome_vegetation"
+      ],
     []
   ]
 }

@@ -296,8 +296,13 @@ public final class ArenaGeometry {
 
 	/** Minimum horizontal distance from a column to any fracture sample. */
 	public static double distanceToFracture(long seed, double x, double z) {
+		return distanceToNearest(fracturePoints(seed), x, z);
+	}
+
+	/** Minimum distance from (x, z) to any [x, z, ...] sample in {@code points}. */
+	public static double distanceToNearest(java.util.List<double[]> points, double x, double z) {
 		double nearest = Double.MAX_VALUE;
-		for (double[] point : fracturePoints(seed)) {
+		for (double[] point : points) {
 			double dx = x - point[0];
 			double dz = z - point[1];
 			nearest = Math.min(nearest, dx * dx + dz * dz);
