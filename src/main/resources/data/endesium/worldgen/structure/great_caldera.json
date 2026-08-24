@@ -1,0 +1,8 @@
+{
+  "type": "endesium:flagship",
+  "biomes": "endesium:ashen_expanse",
+  "region": 5,
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

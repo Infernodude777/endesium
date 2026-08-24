@@ -1,0 +1,8 @@
+{
+  "type": "endesium:flagship",
+  "biomes": "endesium:void_crown",
+  "region": 8,
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

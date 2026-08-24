@@ -30,6 +30,7 @@ public final class ModWorldgen {
 	}
 
 	public static void register() {
+		com.infernodude777.endesium.world.structure.EndesiumStructureTypes.register();
 		// Resolve the Endesium biome holders from the server registry before any
 		// level is created, so the biome-source mixin can rely on them even for
 		// TheEndBiomeSource instances built through the dimension codec path.

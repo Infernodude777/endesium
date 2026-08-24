@@ -6,26 +6,50 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 /**
- * Safe write boundary for hand-authored Features. Registered Structures have
- * bounding-box arbitration; these legacy builders do not, so every landmark
- * write must refuse to erase vanilla arena infrastructure or another block
- * entity written by an earlier generator.
+ * Safe write boundary for Endesium generation. Registered Structures have
+ * bounding-box arbitration; these builders do not, so every write must refuse
+ * to erase vanilla arena infrastructure or another block entity written by an
+ * earlier generator.
  *
- * <p>Writes are also gated to the currently generating 3x3 chunk region.
- * During feature placement the chunk reader has already primed those chunks,
- * so a write there is safe. A write into a chunk outside that region would
- * land in a chunk that may already be saved on disk - Minecraft rejects it
- * with a "setBlock in a far chunk" warning - so we refuse it up front. The
- * landmark builders keep their footprints inside the owning chunk plus at
- * most a few blocks of neighbor, which is always inside the 3x3 region.
+ * <p>Writes are gated twice. During Feature placement they are limited to the
+ * generating 3x3 chunk region. During Structure-piece generation the active
+ * piece BoundingBox (see {@link #beginPiece}) additionally clips every write,
+ * which is how vanilla keeps large multi-chunk builds ordered: each chunk only
+ * ever realizes the part of the build that falls inside it.
  */
 public final class StructurePlacement {
+	/** True while a vanilla Structure piece is delegating into a builder. */
+	public static boolean structureDriven;
+
 	private StructurePlacement() {
 	}
 
+	/**
+	 * The bounding box of the structure piece currently being generated, or
+	 * null outside piece generation. World generation for one chunk batch runs
+	 * on a single worker thread, so a ThreadLocal is a safe channel between
+	 * {@code beginPiece}/{@code endPiece} and the shared write helpers.
+	 */
+	private static final ThreadLocal<BoundingBox> ACTIVE_PIECE_BOX = new ThreadLocal<>();
+
+	/** Enters piece mode: every subsequent write is clipped to {@code box}. */
+	public static void beginPiece(BoundingBox box) {
+		ACTIVE_PIECE_BOX.set(box);
+	}
+
+	/** Leaves piece mode; the clip reverts to the 3x3 feature-region gate. */
+	public static void endPiece() {
+		ACTIVE_PIECE_BOX.remove();
+	}
+
 	public static boolean set(WorldGenLevel level, BlockPos pos, BlockState state, int flags) {
+		BoundingBox box = ACTIVE_PIECE_BOX.get();
+		if (box != null && !box.isInside(pos)) {
+			return false;
+		}
 		if (isProtected(level, pos)) {
 			return false;
 		}
@@ -57,7 +81,8 @@ public final class StructurePlacement {
 			int cz = pos.getZ() >> 4;
 			return Math.abs(cx - center.x) <= 1 && Math.abs(cz - center.z) <= 1;
 		}
-		return false;
+		// Full-strength level (e.g. /place structure): no region restriction.
+		return true;
 	}
 
 	private static boolean isProtected(WorldGenLevel level, BlockPos pos) {

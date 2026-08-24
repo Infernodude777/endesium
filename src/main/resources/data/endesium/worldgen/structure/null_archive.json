@@ -1,0 +1,8 @@
+{
+  "type": "endesium:flagship",
+  "biomes": "endesium:umbral_reach",
+  "region": 9,
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

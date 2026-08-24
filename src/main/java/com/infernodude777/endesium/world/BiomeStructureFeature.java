@@ -68,6 +68,7 @@ public final class BiomeStructureFeature extends Feature<NoneFeatureConfiguratio
 
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
+		if (!StructurePlacement.structureDriven) return false;
         WorldGenLevel level = ctx.level();
         RandomSource random = ctx.random();
         BlockPos origin = ctx.origin();
