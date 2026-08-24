@@ -96,3 +96,14 @@
 - First Resonance and discovery advancements
 - Resonant materials and production assets
 - GeckoLib integration
+
+## [Unreleased] - Dragon fight escalation layer
+
+### Added
+
+- Crystal aegis: the dragon regenerates while 3+ pillar crystals survive (2 HP/s at 5+), making pillar clearing the fight's real first phase.
+- Enrage ladder at 60% / 35% / 15% dragon health: announced escalations that spawn void wisp waves (capped at 8 alive) and, from enrage 2, dragon-breath pools under the dragon's flight path.
+- Enhanced dragon hoard on death: 1 Dragon Heart, 3 Dragon Fang, 8 Dragonbone, 2 Resonant Dragon Scale at the kill site.
+- `/dragonfight` live status command: dragon HP, remaining crystals, enrage level, alive adds.
+- `docs/DRAGON_FIGHT.md`: full fight documentation with the attack table, enrage ladder, and testing checklist.
+- `docs/DEVLOG_16.md`.

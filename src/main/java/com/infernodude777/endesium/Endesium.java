@@ -70,6 +70,7 @@ public class Endesium implements ModInitializer {
 		EndesiumCommands.register();
 		EndesiumPackets.register();
 		ResonanceSystem.register();
+		com.infernodude777.endesium.dragon.DragonAssaultHandler.register();
 		com.infernodude777.endesium.state.BossRewardEvents.register();
 		com.infernodude777.endesium.state.RecipeUnlockEvents.register();
 		EntityElytraEvents.CUSTOM.register((entity, tickElytra) -> {
