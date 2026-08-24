@@ -108,3 +108,13 @@
 - Scripted dragon set-pieces that puppet the dragon directly: **Abyssal Burrow** (enrage 1+, dives into the void and erupts beneath a player), **Skyward Seize** (enrage 2+, grabs a player, carries them aloft, hurls them - slow falling mercy below enrage 3), and **Gravity Rifts** (enrage 3, four arena rifts that drag players into their cores). All scale damage, cooldowns, and mercy with the enrage ladder.
 - `docs/DRAGON_FIGHT.md`: full fight documentation with the attack table, enrage ladder, and testing checklist.
 - `docs/DEVLOG_16.md`, `docs/DEVLOG_17.md`.
+
+## [Unreleased] - Terrain generation overhaul
+
+### Changed
+
+- Region relief is now a smooth, domain-warped height field instead of stacked per-column offsets: no more terracing, stair-steps, or grid-aligned artifacts anywhere in the ten Endesium regions.
+- Every region has its own continuous landform character: ridged highlands, anisotropic ash dunes, sunken marsh basins, flat-topped void mesas, fissured lowlands, rolling wilds.
+- Column fills are stratified (ground cap, dithered transition band, substrate) with slope-aware faces - steep grades expose rock, gentle grades keep soil - and a one-block apron plus relaxation pass keeps surfaces continuous across chunk borders.
+- Carving only removes loose natural geology (end stone + region ground/substrate) and stops at structure shells or placed machinery, so structures and terrain coexist cleanly.
+- Structure builders are untouched: all twenty builds are byte-identical to their previous appearance.

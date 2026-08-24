@@ -17,18 +17,24 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 /**
  * Per-biome relief for the Endesium regions.
  *
- * <p>Runs once per chunk (data-driven {@code in_square} placement) and applies
- * {@link BiomeTerrain#offsetAt} to its own columns only. Heights are a pure
- * function of world seed + absolute column, so adjacent chunks agree and no
- * write ever leaves the generating chunk. Void regions additionally receive a
- * surface pass that replaces the top layer with the region's void geology, so
- * no End Stone shows through.</p>
+ * <p>Runs once per chunk (data-driven {@code in_square} placement) and resculpts
+ * its own columns toward a smooth height field. The field is sampled with a
+ * one-block apron and lightly blurred, so the surface never steps by more than
+ * the noise itself: slopes read as natural grades, rises cap in region ground,
+ * steep faces expose the substrate, and strata boundaries are dithered rather
+ * than drawn as planes. Heights are a pure function of world seed + absolute
+ * column, so adjacent chunks agree and no write ever leaves the generating
+ * chunk. Void regions additionally receive a surface pass that replaces the
+ * top layer with the region's void geology, so no End Stone shows through.</p>
  */
 public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration> {
-	private static final int MAX_CARVE = 9;
 	/** Depth of the geological reskin below the surface, so cliffs and basins
 	 * show full region geology instead of vanilla End Stone beneath a cap. */
 	private static final int SKIN_DEPTH = 8;
+	/** Maximum carve depth per column, so basins never punch through islands. */
+	private static final int MAX_CARVE = 14;
+	/** Slope (blocks per column) above which a face reads as rock, not soil. */
+	private static final double ROCK_FACE_SLOPE = 1.8D;
 
 	public BiomeTerrainFeature() {
 		super(NoneFeatureConfiguration.CODEC);
@@ -56,12 +62,42 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 		boolean voidRegion = EndBiomeProfiles.isVoidRegion(region);
 
 		int minX = chunk.getMinBlockX();
-		int maxX = chunk.getMaxBlockX();
 		int minZ = chunk.getMinBlockZ();
-		int maxZ = chunk.getMaxBlockZ();
-		for (int x = minX; x <= maxX; x++) {
-			for (int z = minZ; z <= maxZ; z++) {
-				applyColumn(level, seed, region, x, z, ground, substrate, lowland);
+
+		// Sample the offset field with a one-block apron so every column can
+		// see its neighbors, then relax it once: single-column spikes vanish
+		// while genuine ridges and basin walls survive the blur.
+		int size = 18;
+		double[][] offsets = new double[size][size];
+		for (int gx = 0; gx < size; gx++) {
+			for (int gz = 0; gz < size; gz++) {
+				offsets[gx][gz] = BiomeTerrain.offsetAt(region, seed, minX + gx - 1, minZ + gz - 1);
+			}
+		}
+		double[][] relaxed = new double[size][size];
+		for (int gx = 0; gx < size; gx++) {
+			for (int gz = 0; gz < size; gz++) {
+				if (gx > 0 && gx < size - 1 && gz > 0 && gz < size - 1) {
+					relaxed[gx][gz] = offsets[gx][gz] * 0.6D
+							+ (offsets[gx - 1][gz] + offsets[gx + 1][gz]
+							+ offsets[gx][gz - 1] + offsets[gx][gz + 1]) * 0.1D;
+				} else {
+					relaxed[gx][gz] = offsets[gx][gz];
+				}
+			}
+		}
+
+		for (int x = minX; x <= minX + 15; x++) {
+			for (int z = minZ; z <= minZ + 15; z++) {
+				int gx = x - minX + 1;
+				int gz = z - minZ + 1;
+				double offset = relaxed[gx][gz];
+				double slope = Math.max(
+						Math.abs(offset - relaxed[gx - 1][gz]),
+						Math.max(Math.abs(offset - relaxed[gx + 1][gz]),
+								Math.max(Math.abs(offset - relaxed[gx][gz - 1]),
+										Math.abs(offset - relaxed[gx][gz + 1]))));
+				applyColumn(level, seed, region, x, z, ground, substrate, lowland, offset, slope);
 				if (voidRegion) {
 					applyVoidSurface(level, x, z, ground, substrate);
 				}
@@ -73,8 +109,8 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 
 	/**
 	 * Replaces the top {@link #SKIN_DEPTH} layers of a column with the region's
-	 * geology: ground cap on top, substrate beneath, and — for the void
-	 * regions — a sealed VOID_SOIL floor at the bottom so the dark biomes read
+	 * geology: ground cap on top, substrate beneath, and - for the void
+	 * regions - a sealed VOID_SOIL floor at the bottom so the dark biomes read
 	 * as their own strata rather than painted End Stone. Only End-family blocks
 	 * are ever replaced; foreign or placed blocks stop the reskin.
 	 */
@@ -104,7 +140,7 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 	}
 
 	private static void applyColumn(WorldGenLevel level, long seed, int region, int x, int z,
-			Block ground, Block substrate, boolean lowland) {
+			Block ground, Block substrate, boolean lowland, double offset, double slope) {
 		int surfaceTop = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1;
 		if (surfaceTop < level.getMinBuildHeight() + 4) {
 			return;
@@ -113,12 +149,80 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 			return; // never sculpt vanilla structures, plants, or the void
 		}
 
-		int offset = BiomeTerrain.offsetAt(region, seed, x, z);
-		if (offset > 0) {
-			raise(level, x, z, surfaceTop, offset, ground, substrate);
-		} else if (offset < 0) {
-			lower(level, x, z, surfaceTop, Math.max(offset, -MAX_CARVE), ground, lowland);
+		int target = surfaceTop + (int) Math.round(offset);
+		if (target > surfaceTop) {
+			raise(level, seed, x, z, surfaceTop, target, ground, substrate, slope);
+		} else if (target < surfaceTop) {
+			lower(level, seed, x, z, surfaceTop, Math.min(surfaceTop - target, MAX_CARVE),
+					ground, substrate, lowland);
 		}
+	}
+
+	/**
+	 * Raises a column to its target height. The fill is stratified: a ground
+	 * cap (rock substrate on steep faces), a dithered transition band, then
+	 * clean substrate - so slopes read as weathered rock, not stacked blocks.
+	 */
+	private static void raise(WorldGenLevel level, long seed, int x, int z, int surfaceTop, int target,
+			Block ground, Block substrate, double slope) {
+		boolean rockyFace = slope >= ROCK_FACE_SLOPE;
+		for (int y = surfaceTop + 1; y <= target; y++) {
+			BlockPos pos = new BlockPos(x, y, z);
+			if (!level.getBlockState(pos).isAir()) {
+				break; // a structure or feature already owns this space
+			}
+			Block block;
+			if (y >= target - 1) {
+				block = rockyFace ? substrate : ground;
+			} else if (y >= target - 3 && dither(seed, x, y, z, 5)) {
+				block = ground;
+			} else {
+				block = substrate;
+			}
+			level.setBlock(pos, block.defaultBlockState(), 3);
+		}
+	}
+
+	/**
+	 * Carves a column down to its target height. Only loose, natural blocks
+	 * are ever removed - end stone and the region's own ground and substrate -
+	 * so structure shells, placed machinery, and foreign materials stop the
+	 * carve immediately.
+	 */
+	private static void lower(WorldGenLevel level, long seed, int x, int z, int surfaceTop, int depth,
+			Block ground, Block substrate, boolean lowland) {
+		int newSurface = surfaceTop - depth;
+		for (int y = surfaceTop; y > newSurface; y--) {
+			BlockPos pos = new BlockPos(x, y, z);
+			if (level.getBlockEntity(pos) != null) {
+				return; // placed machinery - never carve through it
+			}
+			if (!carveable(level.getBlockState(pos), ground, substrate)) {
+				return; // structure shell or foreign material - stop here
+			}
+			level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+		}
+		if (lowland) {
+			// Cap the freshly carved basin floor with the region's soil.
+			BlockPos floor = new BlockPos(x, newSurface, z);
+			if (carveable(level.getBlockState(floor), ground, substrate)) {
+				level.setBlock(floor, ground.defaultBlockState(), 3);
+			}
+		}
+	}
+
+	/** Only loose natural geology may be carved away. */
+	private static boolean carveable(BlockState state, Block ground, Block substrate) {
+		return state.is(Blocks.END_STONE) || state.is(ground) || state.is(substrate);
+	}
+
+	/** Cheap deterministic dither so strata boundaries never read as planes. */
+	private static boolean dither(long seed, int x, int y, int z, int bound) {
+		long h = seed + x * 341873128712L + y * 132897987541L + z * 604891948905L;
+		h ^= h >>> 33;
+		h *= 0xFF51AFD7ED558CCDL;
+		h ^= h >>> 29;
+		return (int) Math.floorMod(h, 97L) % bound == 0;
 	}
 
 	private static void applyVoidSurface(WorldGenLevel level, int x, int z, Block ground, Block substrate) {
@@ -134,34 +238,6 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 		BlockPos below = top.below();
 		if (isEndFamily(level.getBlockState(below))) {
 			level.setBlock(below, substrate.defaultBlockState(), 3);
-		}
-	}
-
-	private static void raise(WorldGenLevel level, int x, int z, int surfaceTop, int offset,
-			Block ground, Block substrate) {
-		int target = surfaceTop + offset;
-		for (int y = surfaceTop + 1; y <= target; y++) {
-			BlockPos pos = new BlockPos(x, y, z);
-			if (!level.getBlockState(pos).isAir()) {
-				break;
-			}
-			level.setBlock(pos, (y == target ? ground : substrate).defaultBlockState(), 3);
-		}
-	}
-
-	private static void lower(WorldGenLevel level, int x, int z, int surfaceTop, int depth,
-			Block ground, boolean lowland) {
-		int newSurface = surfaceTop - depth;
-		for (int y = surfaceTop; y > newSurface; y--) {
-			BlockPos pos = new BlockPos(x, y, z);
-			if (!isEndFamily(level.getBlockState(pos))) {
-				return; // hit something we should not destroy
-			}
-			level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-		}
-		if (lowland) {
-			// Cap the freshly carved basin with the region's soil.
-			level.setBlock(new BlockPos(x, newSurface, z), ground.defaultBlockState(), 3);
 		}
 	}
 
