@@ -27,10 +27,33 @@ attacks rather than vanilla's passive strafing loop:
 | Gale | A wind push that shoves players off the pillars | Hug the obsidian mid-animation |
 | Sweep | A low wing sweep across the fountain platform | Get on top of the fountain |
 | Catastrophe | The late-fight finisher: fissures and zone denial across the main island | Pre-position on the outer ring |
+| **Abyssal Burrow** | The dragon plunges below the island into the void and vanishes; the ground rumbles for three seconds, then it erupts from directly beneath a player, dealing heavy damage and launching everything nearby | When the rumble starts, keep moving - never stand still |
+| **Skyward Seize** | The dragon swoops a player, carries them aloft in its claws while spiraling upward, then hurls them across the sky | Burst the grab window with a ranged hit, or brace for the throw |
+| **Gravity Rifts** | Four rifts tear open across the arena and drag players toward their cores | Fight the pull early; the cores hurt |
 
 Attacks telegraph before they land. The controller alternates between ranged
 pressure and commitment windows, so shield timing and repositioning both
 matter.
+
+## Special attacks
+
+The special attacks are scripted set-pieces that puppet the dragon directly.
+They unlock with enrage, and every stat below scales with the enrage level
+(1 / 2 / 3):
+
+| Move | Unlocks | Damage | Cooldown | Escalation |
+|---|---|---|---|---|
+| Abyssal Burrow | enrage 1 | 9 / 11 / 13 + launch | 26s / 22s / 18s | Bigger launch, shorter cooldown |
+| Skyward Seize | enrage 2 | 5 / 8 / 10 across grab + throw | 30s / 25s / 20s | Higher throw; slow falling mercy (10s) at enrage 2 only - at enrage 3 the fall is yours |
+| Gravity Rifts | enrage 3 | 3 per second in a rift core | 30s | Stronger pull, more rifts (5) |
+
+Notes:
+
+- Only one special attack runs at a time, and each begins with a tell: the
+  burrow opens with a portal howl, the seize with a wingbeat, the rifts with
+  portal shimmer at their feet.
+- While puppeted the dragon is invulnerable (burrow) or committed (seize);
+  this is the window to reposition, not to burst.
 
 ## Crystal aegis
 
@@ -75,6 +98,9 @@ still fires on the first kill exactly as before.
   watch levels 1-3 announce in sequence.
 - To test the aegis: leave four crystals alive and check that the dragon's HP
   climbs between hits.
+- To test the specials: drop the dragon to the enrage threshold you want
+  (burrow at 1, seize at 2, rifts at 3) and wait - each fires within seconds
+  once its cooldown is clear and a player is in the arena.
 - To test rewards: kill the dragon and confirm the hoard drops at its last
   position, then check the transformation event fires on a first kill.
 
@@ -83,5 +109,8 @@ still fires on the first kill exactly as before.
 The assault layer (`DragonAssaultHandler`) polls the End dimension on a server
 tick rather than injecting into the dragon's AI. It never overrides the fight
 controller's phase machine; it only observes health and crystal counts and adds
-pressure around them. Rewards drop through `DragonRewards`, and the live
-readout lives in `DragonFightCommand`.
+pressure around them. The special attacks (`DragonSpecialAttacks`) are the one
+deliberate exception: each set-piece parks the dragon in the hover phase,
+disables its AI, and puppets its position tick by tick for the duration, then
+hands control back to the holding pattern. Rewards drop through `DragonRewards`,
+and the live readout lives in `DragonFightCommand`.

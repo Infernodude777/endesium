@@ -57,8 +57,15 @@ public final class DragonAssaultHandler {
 
 	public static void register() {
 		ServerTickEvents.END_SERVER_TICK.register(DragonAssaultHandler::tick);
+		DragonSpecialAttacks.register();
 		DragonFightCommand.register();
-		Endesium.LOGGER.info("Dragon assault layer registered (aegis, enrage waves, rewards)");
+		Endesium.LOGGER.info("Dragon assault layer registered (aegis, enrage waves, rewards, special attacks)");
+	}
+
+	/** Current enrage level (0-3) for the fight in the given dimension. */
+	public static int enrageOf(ServerLevel level) {
+		FightState state = STATES.get(level.dimension());
+		return state == null ? 0 : state.enrageLevel;
 	}
 
 	private static void tick(MinecraftServer server) {

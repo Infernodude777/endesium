@@ -105,5 +105,6 @@
 - Enrage ladder at 60% / 35% / 15% dragon health: announced escalations that spawn void wisp waves (capped at 8 alive) and, from enrage 2, dragon-breath pools under the dragon's flight path.
 - Enhanced dragon hoard on death: 1 Dragon Heart, 3 Dragon Fang, 8 Dragonbone, 2 Resonant Dragon Scale at the kill site.
 - `/dragonfight` live status command: dragon HP, remaining crystals, enrage level, alive adds.
+- Scripted dragon set-pieces that puppet the dragon directly: **Abyssal Burrow** (enrage 1+, dives into the void and erupts beneath a player), **Skyward Seize** (enrage 2+, grabs a player, carries them aloft, hurls them - slow falling mercy below enrage 3), and **Gravity Rifts** (enrage 3, four arena rifts that drag players into their cores). All scale damage, cooldowns, and mercy with the enrage ladder.
 - `docs/DRAGON_FIGHT.md`: full fight documentation with the attack table, enrage ladder, and testing checklist.
-- `docs/DEVLOG_16.md`.
+- `docs/DEVLOG_16.md`, `docs/DEVLOG_17.md`.
