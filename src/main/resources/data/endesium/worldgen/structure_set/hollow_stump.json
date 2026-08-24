@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {"structure": "endesium:hollow_stump", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1182968282,
+    "spacing": 16,
+    "separation": 6,
+    "spread_type": "linear"
+  }
+}

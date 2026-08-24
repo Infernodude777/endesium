@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {"structure": "endesium:ember_shrine", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1182984120,
+    "spacing": 16,
+    "separation": 6,
+    "spread_type": "linear"
+  }
+}

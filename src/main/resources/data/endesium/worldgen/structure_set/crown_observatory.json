@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {"structure": "endesium:crown_observatory", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1182928687,
+    "spacing": 24,
+    "separation": 8,
+    "spread_type": "linear"
+  }
+}

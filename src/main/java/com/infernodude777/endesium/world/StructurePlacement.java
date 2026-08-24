@@ -24,6 +24,44 @@ public final class StructurePlacement {
 	/** True while a vanilla Structure piece is delegating into a builder. */
 	public static boolean structureDriven;
 
+	/** Boxes of structures built during this generation session. */
+	private static final java.util.List<StructureBox> STRUCTURE_BOXES = new java.util.ArrayList<>();
+
+	/**
+	 * Records a built structure's full bounding box. Terrain reskinning consults
+	 * these boxes and leaves covered columns exactly as the structure built
+	 * them, no matter how deep the geological reskin runs.
+	 */
+	public static void registerStructureBox(ChunkPos anchor, BoundingBox box) {
+		STRUCTURE_BOXES.add(new StructureBox(anchor, box));
+		STRUCTURE_BOXES.removeIf(entry -> Math.abs(entry.anchor.x - anchor.x) > 3
+				|| Math.abs(entry.anchor.z - anchor.z) > 3);
+	}
+
+	/**
+	 * Whether a column lies inside any recently built structure. Entries from
+	 * far-away chunks are pruned as generation moves on.
+	 */
+	public static boolean insideStructureBox(int x, int z, ChunkPos current) {
+		STRUCTURE_BOXES.removeIf(entry -> Math.abs(entry.anchor.x - current.x) > 3
+				|| Math.abs(entry.anchor.z - current.z) > 3);
+		for (StructureBox entry : STRUCTURE_BOXES) {
+			if (x >= entry.box.minX() && x <= entry.box.maxX()
+					&& z >= entry.box.minZ() && z <= entry.box.maxZ()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Clears recorded boxes (called when a server stops). */
+	public static void clearBoxes() {
+		STRUCTURE_BOXES.clear();
+	}
+
+	private record StructureBox(ChunkPos anchor, BoundingBox box) {
+	}
+
 	private StructurePlacement() {
 	}
 

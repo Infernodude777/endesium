@@ -159,6 +159,7 @@ public final class EndesiumFlagshipStructure extends Structure {
 			BlockPos origin = new BlockPos(centerX, y, centerZ);
 			FeaturePlaceContext<NoneFeatureConfiguration> ctx = new FeaturePlaceContext<>(
 					Optional.empty(), level, chunkGenerator, random, origin, NoneFeatureConfiguration.INSTANCE);
+			StructurePlacement.registerStructureBox(chunkPos, this.getBoundingBox());
 			StructurePlacement.structureDriven = true;
 			try {
 				ModWorldgen.BIOME_STRUCTURE_FEATURE.place(ctx);

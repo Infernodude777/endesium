@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {"structure": "endesium:great_caldera", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1182904930,
+    "spacing": 24,
+    "separation": 8,
+    "spread_type": "linear"
+  }
+}

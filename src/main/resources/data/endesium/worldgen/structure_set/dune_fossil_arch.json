@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {"structure": "endesium:dune_fossil_arch", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1182944525,
+    "spacing": 16,
+    "separation": 6,
+    "spread_type": "linear"
+  }
+}

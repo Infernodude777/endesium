@@ -67,6 +67,7 @@ public final class ModWorldgen {
 		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
 			EndesiumBiomeHolders.clear();
+			StructurePlacement.clearBoxes();
 			// A stale captured seed must never leak into the next world opened
 			// in the same JVM; the next RandomState creation re-captures it.
 			EndesiumWorldgenSeeds.clear();

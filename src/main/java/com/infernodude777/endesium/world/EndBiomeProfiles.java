@@ -62,7 +62,7 @@ public final class EndBiomeProfiles {
 			case EndesiumRegions.VOID_CROWN: return ModBlocks.VOID_SLATE;
 			case EndesiumRegions.UMBRAL_REACH: return ModBlocks.VOID_SOIL;
 			case EndesiumRegions.END_WASTES:
-			default: return Blocks.END_STONE;
+			default: return ModBlocks.CRACKED_SPIRE_STONE;
 		}
 	}
 

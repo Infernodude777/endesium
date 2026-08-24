@@ -66,83 +66,52 @@ public final class BiomeStructureFeature extends Feature<NoneFeatureConfiguratio
         return (int) Math.floorMod(h, SPACING_GRID);
     }
 
-    @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
-		if (!StructurePlacement.structureDriven) return false;
-        WorldGenLevel level = ctx.level();
-        RandomSource random = ctx.random();
-        BlockPos origin = ctx.origin();
-        if (origin.getX() * origin.getX() + origin.getZ() * origin.getZ() < 160 * 160) return false;
+	/**
+	 * The structure-driven build path. Placement conditions (distance gate,
+	 * lattice pick) are owned by the vanilla structure sets and the wrapper's
+	 * region gate, so this path validates only the biome and dispatches
+	 * straight to the hand-authored builders - the same code the legacy path
+	 * runs, byte for byte.
+	 */
+	private static boolean buildForStructure(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
+		WorldGenLevel level = ctx.level();
+		RandomSource random = ctx.random();
+		BlockPos origin = ctx.origin();
+		int region = EndBiomeProfiles.regionOf(level.getBiome(origin));
+		if (region < 0) {
+			return false;
+		}
+		try {
+			switch (region) {
+				case EndesiumRegions.END_WASTES -> dustCathedral(level, origin, random);
+				case EndesiumRegions.CHORUS_WILDS -> elderwoodSanctum(level, origin, random);
+				case EndesiumRegions.SHATTERED_HIGHLANDS -> skyrendKeep(level, origin, random);
+				case EndesiumRegions.VOID_MARSHES -> drownedCathedral(level, origin, random);
+				case EndesiumRegions.LUMINOUS_GROVES -> lumenCathedral(level, origin, random);
+				case EndesiumRegions.ASHEN_EXPANSE -> greatCaldera(level, origin, random);
+				case EndesiumRegions.CRYSTAL_BARRENS -> sunkenGeode(level, origin, random);
+				case EndesiumRegions.VOID_SKIRTS -> voidSpire(level, origin, random);
+				case EndesiumRegions.VOID_CROWN -> crownObservatory(level, origin, random);
+				case EndesiumRegions.UMBRAL_REACH -> nullArchive(level, origin, random);
+				default -> {
+					return false;
+				}
+			}
+		} catch (Exception e) {
+			com.infernodude777.endesium.Endesium.LOGGER.error(
+					"Endesium flagship structure build failed near [{}, {}]", origin.getX(), origin.getZ(), e);
+			return false;
+		}
+		return true;
+	}
 
-        Holder<Biome> biome = level.getBiome(origin);
-        int region = EndBiomeProfiles.regionOf(biome);
-        if (region < 0) return false;
-
-        // Deterministic organic spacing: every SPACING_GRID x SPACING_GRID
-        // chunk cell hashes to exactly ONE host chunk per region, and that
-        // slot moves cell by cell, so flagships scatter naturally across the
-        // region instead of forming the old straight mod-rows.
-        int chunkX = Math.floorDiv(origin.getX(), 16);
-        int chunkZ = Math.floorDiv(origin.getZ(), 16);
-        long worldSeed = EndesiumWorldgenSeeds.get();
-        int[] pick = flagshipChunk(worldSeed, region,
-                Math.floorDiv(chunkX, SPACING_GRID), Math.floorDiv(chunkZ, SPACING_GRID));
-        if (pick[0] != chunkX || pick[1] != chunkZ) {
-            return false;
-        }
-
-        // Pin the base to the chunk's true center regardless of where the
-        // placement origin landed inside it (in_square picks a random point),
-        // so geometry never drifts toward a region boundary between attempts.
-        int bx = (origin.getX() & ~15) + 8;
-        int bz = (origin.getZ() & ~15) + 8;
-
-        int footprintRadius = switch (region) {
-            case EndesiumRegions.SHATTERED_HIGHLANDS, EndesiumRegions.ASHEN_EXPANSE -> 16;
-            case EndesiumRegions.VOID_SKIRTS -> 15;
-            default -> 13;
-        };
-
-        // Every world read from here down is inside one guarded section: any
-        // query that grazes outside the generation region must degrade to
-        // "skip this attempt", never kill the chunk pipeline.
-        try {
-            int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, bx, bz);
-            BlockPos base = new BlockPos(bx, y, bz);
-
-            // Never straddle a biome border: sample a full ring around the
-            // entire footprint (including the terrace skirt). If any sample
-            // falls in a different region, skip rather than build half a
-            // flagship against a geology seam.
-            int probeDist = footprintRadius + 2;
-            for (int i = 0; i < 8; i++) {
-                double ang = Math.PI / 4.0D * i;
-                int px = (int) Math.round(Math.cos(ang) * probeDist);
-                int pz = (int) Math.round(Math.sin(ang) * probeDist);
-                BlockPos edge = base.offset(px, 0, pz);
-                if (EndBiomeProfiles.regionOf(level.getBiome(edge)) != region) return false;
-            }
-
-            if (!hasSolidFootprint(level, base, footprintRadius)) return false;
-            switch (region) {
-                case EndesiumRegions.END_WASTES -> dustCathedral(level, base, random);
-                case EndesiumRegions.CHORUS_WILDS -> elderwoodSanctum(level, base, random);
-                case EndesiumRegions.SHATTERED_HIGHLANDS -> skyrendKeep(level, base, random);
-                case EndesiumRegions.VOID_MARSHES -> drownedCathedral(level, base, random);
-                case EndesiumRegions.LUMINOUS_GROVES -> lumenCathedral(level, base, random);
-                case EndesiumRegions.ASHEN_EXPANSE -> greatCaldera(level, base, random);
-                case EndesiumRegions.CRYSTAL_BARRENS -> sunkenGeode(level, base, random);
-                case EndesiumRegions.VOID_SKIRTS -> voidSpire(level, base, random);
-                case EndesiumRegions.VOID_CROWN -> crownObservatory(level, base, random);
-                case EndesiumRegions.UMBRAL_REACH -> nullArchive(level, base, random);
-                default -> { return false; }
-            }
-        } catch (Exception e) {
-            Endesium.LOGGER.error("Endesium flagship generation failed near [{}, {}]", bx, bz, e);
-            return false;
-        }
-        return true;
-    }
+	@Override
+	public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
+		if (StructurePlacement.structureDriven) {
+			return buildForStructure(ctx);
+		}
+		return false;
+	}
 
     // =====================================================================
     // Shared helpers

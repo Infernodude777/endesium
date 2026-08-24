@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {"structure": "endesium:shard_spire_cluster", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1182992039,
+    "spacing": 16,
+    "separation": 6,
+    "spread_type": "linear"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {"structure": "endesium:elderwood_sanctum", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1182889092,
+    "spacing": 24,
+    "separation": 8,
+    "spread_type": "linear"
+  }
+}

@@ -30,7 +30,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration> {
 	/** Depth of the geological reskin below the surface, so cliffs and basins
 	 * show full region geology instead of vanilla End Stone beneath a cap. */
-	private static final int SKIN_DEPTH = 8;
+	private static final int SKIN_DEPTH = 40;
 	/** Maximum carve depth per column, so basins never punch through islands. */
 	private static final int MAX_CARVE = 14;
 	/** Slope (blocks per column) above which a face reads as rock, not soil. */
@@ -89,6 +89,9 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 
 		for (int x = minX; x <= minX + 15; x++) {
 			for (int z = minZ; z <= minZ + 15; z++) {
+				if (StructurePlacement.insideStructureBox(x, z, chunk)) {
+					continue; // structure-owned column - leave it exactly as built
+				}
 				int gx = x - minX + 1;
 				int gz = z - minZ + 1;
 				double offset = relaxed[gx][gz];

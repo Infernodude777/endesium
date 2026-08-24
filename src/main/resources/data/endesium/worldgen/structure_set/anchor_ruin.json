@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {"structure": "endesium:anchor_ruin", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1182999958,
+    "spacing": 16,
+    "separation": 6,
+    "spread_type": "linear"
+  }
+}

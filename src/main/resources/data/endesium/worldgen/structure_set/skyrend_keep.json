@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {"structure": "endesium:skyrend_keep", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1182873254,
+    "spacing": 24,
+    "separation": 8,
+    "spread_type": "linear"
+  }
+}

@@ -38,92 +38,52 @@ public final class RegionLandmarkFeature extends Feature<NoneFeatureConfiguratio
     /** 16 chunks = 256 blocks between same-region landmark attempts. */
     public static final int SPACING_GRID = 16;
 
-    @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
-		if (!StructurePlacement.structureDriven) return false;
-        WorldGenLevel level = ctx.level();
-        RandomSource random = ctx.random();
-        BlockPos origin = ctx.origin();
-        if (origin.getX() * origin.getX() + origin.getZ() * origin.getZ() < 160 * 160) return false;
+	/**
+	 * The structure-driven build path: validates only the biome and dispatches
+	 * straight to the hand-authored landmark builders - the same code the
+	 * legacy path runs, byte for byte. Site quality checks (slope, seams,
+	 * flagship proximity) are owned by the wrapper's region gate and the
+	 * vanilla structure sets.
+	 */
+	private static boolean buildForStructure(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
+		WorldGenLevel level = ctx.level();
+		RandomSource random = ctx.random();
+		BlockPos origin = ctx.origin();
+		int region = EndBiomeProfiles.regionOf(level.getBiome(origin));
+		if (region < 0) {
+			return false;
+		}
+		try {
+			switch (region) {
+				case EndesiumRegions.END_WASTES -> duneFossilArch(level, origin, random);
+				case EndesiumRegions.CHORUS_WILDS -> hollowStump(level, origin, random);
+				case EndesiumRegions.SHATTERED_HIGHLANDS -> windvaneWatchtower(level, origin, random);
+				case EndesiumRegions.VOID_MARSHES -> mireBellCairn(level, origin, random);
+				case EndesiumRegions.LUMINOUS_GROVES -> lightwellGazebo(level, origin, random);
+				case EndesiumRegions.ASHEN_EXPANSE -> emberShrine(level, origin, random);
+				case EndesiumRegions.CRYSTAL_BARRENS -> shardSpireCluster(level, origin, random);
+				case EndesiumRegions.VOID_SKIRTS -> anchorRuin(level, origin, random);
+				case EndesiumRegions.VOID_CROWN -> needleCircle(level, origin, random);
+				case EndesiumRegions.UMBRAL_REACH -> nullObelisk(level, origin, random);
+				default -> {
+					return false;
+				}
+			}
+		} catch (Exception e) {
+			com.infernodude777.endesium.Endesium.LOGGER.error(
+					"Endesium landmark structure build failed near [{}, {}]", origin.getX(), origin.getZ(), e);
+			return false;
+		}
+		return true;
+	}
 
-        Holder<Biome> biome = level.getBiome(origin);
-        int region = EndBiomeProfiles.regionOf(biome);
-        if (region < 0) return false;
-
-        int chunkX = Math.floorDiv(origin.getX(), 16);
-        int chunkZ = Math.floorDiv(origin.getZ(), 16);
-        long worldSeed = EndesiumWorldgenSeeds.get();
-
-        // Deterministic organic spacing: every grid cell hashes to exactly one
-        // host chunk per region, and the slot moves cell by cell, so landmarks
-        // scatter naturally instead of marching in straight mod-aligned rows.
-        int cellX = Math.floorDiv(chunkX, SPACING_GRID);
-        int cellZ = Math.floorDiv(chunkZ, SPACING_GRID);
-        if (cellSlot(worldSeed, region, 0x1A4DL, cellX, cellZ) != Math.floorMod(chunkX, SPACING_GRID)
-                || cellSlot(worldSeed, region, 0x6E21L, cellX, cellZ) != Math.floorMod(chunkZ, SPACING_GRID)) {
-            return false;
-        }
-
-        // Keep clear of every nearby flagship pick (including adjacent cells)
-        // so landmarks never butt up against a grand structure or straddle its
-        // probe ring.
-        int flagCellX = Math.floorDiv(chunkX, BiomeStructureFeature.SPACING_GRID);
-        int flagCellZ = Math.floorDiv(chunkZ, BiomeStructureFeature.SPACING_GRID);
-        for (int dcx = -1; dcx <= 1; dcx++) {
-            for (int dcz = -1; dcz <= 1; dcz++) {
-                int[] fp = BiomeStructureFeature.flagshipChunk(worldSeed, region,
-                        flagCellX + dcx, flagCellZ + dcz);
-                if (Math.abs(chunkX - fp[0]) <= 2 && Math.abs(chunkZ - fp[1]) <= 2) return false;
-            }
-        }
-
-        int bx = (origin.getX() & ~15) + 8;
-        int bz = (origin.getZ() & ~15) + 8;
-
-        // Landmarks keep compact footprints so they never leave the guarded
-        // generation region; probe a modest ring for biome seams anyway.
-        try {
-            int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, bx, bz);
-            BlockPos base = new BlockPos(bx, y, bz);
-            // Per-column support: sample a ring around the anchor and reject
-            // sites where the ground falls away, so compact builds never
-            // float over a slope or straddle a cliff edge.
-            int lowest = y;
-            int highest = y;
-            for (int i = 0; i < 8; i++) {
-                double ang = Math.PI / 4.0D * i;
-                int sx = bx + (int) Math.round(Math.cos(ang) * 5.0D);
-                int sz = bz + (int) Math.round(Math.sin(ang) * 5.0D);
-                int sy = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, sx, sz);
-                if (sy < lowest) lowest = sy;
-                if (sy > highest) highest = sy;
-            }
-            if (highest - lowest > 6) return false;
-            for (int i = 0; i < 8; i++) {
-                double ang = Math.PI / 4.0D * i;
-                BlockPos edge = base.offset((int) Math.round(Math.cos(ang) * 10),
-                        0, (int) Math.round(Math.sin(ang) * 10));
-                if (EndBiomeProfiles.regionOf(level.getBiome(edge)) != region) return false;
-            }
-            switch (region) {
-                case EndesiumRegions.END_WASTES -> duneFossilArch(level, base, random);
-                case EndesiumRegions.CHORUS_WILDS -> hollowStump(level, base, random);
-                case EndesiumRegions.SHATTERED_HIGHLANDS -> windvaneWatchtower(level, base, random);
-                case EndesiumRegions.VOID_MARSHES -> mireBellCairn(level, base, random);
-                case EndesiumRegions.LUMINOUS_GROVES -> lightwellGazebo(level, base, random);
-                case EndesiumRegions.ASHEN_EXPANSE -> emberShrine(level, base, random);
-                case EndesiumRegions.CRYSTAL_BARRENS -> shardSpireCluster(level, base, random);
-                case EndesiumRegions.VOID_SKIRTS -> anchorRuin(level, base, random);
-                case EndesiumRegions.VOID_CROWN -> needleCircle(level, base, random);
-                case EndesiumRegions.UMBRAL_REACH -> nullObelisk(level, base, random);
-                default -> { return false; }
-            }
-        } catch (Exception e) {
-            Endesium.LOGGER.error("Endesium landmark generation failed near [{}, {}]", bx, bz, e);
-            return false;
-        }
-        return true;
-    }
+	@Override
+	public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
+		if (StructurePlacement.structureDriven) {
+			return buildForStructure(ctx);
+		}
+		return false;
+	}
 
     /**
      * The chunk (as [chunkX, chunkZ]) where this region's landmark would
