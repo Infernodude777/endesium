@@ -6,22 +6,19 @@ import com.infernodude777.endesium.block.ResonantMechanismBlockEntity;
 import com.infernodude777.endesium.registry.ModBlocks;
 import com.infernodude777.endesium.registry.ModEntities;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.storage.loot.LootTable;
 
 /**
@@ -35,12 +32,90 @@ import net.minecraft.world.level.storage.loot.LootTable;
  * (a registered vanilla Structure) validates the site per generating chunk and
  * calls {@link #generateInto}. The old Feature lattice was retired when
  * flagships migrated to {@code random_spread} structure sets, which give every
- * candidate proper chunk ownership and a bounding box.
+ * candidate proper chunk ownership and a bounding box.</p>
+ *
+ * <p>Build geometry is capped at a 21 block half-extent from the anchor so the
+ * single-pass anchor-chunk build always stays inside the primed 3x3 chunk
+ * region that worldgen allows writes into.</p>
  */
 public final class BiomeStructureFeature {
 
     /** Largest half-footprint across all ten flagships, including skirts. */
     public static final int MAX_FOOTPRINT_RADIUS = 16;
+
+    /** Largest half-extent of any single flagship build, including scatter. */
+    public static final int MAX_BUILD_EXTENT = 21;
+
+    /** Height spread across a footprint that the terrace builder can dress. */
+    public static final int MAX_TERRAIN_SPREAD = 14;
+
+    /** Half-footprint of each region's flagship, including terrace skirts. */
+    public static int footprintRadius(int region) {
+        return switch (region) {
+            case EndesiumRegions.SHATTERED_HIGHLANDS, EndesiumRegions.ASHEN_EXPANSE -> 16;
+            case EndesiumRegions.VOID_SKIRTS -> 15;
+            default -> 13;
+        };
+    }
+
+    /**
+     * The exact site checks the piece applies, evaluated purely on noise so
+     * {@code /locate} and structure-set placement can never report a candidate
+     * that generation would refuse. Vanilla runs {@code findGenerationPoint}
+     * for both paths, so agreement here is what keeps locate truthful: a
+     * candidate that passes this check is a candidate the piece builds.
+     *
+     * @param surfaceY noise surface height at the anchor (the Y the piece sits on)
+     */
+    public static boolean siteValid(Structure.GenerationContext context, int centerX, int centerZ,
+            int surfaceY, int region) {
+        try {
+            var source = context.chunkGenerator().getBiomeSource();
+            var sampler = context.randomState().sampler();
+            int radius = footprintRadius(region);
+
+            // Never straddle a biome border: sample the full probe ring at the
+            // height the structure will actually occupy. Mirrors the piece's
+            // real-biome ring check exactly.
+            int probeDist = radius + 2;
+            int qy = QuartPos.fromBlock(surfaceY);
+            for (int i = 0; i < 8; i++) {
+                double ang = Math.PI / 4.0D * i;
+                int qx = QuartPos.fromBlock(centerX + (int) Math.round(Math.cos(ang) * probeDist));
+                int qz = QuartPos.fromBlock(centerZ + (int) Math.round(Math.sin(ang) * probeDist));
+                if (EndBiomeProfiles.regionOf(source.getNoiseBiome(qx, qy, qz, sampler)) != region) {
+                    return false;
+                }
+            }
+
+            // Support: the footprint must rest on real island terrain (not
+            // void) for the same 58% of sampled columns the block-level check
+            // demands, without a cliff taller than the terrace builder dresses.
+            // Bails out early once too many void columns have been seen, so
+            // /locate over hundreds of candidates stays cheap.
+            int minY = context.chunkGenerator().getMinY();
+            int lowest = Integer.MAX_VALUE, highest = Integer.MIN_VALUE;
+            int samples = radius + 1;
+            int total = samples * samples;
+            int allowedFailures = total - (total * 58 + 99) / 100;
+            int failed = 0;
+            for (int dx = -radius; dx <= radius; dx += 2) {
+                for (int dz = -radius; dz <= radius; dz += 2) {
+                    int h = context.chunkGenerator().getFirstOccupiedHeight(centerX + dx, centerZ + dz,
+                            Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState());
+                    if (h >= minY + 24) {
+                        if (h < lowest) lowest = h;
+                        if (h > highest) highest = h;
+                    } else if (++failed > allowedFailures) {
+                        return false;
+                    }
+                }
+            }
+            return highest - lowest <= MAX_TERRAIN_SPREAD;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     /**
      * Validates the site around {@code base} and builds this region's flagship.
@@ -52,11 +127,7 @@ public final class BiomeStructureFeature {
         int bx = base.getX();
         int bz = base.getZ();
 
-        int footprintRadius = switch (region) {
-            case EndesiumRegions.SHATTERED_HIGHLANDS, EndesiumRegions.ASHEN_EXPANSE -> 16;
-            case EndesiumRegions.VOID_SKIRTS -> 15;
-            default -> 13;
-        };
+        int footprintRadius = footprintRadius(region);
 
         // Every world read from here down is inside one guarded section: any
         // query that grazes outside the generation region must degrade to
@@ -142,6 +213,15 @@ public final class BiomeStructureFeature {
                 if (d <= r * r && d > (r - 1) * (r - 1))
                     setReplace(l, off(b, cx + dx, y, cz + dz), block);
             }
+    }
+
+    /** Hanging column that stops at the first obstruction, for tendrils. */
+    private static void hangColumn(WorldGenLevel l, BlockPos b, int dx, int yTop, int dz, int len, Block block) {
+        for (int k = 0; k < len; k++) {
+            BlockPos p = off(b, dx, yTop - k, dz);
+            if (!l.getBlockState(p).isAir()) break;
+            setReplace(l, p, block);
+        }
     }
 
     private static void setReplace(WorldGenLevel l, BlockPos p, Block block) {
@@ -268,30 +348,30 @@ public final class BiomeStructureFeature {
     private static void dustCathedral(WorldGenLevel l, BlockPos b, RandomSource r) {
         b = flattenGround(l, b, 19);
 
-        // Cruciform platform.
+        // Cruciform platform with an apse tongue and approach court.
         fill(l, b, -8, 0, -17, 8, 0, 17, ModBlocks.WASTES_STONE);
-        disc(l, b, 0, 0, -19, 4, ModBlocks.WASTES_STONE);   // apse tongue
-        fill(l, b, -5, 0, 18, 5, 0, 20, ModBlocks.WASTES_STONE); // approach court
+        disc(l, b, 0, 0, -18, 4, ModBlocks.WASTES_STONE);
+        fill(l, b, -5, 0, 18, 5, 0, 20, ModBlocks.WASTES_STONE);
         ring(l, b, 0, 0, 0, 12, Blocks.END_STONE_BRICKS);
 
-        // Nave shell: soaring walls to y=13, hollow interior.
-        fill(l, b, -7, 1, -16, 7, 13, 16, ModBlocks.WASTES_STONE);
-        fill(l, b, -6, 1, -15, 6, 12, 15, Blocks.AIR);
+        // Nave shell: soaring walls to y=14, hollow interior.
+        fill(l, b, -7, 1, -16, 7, 14, 16, ModBlocks.WASTES_STONE);
+        fill(l, b, -6, 1, -15, 6, 13, 15, Blocks.AIR);
         // Twin clerestory window bands running the full length.
         for (int z = -13; z <= 13; z += 4) {
             fill(l, b, -7, 4, z, -7, 5, z, ModBlocks.VOID_GLASS);
             fill(l, b, 7, 4, z, 7, 5, z, ModBlocks.VOID_GLASS);
-            fill(l, b, -7, 9, z, -7, 10, z, ModBlocks.VOID_GLASS);
-            fill(l, b, 7, 9, z, 7, 10, z, ModBlocks.VOID_GLASS);
+            fill(l, b, -7, 10, z, -7, 11, z, ModBlocks.VOID_GLASS);
+            fill(l, b, 7, 10, z, 7, 11, z, ModBlocks.VOID_GLASS);
         }
         // Transept arms give the cathedral its true cross silhouette.
         buildTranseptArm(l, b, -1, r);
         buildTranseptArm(l, b, 1, r);
         // Rose window set into the apse face: stained glass petals in cyan
         // and light blue radiating around a pale crystal heart.
-        for (int dx = -2; dx <= 2; dx++)
-            for (int dy = -2; dy <= 2; dy++) {
-                if (dx * dx + dy * dy > 5 || (dx == 0 && dy == 0)) continue;
+        for (int dx = -3; dx <= 3; dx++)
+            for (int dy = -3; dy <= 3; dy++) {
+                if (dx * dx + dy * dy > 10 || (dx == 0 && dy == 0)) continue;
                 Block petal = (dx + dy) % 2 == 0
                         ? Blocks.LIGHT_BLUE_STAINED_GLASS
                         : Blocks.CYAN_STAINED_GLASS;
@@ -299,54 +379,69 @@ public final class BiomeStructureFeature {
             }
         setReplace(l, off(b, 0, 8, -20), ModBlocks.PALE_CRYSTAL_BLOCK);
         // Nave chandelier: a gold hub with four hanging lamps.
-        col(l, b, 0, 0, 10, 11, Blocks.CHAIN);
-        setReplace(l, off(b, 0, 9, 0), Blocks.GOLD_BLOCK);
-        hangLamp(l, b, -2, 8, 0);
-        hangLamp(l, b, 2, 8, 0);
-        hangLamp(l, b, 0, 8, -2);
-        hangLamp(l, b, 0, 8, 2);
-        // Buttresses along the outer flanks, arched at the top.
+        col(l, b, 0, 0, 11, 12, Blocks.CHAIN);
+        setReplace(l, off(b, 0, 10, 0), Blocks.GOLD_BLOCK);
+        hangLamp(l, b, -2, 9, 0);
+        hangLamp(l, b, 2, 9, 0);
+        hangLamp(l, b, 0, 9, -2);
+        hangLamp(l, b, 0, 9, 2);
+        // Flying buttresses along the outer flanks: pier, shoulder, then a
+        // curving arch strut reaching back up to the clerestory wall.
         for (int z = -12; z <= 14; z += 4) {
-            fill(l, b, -9, 1, z, -8, 8, z, ModBlocks.CRACKED_SPIRE_STONE);
-            setReplace(l, off(b, -10, 8, z), ModBlocks.CRACKED_SPIRE_STONE);
-            fill(l, b, 8, 1, z, 9, 8, z, ModBlocks.CRACKED_SPIRE_STONE);
-            setReplace(l, off(b, 10, 8, z), ModBlocks.CRACKED_SPIRE_STONE);
+            fill(l, b, -9, 1, z, -9, 9, z, ModBlocks.CRACKED_SPIRE_STONE);
+            fill(l, b, 9, 1, z, 9, 9, z, ModBlocks.CRACKED_SPIRE_STONE);
+            setReplace(l, off(b, -10, 9, z), ModBlocks.CRACKED_SPIRE_STONE);
+            setReplace(l, off(b, 10, 9, z), ModBlocks.CRACKED_SPIRE_STONE);
+            setReplace(l, off(b, -10, 10, z), ModBlocks.CRACKED_SPIRE_STONE);
+            setReplace(l, off(b, -9, 11, z), ModBlocks.CRACKED_SPIRE_STONE);
+            setReplace(l, off(b, -8, 12, z), ModBlocks.CRACKED_SPIRE_STONE);
+            setReplace(l, off(b, 10, 10, z), ModBlocks.CRACKED_SPIRE_STONE);
+            setReplace(l, off(b, 9, 11, z), ModBlocks.CRACKED_SPIRE_STONE);
+            setReplace(l, off(b, 8, 12, z), ModBlocks.CRACKED_SPIRE_STONE);
+            setReplace(l, off(b, -10, 11, z), ModBlocks.WASTES_STONE);
+            setReplace(l, off(b, 10, 11, z), ModBlocks.WASTES_STONE);
         }
-        // Partial vaulted roof with collapsed gaps.
+        // Partial vaulted roof with collapsed gaps, plus ridge pinnacles.
         for (int x = -6; x <= 6; x++)
             for (int z = -15; z <= 15; z++) {
                 boolean beam = Math.abs(x) % 3 == 0 || z % 6 == 0;
                 if (beam && r.nextInt(5) != 0)
-                    setReplace(l, off(b, x, 13, z), ModBlocks.CRACKED_SPIRE_STONE);
+                    setReplace(l, off(b, x, 14, z), ModBlocks.CRACKED_SPIRE_STONE);
             }
+        for (int z = -14; z <= 14; z += 7) {
+            col(l, b, -7, z, 15, 16, ModBlocks.WASTES_STONE);
+            col(l, b, 7, z, 15, 16, ModBlocks.WASTES_STONE);
+        }
         // Grand south entrance arch with crystal keystone.
-        fill(l, b, -1, 1, 16, 1, 4, 16, Blocks.AIR);
-        col(l, b, -3, 16, 1, 5, Blocks.END_STONE_BRICKS);
-        col(l, b, 3, 16, 1, 5, Blocks.END_STONE_BRICKS);
-        fill(l, b, -2, 5, 16, 2, 5, 16, Blocks.END_STONE_BRICKS);
-        setReplace(l, off(b, 0, 6, 16), ModBlocks.DORMANT_RESONANT_CRYSTAL);
+        fill(l, b, -1, 1, 16, 1, 5, 16, Blocks.AIR);
+        col(l, b, -3, 16, 1, 6, Blocks.END_STONE_BRICKS);
+        col(l, b, 3, 16, 1, 6, Blocks.END_STONE_BRICKS);
+        fill(l, b, -2, 6, 16, 2, 6, 16, Blocks.END_STONE_BRICKS);
+        setReplace(l, off(b, 0, 7, 16), ModBlocks.DORMANT_RESONANT_CRYSTAL);
 
         // Twin bell towers flanking the entrance court.
-        buildBellTower(l, b, -11, 13, 22, r);
-        buildBellTower(l, b, 11, 13, 22, r);
+        buildBellTower(l, b, -11, 13, 24, r);
+        buildBellTower(l, b, 11, 13, 24, r);
 
-        // Crossing tower over the apse with tapering spire.
+        // Crossing tower over the apse with a tall tapering spire.
         fill(l, b, -3, 1, -20, 3, 15, -16, ModBlocks.WASTES_STONE);
         fill(l, b, -2, 1, -19, 2, 14, -17, Blocks.AIR);
-        for (int level = 16; level <= 26; level++) {
-            int half = Math.max(1, 3 - (level - 16) / 4);
-            fill(l, b, -half, level, -22 + (26 - level), half, level, -14 - (26 - level), ModBlocks.CRACKED_SPIRE_STONE);
+        for (int level = 16; level <= 28; level++) {
+            int half = Math.max(1, 3 - (level - 16) / 5);
+            int halfDepth = Math.max(2, 6 - (level - 16) / 3);
+            fill(l, b, -half, level, -18 - halfDepth, half, level, -18 + halfDepth, ModBlocks.CRACKED_SPIRE_STONE);
         }
-        setReplace(l, off(b, 0, 27, -18), ModBlocks.DORMANT_RESONANT_CRYSTAL);
+        setReplace(l, off(b, 0, 29, -18), ModBlocks.DORMANT_RESONANT_CRYSTAL);
+        setReplace(l, off(b, 0, 30, -18), ModBlocks.VOID_LAMP);
 
         // Interior colonnades crowned with alternating beacons.
         for (int z = -12; z <= 12; z += 4) {
             if (z >= -14 && z <= -10) continue; // crossing floor stays open
-            col(l, b, -4, z, 1, 12, ModBlocks.CRACKED_SPIRE_STONE);
-            col(l, b, 4, z, 1, 12, ModBlocks.CRACKED_SPIRE_STONE);
+            col(l, b, -4, z, 1, 13, ModBlocks.CRACKED_SPIRE_STONE);
+            col(l, b, 4, z, 1, 13, ModBlocks.CRACKED_SPIRE_STONE);
             Block cap = (z / 4) % 2 == 0 ? ModBlocks.VOID_LAMP : ModBlocks.DORMANT_RESONANT_CRYSTAL;
-            setReplace(l, off(b, -4, 13, z), cap);
-            setReplace(l, off(b, 4, 13, z), cap);
+            setReplace(l, off(b, -4, 14, z), cap);
+            setReplace(l, off(b, 4, 14, z), cap);
         }
         // Altar dais and mechanism.
         fill(l, b, -3, 1, -8, 3, 1, -4, ModBlocks.END_GRAY);
@@ -373,12 +468,18 @@ public final class BiomeStructureFeature {
         setReplace(l, off(b, 2, -5, -2), Blocks.MAGMA_BLOCK);
         placeWarden(l, off(b, 1, -4, -3));
 
-        // Scree field around the cathedral.
-        for (int i = 0; i < 30; i++) {
+        // Scree field around the cathedral with fallen column runs.
+        for (int i = 0; i < 34; i++) {
             int dx = r.nextInt(35) - 17, dz = r.nextInt(43) - 21;
             if (Math.abs(dx) <= 9 && Math.abs(dz) <= 17) continue;
             setReplace(l, off(b, dx, 1, dz), r.nextBoolean() ? ModBlocks.WASTES_GRAVEL : ModBlocks.CRACKED_SPIRE_STONE);
         }
+        fill(l, b, 12, 1, 5, 17, 1, 5, ModBlocks.CRACKED_SPIRE_STONE);
+        setReplace(l, off(b, 18, 1, 5), ModBlocks.WASTES_GRAVEL);
+        fill(l, b, -17, 1, -3, -12, 1, -3, ModBlocks.CRACKED_SPIRE_STONE);
+        setReplace(l, off(b, -18, 1, -3), ModBlocks.WASTES_GRAVEL);
+        col(l, b, 14, -8, 1, 4, ModBlocks.CRACKED_SPIRE_STONE);
+        setReplace(l, off(b, 14, 5, -8), ModBlocks.DORMANT_RESONANT_CRYSTAL);
         inscribe(l, off(b, -4, 1, 18), InscribedSlateBlock.SYMBOL_SPIRE);
         inscribe(l, off(b, 4, 1, 18), InscribedSlateBlock.SYMBOL_EYE);
     }
@@ -389,17 +490,17 @@ public final class BiomeStructureFeature {
         int inner = dir * 8;
         int x0 = Math.min(outer, inner), x1 = Math.max(outer, inner);
         fill(l, b, x0, 0, -14, x1, 0, -8, Blocks.END_STONE_BRICKS);
-        fill(l, b, x0, 1, -14, x1, 9, -14, ModBlocks.WASTES_STONE);   // far wall
-        fill(l, b, x0, 1, -8, x1, 9, -8, ModBlocks.WASTES_STONE);     // near wall
-        fill(l, b, x0, 1, -13, x0, 9, -9, ModBlocks.WASTES_STONE);    // outer end
-        fill(l, b, x0 + (dir == -1 ? 1 : 0), 1, -12, x1 - (dir == 1 ? 1 : 0), 8, -10, Blocks.AIR);
+        fill(l, b, x0, 1, -14, x1, 10, -14, ModBlocks.WASTES_STONE);   // far wall
+        fill(l, b, x0, 1, -8, x1, 10, -8, ModBlocks.WASTES_STONE);     // near wall
+        fill(l, b, x0, 1, -13, x0, 10, -9, ModBlocks.WASTES_STONE);    // outer end
+        fill(l, b, x0 + (dir == -1 ? 1 : 0), 1, -12, x1 - (dir == 1 ? 1 : 0), 9, -10, Blocks.AIR);
         // Great window on the gable end.
         for (int dz = -12; dz <= -10; dz++)
-            for (int dy = 4; dy <= 7; dy++)
+            for (int dy = 4; dy <= 8; dy++)
                 setReplace(l, off(b, outer, dy, dz), ModBlocks.VOID_GLASS);
-        setReplace(l, off(b, outer, 6, -11), ModBlocks.DORMANT_RESONANT_CRYSTAL);
+        setReplace(l, off(b, outer, 7, -11), ModBlocks.DORMANT_RESONANT_CRYSTAL);
         // Vault stub and side benches.
-        if (r.nextBoolean()) fill(l, b, x0 + (dir == -1 ? 2 : 0), 9, -12, x1 - (dir == 1 ? 2 : 0), 9, -10, ModBlocks.CRACKED_SPIRE_STONE);
+        if (r.nextBoolean()) fill(l, b, x0 + (dir == -1 ? 2 : 0), 10, -12, x1 - (dir == 1 ? 2 : 0), 10, -10, ModBlocks.CRACKED_SPIRE_STONE);
         lootBarrel(l, off(b, dir * 15, 1, -9), r, "chests/wastes_cathedral");
     }
 
@@ -430,78 +531,90 @@ public final class BiomeStructureFeature {
     private static void elderwoodSanctum(WorldGenLevel l, BlockPos b, RandomSource r) {
         b = flattenGround(l, b, 20);
 
-        // Colossal hollow trunk: bark shell tapering 8 -> 4 over 28 blocks.
-        for (int y = 0; y <= 26; y++) {
-            int rad = Math.max(4, 8 - y / 7);
+        // Root mound the titan grew from.
+        disc(l, b, 0, 0, 0, 12, ModBlocks.CHORUS_ROOT);
+        disc(l, b, 0, 1, 0, 8, ModBlocks.ELDER_CHORUS_BARK);
+
+        // Colossal hollow trunk: bark shell tapering 9 -> 5 over 30 blocks.
+        for (int y = 2; y <= 31; y++) {
+            int rad = Math.max(5, 9 - y / 6);
             for (int dx = -rad; dx <= rad; dx++)
                 for (int dz = -rad; dz <= rad; dz++) {
                     int d2 = dx * dx + dz * dz;
                     if (d2 > rad * rad) continue;
-                    if (y > 0 && d2 <= (rad - 2) * (rad - 2)) continue; // hollow core
+                    if (y > 3 && d2 <= (rad - 3) * (rad - 3)) continue; // hollow core
                     Block bark = (dx + dz + y) % 4 == 0 ? ModBlocks.ELDER_CHORUS_WOOD : ModBlocks.ELDER_CHORUS_BARK;
                     setReplace(l, off(b, dx, y, dz), bark);
                 }
         }
         // Moss altar floor at the heart of the trunk.
-        disc(l, b, 0, 0, 0, 4, ModBlocks.CHORUS_MOSS);
-        setReplace(l, off(b, 0, 1, 0), ModBlocks.ELDER_CHORUS_WOOD);
-        landmarkMechanism(l, off(b, 0, 2, 0), EndRuinVariant.BLOOM_CONSERVATORY);
+        disc(l, b, 0, 2, 0, 5, ModBlocks.CHORUS_MOSS);
+        setReplace(l, off(b, 0, 3, 0), ModBlocks.ELDER_CHORUS_WOOD);
+        landmarkMechanism(l, off(b, 0, 4, 0), EndRuinVariant.BLOOM_CONSERVATORY);
 
         // Root buttresses radiating out and down from the trunk base.
-        for (int i = 0; i < 8; i++) {
-            double ang = i * Math.PI / 4.0 + 0.39;
+        for (int i = 0; i < 10; i++) {
+            double ang = i * Math.PI / 5.0 + 0.31;
             double cos = Math.cos(ang), sin = Math.sin(ang);
-            for (int k = 0; k <= 6; k++) {
-                int dx = (int) Math.round(cos * (7 + k));
-                int dz = (int) Math.round(sin * (7 + k));
-                col(l, b, dx, dz, 0, Math.max(1, 8 - k), k % 2 == 0 ? ModBlocks.CHORUS_ROOT : ModBlocks.ELDER_CHORUS_BARK);
+            for (int k = 0; k <= 8; k++) {
+                int dx = (int) Math.round(cos * (8 + k));
+                int dz = (int) Math.round(sin * (8 + k));
+                col(l, b, dx, dz, 0, Math.max(1, 9 - k), k % 2 == 0 ? ModBlocks.CHORUS_ROOT : ModBlocks.ELDER_CHORUS_BARK);
             }
         }
         // Spiral ledge climbing inside the trunk.
-        for (int y = 2; y <= 22; y++) {
+        for (int y = 4; y <= 27; y++) {
             double ang = y * 0.55D;
-            int lx = (int) Math.round(Math.cos(ang) * 3);
-            int lz = (int) Math.round(Math.sin(ang) * 3);
+            int lx = (int) Math.round(Math.cos(ang) * 4);
+            int lz = (int) Math.round(Math.sin(ang) * 4);
             setReplace(l, off(b, lx, y, lz), ModBlocks.CHORUS_ROOT);
             setReplace(l, off(b, lx, y - 1, lz), ModBlocks.CHORUS_ROOT);
         }
-        // Canopy: layered discs with branch spokes reaching far out.
-        disc(l, b, 0, 24, 0, 18, ModBlocks.CHORUS_ROOT);
-        disc(l, b, 0, 25, 0, 16, ModBlocks.CHORUS_MOSS);
-        disc(l, b, 0, 26, 0, 13, ModBlocks.CHORUS_MOSS);
-        disc(l, b, 0, 27, 0, 9, ModBlocks.CHORUS_ROOT);
-        disc(l, b, 0, 28, 0, 5, ModBlocks.CHORUS_MOSS);
+
+        // The canopy: one vast layered crown with a raised rim, carried on
+        // under-ribs that fan out from the trunk top.
+        disc(l, b, 0, 26, 0, 20, ModBlocks.CHORUS_ROOT);
+        disc(l, b, 0, 27, 0, 18, ModBlocks.CHORUS_MOSS);
+        ring(l, b, 0, 27, 0, 19, ModBlocks.CHORUS_ROOT);   // raised rim
+        disc(l, b, 0, 28, 0, 14, ModBlocks.CHORUS_MOSS);
+        disc(l, b, 0, 29, 0, 10, ModBlocks.CHORUS_ROOT);
+        disc(l, b, 0, 30, 0, 5, ModBlocks.CHORUS_MOSS);
         for (int i = 0; i < 10; i++) {
             double ang = i * Math.PI / 5.0;
             double cos = Math.cos(ang), sin = Math.sin(ang);
-            for (int k = 10; k <= 19; k++) {
-                int drop = k > 15 ? (k - 15) : 0;
-                setReplace(l, off(b, (int) Math.round(cos * k), 23 - drop, (int) Math.round(sin * k)), ModBlocks.HOLLOW_CHORUS_WOOD);
+            for (int k = 9; k <= 19; k++) {
+                setReplace(l, off(b, (int) Math.round(cos * k), 25, (int) Math.round(sin * k)), ModBlocks.CHORUS_ROOT);
             }
-            int tx = (int) Math.round(cos * 20), tz = (int) Math.round(sin * 20);
-            setReplace(l, off(b, tx, 21, tz), Blocks.CHORUS_PLANT);
-            if (r.nextBoolean()) setReplace(l, off(b, tx, 22, tz), Blocks.CHORUS_FLOWER);
+            int tx = (int) Math.round(cos * 21), tz = (int) Math.round(sin * 21);
+            setReplace(l, off(b, tx, 24, tz), ModBlocks.HOLLOW_CHORUS_WOOD);
+            setReplace(l, off(b, tx, 23, tz), Blocks.CHORUS_PLANT);
+            if (r.nextBoolean()) setReplace(l, off(b, tx, 24, tz), Blocks.CHORUS_FLOWER);
+        }
+        // Canopy-top bloom scatter catching the light from above.
+        for (int i = 0; i < 14; i++) {
+            double ang = r.nextDouble() * Math.PI * 2.0D;
+            int dx = (int) Math.round(Math.cos(ang) * r.nextInt(16));
+            int dz = (int) Math.round(Math.sin(ang) * r.nextInt(16));
+            if (dx * dx + dz * dz > 256) continue;
+            if (l.getBlockState(off(b, dx, 28, dz)).isAir() && !l.getBlockState(off(b, dx, 27, dz)).isAir())
+                setReplace(l, off(b, dx, 28, dz), ModBlocks.RESONANT_BLOOM);
         }
         // Hanging tendrils with blooms beneath the canopy rim.
-        for (int i = 0; i < 12; i++) {
-            double ang = r.nextDouble() * Math.PI * 2.0;
-            int dx = (int) Math.round(Math.cos(ang) * (11 + r.nextInt(5)));
-            int dz = (int) Math.round(Math.sin(ang) * (11 + r.nextInt(5)));
-            int len = 5 + r.nextInt(5);
-            for (int k = 0; k < len; k++) {
-                BlockPos p = off(b, dx, 23 - k, dz);
-                if (l.getBlockState(p).isAir()) setReplace(l, p, ModBlocks.CHORUS_ROOT);
-                else break;
-            }
-            setReplace(l, off(b, dx, 23 - len, dz), ModBlocks.RESONANT_BLOOM);
+        for (int i = 0; i < 16; i++) {
+            double ang = r.nextDouble() * Math.PI * 2.0D;
+            int dx = (int) Math.round(Math.cos(ang) * (12 + r.nextInt(8)));
+            int dz = (int) Math.round(Math.sin(ang) * (12 + r.nextInt(8)));
+            int len = 5 + r.nextInt(8);
+            hangColumn(l, b, dx, 25, dz, len, ModBlocks.CHORUS_ROOT);
+            setReplace(l, off(b, dx, 25 - len, dz), ModBlocks.RESONANT_BLOOM);
         }
         // Mid-trunk gallery with loot, lit by blooms.
-        fill(l, b, -5, 11, -5, 5, 14, 5, Blocks.AIR);
-        fill(l, b, -5, 10, -5, 5, 10, 5, ModBlocks.CHORUS_ROOT);
-        lootChest(l, off(b, -3, 11, 3), r, "chests/wilds_archive");
-        lootBarrel(l, off(b, 3, 11, 3), r, "chests/wilds_archive");
-        setReplace(l, off(b, 0, 15, -4), ModBlocks.RESONANT_BLOOM);
-        setReplace(l, off(b, 4, 12, 0), ModBlocks.RESONANT_BLOOM);
+        fill(l, b, -6, 13, -6, 6, 17, 6, Blocks.AIR);
+        fill(l, b, -6, 12, -6, 6, 12, 6, ModBlocks.CHORUS_ROOT);
+        lootChest(l, off(b, -4, 13, 4), r, "chests/wilds_archive");
+        lootBarrel(l, off(b, 4, 13, 4), r, "chests/wilds_archive");
+        setReplace(l, off(b, 0, 18, -5), ModBlocks.RESONANT_BLOOM);
+        setReplace(l, off(b, 5, 14, 0), ModBlocks.RESONANT_BLOOM);
 
         // Root vault below with the deeper cache.
         fill(l, b, -5, -5, -5, 5, -1, 5, Blocks.AIR);
@@ -514,8 +627,8 @@ public final class BiomeStructureFeature {
         // root pillars when intruders descend.
         placeSpawner(l, off(b, 0, -4, 4), ModEntities.CHORUS_STALKER, r);
         placeWarden(l, off(b, 0, -5, -2));
-        inscribe(l, off(b, 8, 1, 0), InscribedSlateBlock.SYMBOL_RING);
-        inscribe(l, off(b, -8, 1, 0), InscribedSlateBlock.SYMBOL_EYE);
+        inscribe(l, off(b, 9, 1, 0), InscribedSlateBlock.SYMBOL_RING);
+        inscribe(l, off(b, -9, 1, 0), InscribedSlateBlock.SYMBOL_EYE);
     }
 
     // =====================================================================
@@ -525,39 +638,45 @@ public final class BiomeStructureFeature {
     private static void skyrendKeep(WorldGenLevel l, BlockPos b, RandomSource r) {
         b = flattenGround(l, b, 20);
 
-        // Curtain wall square, two thick, nine tall.
+        // Curtain wall square, two thick, ten tall.
         fill(l, b, -16, 0, -16, 16, 0, 16, ModBlocks.HIGHLAND_SLATE);
-        fill(l, b, -16, 1, -16, 16, 8, 16, ModBlocks.HIGHLAND_STONE);
-        fill(l, b, -14, 1, -14, 14, 7, 14, Blocks.AIR);
-        fill(l, b, -16, 4, -16, 16, 4, 16, ModBlocks.HIGHLAND_SLATE);
-        // Crenellations.
+        fill(l, b, -16, 1, -16, 16, 9, 16, ModBlocks.HIGHLAND_STONE);
+        fill(l, b, -14, 1, -14, 14, 8, 14, Blocks.AIR);
+        fill(l, b, -16, 5, -16, 16, 5, 16, ModBlocks.HIGHLAND_SLATE);
+        // Crenellations and arrow slits.
         for (int i = -16; i <= 16; i += 2) {
-            col(l, b, i, -16, 9, 9, ModBlocks.HIGHLAND_STONE);
-            col(l, b, i, 16, 9, 9, ModBlocks.HIGHLAND_STONE);
-            col(l, b, -16, i, 9, 9, ModBlocks.HIGHLAND_STONE);
-            col(l, b, 16, i, 9, 9, ModBlocks.HIGHLAND_STONE);
+            col(l, b, i, -16, 10, 10, ModBlocks.HIGHLAND_STONE);
+            col(l, b, i, 16, 10, 10, ModBlocks.HIGHLAND_STONE);
+            col(l, b, -16, i, 10, 10, ModBlocks.HIGHLAND_STONE);
+            col(l, b, 16, i, 10, 10, ModBlocks.HIGHLAND_STONE);
+        }
+        for (int i = -12; i <= 12; i += 6) {
+            fill(l, b, -16, 3, i, -16, 4, i, ModBlocks.VOID_GLASS);
+            fill(l, b, 16, 3, i, 16, 4, i, ModBlocks.VOID_GLASS);
+            fill(l, b, i, 3, -16, i, 4, -16, ModBlocks.VOID_GLASS);
+            fill(l, b, i, 3, 16, i, 4, 16, ModBlocks.VOID_GLASS);
         }
 
         // Gatehouse: south opening flanked by twin turrets, portcullis of
-        // iron bars half-raised in the gateway.
+        // iron bars half-raised in the gateway, barbican cheeks.
         fill(l, b, -2, 1, 15, 2, 4, 16, Blocks.AIR);
         col(l, b, -2, 16, 3, 4, Blocks.IRON_BARS);
         col(l, b, 2, 16, 3, 4, Blocks.IRON_BARS);
-        fill(l, b, -6, 1, 15, -3, 12, 17, ModBlocks.HIGHLAND_STONE);
-        fill(l, b, 3, 1, 15, 6, 12, 17, ModBlocks.HIGHLAND_STONE);
-        fill(l, b, -6, 1, 14, -3, 12, 18, ModBlocks.HIGHLAND_STONE);
-        fill(l, b, 3, 1, 14, 6, 12, 18, ModBlocks.HIGHLAND_STONE);
-        fill(l, b, -5, 1, 15, -4, 12, 16, Blocks.AIR);
-        fill(l, b, 4, 1, 15, 5, 12, 16, Blocks.AIR);
-        setReplace(l, off(b, 0, 13, 16), ModBlocks.HIGHLAND_LENSSTONE);
+        fill(l, b, -6, 1, 15, -3, 14, 17, ModBlocks.HIGHLAND_STONE);
+        fill(l, b, 3, 1, 15, 6, 14, 17, ModBlocks.HIGHLAND_STONE);
+        fill(l, b, -6, 1, 14, -3, 14, 18, ModBlocks.HIGHLAND_STONE);
+        fill(l, b, 3, 1, 14, 6, 14, 18, ModBlocks.HIGHLAND_STONE);
+        fill(l, b, -5, 1, 15, -4, 14, 16, Blocks.AIR);
+        fill(l, b, 4, 1, 15, 5, 14, 16, Blocks.AIR);
+        setReplace(l, off(b, 0, 15, 16), ModBlocks.HIGHLAND_LENSSTONE);
 
         // Four corner towers with lensstone crowns.
-        buildWatchTower(l, b, -16, -16, 14, r);
-        buildWatchTower(l, b, 16, -16, 14, r);
-        buildWatchTower(l, b, -16, 16, 14, r);
-        buildWatchTower(l, b, 16, 16, 14, r);
+        buildWatchTower(l, b, -16, -16, 18, r);
+        buildWatchTower(l, b, 16, -16, 18, r);
+        buildWatchTower(l, b, -16, 16, 18, r);
+        buildWatchTower(l, b, 16, 16, 18, r);
         for (int[] c : new int[][]{{-16, -16}, {16, -16}, {-16, 16}, {16, 16}}) {
-            setReplace(l, off(b, c[0], 16, c[1]), ModBlocks.HIGHLAND_LENSSTONE);
+            setReplace(l, off(b, c[0], 20, c[1]), ModBlocks.HIGHLAND_LENSSTONE);
         }
 
         // Inner keep: three storeys plus roof garden.
@@ -581,6 +700,30 @@ public final class BiomeStructureFeature {
         col(l, b, 1, -6, 14, 14, Blocks.IRON_BARS);
         setReplace(l, off(b, 0, 17, -4), Blocks.END_STONE_BRICKS);
         landmarkMechanism(l, off(b, 0, 18, -4), EndRuinVariant.RIFT_OBSERVATORY);
+
+        // The donjon: a great central tower crowning the keep.
+        fill(l, b, -3, 19, -3, 3, 25, 3, ModBlocks.HIGHLAND_STONE);
+        fill(l, b, -2, 19, -2, 2, 24, 2, Blocks.AIR);
+        for (int y = 20; y <= 24; y++) {
+            setReplace(l, off(b, 3, y, 0), ModBlocks.VOID_GLASS);
+            setReplace(l, off(b, -3, y, 0), ModBlocks.VOID_GLASS);
+        }
+        fill(l, b, -4, 26, -4, 4, 26, 4, ModBlocks.HIGHLAND_SLATE);
+        for (int i = -4; i <= 4; i += 2) {
+            setReplace(l, off(b, i, 27, -4), ModBlocks.HIGHLAND_STONE);
+            setReplace(l, off(b, i, 27, 4), ModBlocks.HIGHLAND_STONE);
+            setReplace(l, off(b, -4, 27, i), ModBlocks.HIGHLAND_STONE);
+            setReplace(l, off(b, 4, 27, i), ModBlocks.HIGHLAND_STONE);
+        }
+        col(l, b, 0, 0, 27, 28, ModBlocks.WINDSCAR_BRACKET);
+        setReplace(l, off(b, 0, 29, 0), ModBlocks.DORMANT_RESONANT_CRYSTAL);
+
+        // Flying bridges from the keep to the east and west walls.
+        for (int dir = -1; dir <= 1; dir += 2) {
+            fill(l, b, dir * 8, 18, 0, dir * 15, 18, 0, ModBlocks.HIGHLAND_SLATE);
+            col(l, b, dir * 10, 0, 19, 19, ModBlocks.HIGHLAND_STONE);
+            col(l, b, dir * 13, 0, 19, 19, ModBlocks.HIGHLAND_STONE);
+        }
         // Roof parapet and crystal masts; a void ray roosts on the roof
         // garden, diving at anyone who reaches the throne floor.
         placeSpawner(l, off(b, 0, 14, 0), ModEntities.VOID_RAY, r);
@@ -594,6 +737,25 @@ public final class BiomeStructureFeature {
         for (int[] mast : new int[][]{{-6, -6}, {6, -6}, {-6, 6}, {6, 6}}) {
             col(l, b, mast[0], mast[1], 13, 15, Blocks.CHAIN);
             setReplace(l, off(b, mast[0], 16, mast[1]), ModBlocks.DORMANT_RESONANT_CRYSTAL);
+        }
+
+        // The shattering: broken keep fragments hang suspended mid-air,
+        // tethered by chains to the ruin below.
+        for (int i = 0; i < 7; i++) {
+            double ang = i * 2.0D * Math.PI / 7.0D + 0.35D;
+            int dist = 11 + (i % 3) * 3;
+            int fx = (int) Math.round(Math.cos(ang) * dist);
+            int fz = (int) Math.round(Math.sin(ang) * dist);
+            int fy = 22 + (i % 4) * 2;
+            fill(l, b, fx - 1, fy, fz - 1, fx + 1, fy, fz + 1, ModBlocks.HIGHLAND_STONE);
+            setReplace(l, off(b, fx, fy + 1, fz), i % 2 == 0 ? ModBlocks.HIGHLAND_SLATE : ModBlocks.HIGHLAND_STONE);
+            int tether = 3 + (i % 3);
+            for (int k = 1; k <= tether; k++) {
+                BlockPos cp = off(b, fx, fy - k, fz);
+                if (l.getBlockState(cp).isAir()) setReplace(l, cp, Blocks.CHAIN);
+                else break;
+            }
+            if (i % 2 == 0) setReplace(l, off(b, fx, fy + 2, fz), ModBlocks.HIGHLAND_LENSSTONE);
         }
 
         // Courtyard dressing: banner masts, beacon posts, barracks ruin.
@@ -639,33 +801,49 @@ public final class BiomeStructureFeature {
     private static void drownedCathedral(WorldGenLevel l, BlockPos b, RandomSource r) {
         b = flattenGround(l, b, 17);
         // Sunken nave: a two-step basin of mire, moss, and still black water.
-        fill(l, b, -10, -1, -14, 10, -1, 12, Blocks.AIR);
-        fill(l, b, -10, -2, -14, 10, -2, 12, ModBlocks.VOID_MARSH_SOIL);
-        for (int i = 0; i < 40; i++) {
-            int dx = r.nextInt(21) - 10, dz = r.nextInt(27) - 13;
+        fill(l, b, -10, -1, -14, 10, -1, 14, Blocks.AIR);
+        fill(l, b, -10, -2, -14, 10, -2, 14, ModBlocks.VOID_MARSH_SOIL);
+        for (int i = 0; i < 44; i++) {
+            int dx = r.nextInt(21) - 10, dz = r.nextInt(29) - 14;
             setReplace(l, off(b, dx, -2, dz), r.nextBoolean() ? ModBlocks.MARSH_MOSS : ModBlocks.VOID_MARSH_SOIL);
         }
         // Still pools of dark water gathering in the low places.
-        for (int i = 0; i < 14; i++) {
-            int dx = r.nextInt(19) - 9, dz = r.nextInt(25) - 12;
+        for (int i = 0; i < 16; i++) {
+            int dx = r.nextInt(19) - 9, dz = r.nextInt(27) - 13;
             if (Math.abs(dx) <= 3 && dz >= -4 && dz <= 0) continue; // keep the altar isle dry
             fill(l, b, dx - 1, -2, dz - 1, dx + 1, -2, dz + 1,
                     r.nextBoolean() ? Blocks.WATER : ModBlocks.MARSH_MOSS);
             setReplace(l, off(b, dx, -2, dz), Blocks.WATER);
         }
-        // Rib skeleton: tide iron posts and arch beams marching down the nave.
+        // Rib skeleton: tide iron posts and pointed arches marching down the
+        // nave, each course one step narrower toward a pointed crown.
         for (int z = -12; z <= 12; z += 6) {
             col(l, b, -11, z, -1, 9, ModBlocks.TIDE_IRON);
             col(l, b, 11, z, -1, 9, ModBlocks.TIDE_IRON);
             fill(l, b, -11, 10, z, 11, 10, z, ModBlocks.TIDE_IRON);
-            fill(l, b, -8, 11, z, 8, 11, z, ModBlocks.TIDE_IRON);
-            if (r.nextInt(3) == 0) fill(l, b, -5, 12, z, 5, 12, z, ModBlocks.TIDE_IRON);
+            fill(l, b, -7, 11, z, 7, 11, z, ModBlocks.TIDE_IRON);
+            fill(l, b, -3, 12, z, 3, 12, z, ModBlocks.TIDE_IRON);
+            if (r.nextInt(3) == 0) fill(l, b, -1, 13, z, 1, 13, z, ModBlocks.TIDE_IRON);
             // Lantern chains swaying from the rib beams.
             col(l, b, -6, z + (z >= 0 ? 2 : -2), 8, 9, Blocks.CHAIN);
             setReplace(l, off(b, -6, 7, z + (z >= 0 ? 2 : -2)), ModBlocks.VOID_LAMP);
             col(l, b, 6, z + (z >= 0 ? 2 : -2), 8, 9, Blocks.CHAIN);
             setReplace(l, off(b, 6, 7, z + (z >= 0 ? 2 : -2)), ModBlocks.VOID_LAMP);
         }
+        // West facade: a gable wall with a great broken rose window.
+        for (int x = -8; x <= 8; x++) {
+            for (int y = 1; y <= 9; y++) {
+                if (r.nextInt(5) == 0) continue; // weathered gaps
+                setReplace(l, off(b, x, y, -14), ModBlocks.TIDE_IRON);
+            }
+        }
+        for (int dx = -3; dx <= 3; dx++)
+            for (int dy = -3; dy <= 3; dy++) {
+                int d = dx * dx + dy * dy;
+                if (d <= 9 && d > 4) setReplace(l, off(b, dx, 6 + dy, -14), ModBlocks.VOID_GLASS);
+                if (d <= 4) setReplace(l, off(b, dx, 6 + dy, -14), Blocks.AIR);
+            }
+        setReplace(l, off(b, 0, 6, -14), ModBlocks.DORMANT_RESONANT_CRYSTAL);
         // A drowned sister-tower, snapped off at half height.
         for (int y = -1; y <= 7; y++) {
             int rad = y > 4 ? 2 : 3;
@@ -673,34 +851,38 @@ public final class BiomeStructureFeature {
         }
         disc(l, b, 15, -1, -9, 2, ModBlocks.MARSH_MOSS);
         // Ruined low perimeter courses with weathering gaps.
-        for (int z = -14; z <= 12; z++) {
+        for (int z = -14; z <= 14; z++) {
             if (r.nextInt(4) == 0) continue;
             col(l, b, -12, z, -1, 2, ModBlocks.TIDE_IRON);
             col(l, b, 12, z, -1, 2, ModBlocks.TIDE_IRON);
         }
         // Leaning bell tower rising out of the mire at the north-west flank.
         int lean = 0;
-        for (int y = -1; y <= 16; y++) {
-            lean = Math.max(0, y / 7);
+        for (int y = -1; y <= 20; y++) {
+            lean = Math.max(0, y / 6);
             fill(l, b, -15 + lean, y, 10, -11 + lean, y, 14,
                     y % 6 == 0 ? ModBlocks.MARSH_MOSS : ModBlocks.TIDE_IRON);
             fill(l, b, -14 + lean, y, 11, -12 + lean, y, 13, Blocks.AIR);
         }
-        col(l, b, -13 + 2, 12, 15, 16, Blocks.CHAIN);
-        setReplace(l, off(b, -13 + 2, 14, 12), Blocks.GOLD_BLOCK);
-        setReplace(l, off(b, -13 + 2, 17, 12), ModBlocks.DORMANT_RESONANT_CRYSTAL);
+        col(l, b, -10, 12, 16, 18, Blocks.CHAIN);
+        setReplace(l, off(b, -10, 15, 12), Blocks.GOLD_BLOCK);
+        setReplace(l, off(b, -10, 19, 12), ModBlocks.DORMANT_RESONANT_CRYSTAL);
         // Offerings drowned in the mire at the tower's base: gold and relics.
         setReplace(l, off(b, -11, -2, 15), Blocks.GOLD_BLOCK);
         setReplace(l, off(b, -10, -2, 15), ModBlocks.RESONANT_BLOOM);
         lootChest(l, off(b, -9, -2, 16), r, "chests/marsh_tide_bell");
-        // Central altar island with the mechanism.
+        // Central altar island with the mechanism, flanked by statue plinths.
         fill(l, b, -3, -1, -4, 3, -1, 0, ModBlocks.TIDE_IRON);
         fill(l, b, -2, 0, -3, 2, 0, -1, ModBlocks.VOID_MARSH_SOIL);
         setReplace(l, off(b, 0, 1, -2), Blocks.END_STONE_BRICKS);
         landmarkMechanism(l, off(b, 0, 2, -2), EndRuinVariant.TIDE_BELL);
+        for (int[] plinth : new int[][]{{-4, -3}, {4, -3}}) {
+            col(l, b, plinth[0], plinth[1], 0, 2, ModBlocks.TIDE_IRON);
+            setReplace(l, off(b, plinth[0], 3, plinth[1]), ModBlocks.MARSH_MOSS);
+        }
         placeWarden(l, off(b, -2, 1, -1));
         // Broken pew rows flanking the processional aisle.
-        for (int z = 2; z <= 10; z += 3) {
+        for (int z = 2; z <= 12; z += 3) {
             fill(l, b, -6, -1, z, -4, -1, z, ModBlocks.TIDE_IRON);
             fill(l, b, 4, -1, z, 6, -1, z, ModBlocks.TIDE_IRON);
         }
@@ -712,8 +894,8 @@ public final class BiomeStructureFeature {
         lootBarrel(l, off(b, 13, -2, -5), r, "chests/marsh_tide_bell");
         placeSpawner(l, off(b, 11, -1, -7), ModEntities.MARSH_CRAWLER, r);
         // Reeds taking the nave back.
-        for (int i = 0; i < 16; i++) {
-            int dx = r.nextInt(21) - 10, dz = r.nextInt(25) - 12;
+        for (int i = 0; i < 18; i++) {
+            int dx = r.nextInt(21) - 10, dz = r.nextInt(27) - 13;
             if (r.nextBoolean()) setReplace(l, off(b, dx, -1, dz), ModBlocks.VOID_REED);
         }
         inscribe(l, off(b, 0, 0, 15), InscribedSlateBlock.SYMBOL_EYE);
@@ -729,49 +911,55 @@ public final class BiomeStructureFeature {
         // A floor that glows beneath your feet.
         fill(l, b, -11, 0, -20, 11, 0, 20, ModBlocks.LUMEN_STONE);
         // Glass curtain walls held by lumen pilasters every three blocks.
-        fill(l, b, -10, 1, -19, 10, 13, 19, ModBlocks.VOID_GLASS);
+        fill(l, b, -10, 1, -19, 10, 15, 19, ModBlocks.VOID_GLASS);
         for (int z = -18; z <= 18; z += 3) {
-            col(l, b, -10, z, 1, 14, ModBlocks.LUMEN_STONE);
-            col(l, b, 10, z, 1, 14, ModBlocks.LUMEN_STONE);
+            col(l, b, -10, z, 1, 16, ModBlocks.LUMEN_STONE);
+            col(l, b, 10, z, 1, 16, ModBlocks.LUMEN_STONE);
         }
         for (int x = -9; x <= 9; x += 3) {
-            col(l, b, x, -19, 1, 14, ModBlocks.LUMEN_STONE);
-            col(l, b, x, 19, 1, 14, ModBlocks.LUMEN_STONE);
+            col(l, b, x, -19, 1, 16, ModBlocks.LUMEN_STONE);
+            col(l, b, x, 19, 1, 16, ModBlocks.LUMEN_STONE);
         }
         // Prism cornice and glass ceiling with prismatic ribs.
-        fill(l, b, -10, 13, -19, 10, 13, 19, ModBlocks.PRISM_CANOPY_BLOCK);
+        fill(l, b, -10, 15, -19, 10, 15, 19, ModBlocks.PRISM_CANOPY_BLOCK);
         for (int x = -9; x <= 9; x++)
             for (int z = -18; z <= 18; z++)
                 if ((Math.abs(x) % 3 == 0 || Math.abs(z) % 4 == 0) && r.nextInt(6) != 0)
-                    setReplace(l, off(b, x, 14, z), ModBlocks.PRISM_CANOPY_BLOCK);
+                    setReplace(l, off(b, x, 16, z), ModBlocks.PRISM_CANOPY_BLOCK);
         // Hollow the hall.
-        fill(l, b, -9, 1, -18, 9, 12, 18, Blocks.AIR);
+        fill(l, b, -9, 1, -18, 9, 14, 18, Blocks.AIR);
         // Rose window on the south face with a crystal heart.
-        for (int dx = -3; dx <= 3; dx++)
-            for (int dy = -3; dy <= 3; dy++)
-                if (dx * dx + dy * dy <= 9)
-                    setReplace(l, off(b, dx, 7 + dy, 19),
+        for (int dx = -4; dx <= 4; dx++)
+            for (int dy = -4; dy <= 4; dy++)
+                if (dx * dx + dy * dy <= 16)
+                    setReplace(l, off(b, dx, 8 + dy, 19),
                             (dx == 0 && dy == 0) ? ModBlocks.DORMANT_RESONANT_CRYSTAL : ModBlocks.PALE_CRYSTAL_BLOCK);
         // Twin spires flanking the entrance.
-        buildLumenSpire(l, b, -8, 17, 28);
-        buildLumenSpire(l, b, 8, 17, 28);
+        buildLumenSpire(l, b, -8, 17, 32);
+        buildLumenSpire(l, b, 8, 17, 32);
         // Central lantern spire over the apse.
-        for (int level = 14; level <= 30; level++) {
-            int half = level < 20 ? 3 : level < 26 ? 2 : 1;
-            fill(l, b, -half, level, -19 + (30 - level) / 2, half, level, -15 - (30 - level) / 2,
+        for (int level = 16; level <= 34; level++) {
+            int half = level < 22 ? 3 : level < 28 ? 2 : 1;
+            fill(l, b, -half, level, -19 + (34 - level) / 2, half, level, -15 - (34 - level) / 2,
                     level % 4 == 0 ? ModBlocks.PRISM_CANOPY_BLOCK : ModBlocks.LUMEN_STONE);
         }
-        setReplace(l, off(b, 0, 31, -17), ModBlocks.DORMANT_RESONANT_CRYSTAL);
+        setReplace(l, off(b, 0, 35, -17), ModBlocks.DORMANT_RESONANT_CRYSTAL);
+        setReplace(l, off(b, 0, 36, -17), ModBlocks.LUMEN_GRAFT_BLOCK);
+        // Light pylons standing outside the glass: the grove's lanterns.
+        for (int[] p : new int[][]{{-13, -14}, {13, -14}, {-13, 14}, {13, 14}}) {
+            col(l, b, p[0], p[1], 1, 7, ModBlocks.LUMEN_STONE);
+            setReplace(l, off(b, p[0], 8, p[1]), ModBlocks.LUMEN_GRAFT_BLOCK);
+        }
         // Colonnade, chandeliers, and the aisle carpet.
         for (int z = -14; z <= 14; z += 4) {
-            col(l, b, -5, z, 1, 12, ModBlocks.LUMEN_STONE);
-            col(l, b, 5, z, 1, 12, ModBlocks.LUMEN_STONE);
+            col(l, b, -5, z, 1, 13, ModBlocks.LUMEN_STONE);
+            col(l, b, 5, z, 1, 13, ModBlocks.LUMEN_STONE);
         }
         for (int z = -12; z <= 12; z += 7) {
-            col(l, b, -3, z, 12, 13, Blocks.CHAIN);
-            setReplace(l, off(b, -3, 11, z), ModBlocks.LUMEN_GRAFT_BLOCK);
-            col(l, b, 3, z, 12, 13, Blocks.CHAIN);
-            setReplace(l, off(b, 3, 11, z), ModBlocks.LUMEN_GRAFT_BLOCK);
+            col(l, b, -3, z, 14, 15, Blocks.CHAIN);
+            setReplace(l, off(b, -3, 13, z), ModBlocks.LUMEN_GRAFT_BLOCK);
+            col(l, b, 3, z, 14, 15, Blocks.CHAIN);
+            setReplace(l, off(b, 3, 13, z), ModBlocks.LUMEN_GRAFT_BLOCK);
         }
         fill(l, b, -1, 0, -18, 1, 0, 18, ModBlocks.LUMEN_MOSS);
         // A prismatic inlay marks the crossing of the nave.
@@ -799,15 +987,15 @@ public final class BiomeStructureFeature {
         lootBarrel(l, off(b, 8, 1, 16), r, "chests/prism_canopy");
         lootChest(l, off(b, -8, 1, -17), r, "chests/luminous_lightwell");
         // A lumen moth swarm roosts in the open nave near the chandeliers.
-        placeSpawner(l, off(b, 0, 10, 7), ModEntities.LUMEN_MOTH, r);
+        placeSpawner(l, off(b, 0, 12, 7), ModEntities.LUMEN_MOTH, r);
         placeWarden(l, off(b, 3, 1, -14));
         inscribe(l, off(b, -4, 1, 19), InscribedSlateBlock.SYMBOL_RING);
         inscribe(l, off(b, 4, 1, 19), InscribedSlateBlock.SYMBOL_EYE);
     }
 
     private static void buildLumenSpire(WorldGenLevel l, BlockPos b, int cx, int cz, int top) {
-        for (int y = 14; y <= top; y++) {
-            int half = y < 20 ? 1 : 0;
+        for (int y = 16; y <= top; y++) {
+            int half = y < 22 ? 1 : 0;
             fill(l, b, cx - half, y, cz - half, cx + half, y, cz + half,
                     y % 5 == 0 ? ModBlocks.PRISM_CANOPY_BLOCK : ModBlocks.LUMEN_STONE);
         }
@@ -822,12 +1010,12 @@ public final class BiomeStructureFeature {
         b = flattenGround(l, b, 21);
 
         // Solid root massif up to the future crater floor.
-        for (int y = 0; y <= 8; y++) {
+        for (int y = 0; y <= 9; y++) {
             int rad = coneRadius(y);
             disc(l, b, 0, y, 0, rad, y % 5 == 0 ? ModBlocks.RESONANT_BASALT : ModBlocks.ASH_STONE);
         }
         // Cone shell above, hollowed into a crater bowl.
-        for (int y = 9; y <= 24; y++) {
+        for (int y = 10; y <= 28; y++) {
             int rad = coneRadius(y);
             for (int dx = -rad; dx <= rad; dx++)
                 for (int dz = -rad; dz <= rad; dz++) {
@@ -837,22 +1025,22 @@ public final class BiomeStructureFeature {
                         continue;
                     }
                     Block blk = y % 5 == 0 ? ModBlocks.RESONANT_BASALT
-                            : y >= 22 ? ModBlocks.ASHEN_SOIL : ModBlocks.ASH_STONE;
+                            : y >= 25 ? ModBlocks.ASHEN_SOIL : ModBlocks.ASH_STONE;
                     setReplace(l, off(b, dx, y, dz), blk);
                 }
         }
         // Crater lava lake, hemmed by an obsidian shore so the edge reads as
         // cooled glass over molten rock.
-        int rimY = 9;
+        int rimY = 10;
         int lakeRad = coneRadius(rimY) - 2;
         disc(l, b, 0, rimY, 0, lakeRad + 1, Blocks.OBSIDIAN);
         disc(l, b, 0, rimY, 0, lakeRad, Blocks.LAVA);
         ring(l, b, 0, rimY + 1, 0, lakeRad + 2, Blocks.CRYING_OBSIDIAN);
-        // Lava falls pouring from three rim notches.
-        for (double ang : new double[]{0.4D, 2.4D, 4.6D}) {
+        // Lava falls pouring from four rim notches.
+        for (double ang : new double[]{0.4D, 2.0D, 3.5D, 5.0D}) {
             int nx = (int) Math.round(Math.cos(ang));
             int nz = (int) Math.round(Math.sin(ang));
-            for (int y = 9; y >= 0; y--) {
+            for (int y = 10; y >= 0; y--) {
                 int rr = coneRadius(y) - 1;
                 BlockPos p = off(b, nx * rr, y, nz * rr);
                 setReplace(l, p, Blocks.LAVA);
@@ -861,12 +1049,18 @@ public final class BiomeStructureFeature {
         }
         // Glowing magma crack veins wandering across the slopes.
         double veinAngle = r.nextDouble() * Math.PI * 2.0D;
-        for (int y = 22; y >= 2; y--) {
+        for (int y = 26; y >= 2; y--) {
             int rr = coneRadius(y);
             int vx = (int) Math.round(Math.cos(veinAngle) * (rr - 1));
             int vz = (int) Math.round(Math.sin(veinAngle) * (rr - 1));
             setReplace(l, off(b, vx, y, vz), Blocks.MAGMA_BLOCK);
             veinAngle += (r.nextDouble() - 0.5D) * 0.55D;
+        }
+        // An obsidian spine ridging one flank of the cone.
+        for (int y = 24; y >= 12; y--) {
+            int rr = coneRadius(y);
+            setReplace(l, off(b, rr, y, 0), Blocks.OBSIDIAN);
+            setReplace(l, off(b, rr - 1, y + 1, 1), Blocks.OBSIDIAN);
         }
         // Rivers of lava radiating from the root across the scorched plain.
         // Reach is capped so the height queries can never leave the region.
@@ -890,7 +1084,7 @@ public final class BiomeStructureFeature {
             }
         }
         // Bubbling pools pocking the ash plain around the cone.
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 12; i++) {
             double ang = r.nextDouble() * Math.PI * 2.0D;
             int dist = 17 + r.nextInt(5);
             int px = (int) Math.round(Math.cos(ang) * dist);
@@ -931,9 +1125,8 @@ public final class BiomeStructureFeature {
     }
 
     private static int coneRadius(int y) {
-        return Math.max(3, (int) Math.round(19.0D * Math.pow(1.0D - y / 27.0D, 0.9D)));
+        return Math.max(3, (int) Math.round(21.0D * Math.pow(1.0D - y / 30.0D, 0.9D)));
     }
-
 
     // =====================================================================
     // CRYSTAL BARRENS - the Geode of the Sunken Heart
@@ -942,8 +1135,8 @@ public final class BiomeStructureFeature {
     private static void sunkenGeode(WorldGenLevel l, BlockPos b, RandomSource r) {
         b = flattenGround(l, b, 18);
         // Hemispherical geode shell: dark crystal outside, shard lining within.
-        for (int y = 0; y <= 15; y++) {
-            int rr = (int) Math.floor(Math.sqrt(Math.max(0, 16.0D * 16.0D - y * y)));
+        for (int y = 0; y <= 16; y++) {
+            int rr = (int) Math.floor(Math.sqrt(Math.max(0, 17.0D * 17.0D - y * y)));
             for (int dx = -rr; dx <= rr; dx++)
                 for (int dz = -rr; dz <= rr; dz++) {
                     double d = Math.sqrt(dx * dx + (double) dz * dz);
@@ -953,10 +1146,10 @@ public final class BiomeStructureFeature {
                 }
         }
         // Hollow interior and a south entry arch.
-        fill(l, b, -14, 1, -14, 14, 15, 14, Blocks.AIR);
-        fill(l, b, -2, 1, 12, 2, 4, 16, Blocks.AIR);
+        fill(l, b, -15, 1, -15, 15, 16, 15, Blocks.AIR);
+        fill(l, b, -2, 1, 12, 2, 4, 17, Blocks.AIR);
         // Apex light shaft.
-        fill(l, b, -1, 13, -1, 1, 15, 1, Blocks.AIR);
+        fill(l, b, -1, 14, -1, 1, 16, 1, Blocks.AIR);
         // Sunken pit descending to the heart floor, rimmed in pale crystal.
         fill(l, b, -5, -4, -5, 5, -1, 5, Blocks.AIR);
         fill(l, b, -5, -5, -5, 5, -5, 5, ModBlocks.DARK_CRYSTAL_BLOCK);
@@ -966,12 +1159,12 @@ public final class BiomeStructureFeature {
             fill(l, b, 5 + k, -k - 2, -2, 5 + k, -k - 2, 2, ModBlocks.CRYSTAL_SHARD_BLOCK);
         }
         // The Heart: a luminous monolith of pale and dark crystal.
-        for (int y = -4; y <= 5; y++) {
+        for (int y = -4; y <= 6; y++) {
             Block layer = (y % 2 == 0) ? ModBlocks.PALE_CRYSTAL_BLOCK : ModBlocks.DARK_CRYSTAL_BLOCK;
-            int rad = y > 2 ? 1 : 2;
+            int rad = y > 3 ? 1 : 2;
             fill(l, b, -rad, y, -rad, rad, y, rad, layer);
         }
-        setReplace(l, off(b, 0, 6, 0), ModBlocks.CRYSTAL_CLUSTER);
+        setReplace(l, off(b, 0, 7, 0), ModBlocks.CRYSTAL_CLUSTER);
         // Cluster ring around the pit floor, each rooted in warm lumen light.
         for (int i = 0; i < 10; i++) {
             double ang = i * Math.PI / 5.0D;
@@ -988,18 +1181,35 @@ public final class BiomeStructureFeature {
         // crystal spires, lit from below.
         for (int i = 0; i < 8; i++) {
             double ang = i * Math.PI / 4.0D + 0.39D;
-            int px = (int) Math.round(Math.cos(ang) * 10);
-            int pz = (int) Math.round(Math.sin(ang) * 10);
-            int top = i % 2 == 0 ? 10 : 6;
+            int px = (int) Math.round(Math.cos(ang) * 11);
+            int pz = (int) Math.round(Math.sin(ang) * 11);
+            int top = i % 2 == 0 ? 11 : 6;
             col(l, b, px, pz, 1, top, ModBlocks.PALE_CRYSTAL_BLOCK);
             setReplace(l, off(b, px, top + 1, pz), ModBlocks.CRYSTAL_CLUSTER);
             setReplace(l, off(b, px, 0, pz), ModBlocks.LUMEN_STONE);
         }
         // Two grand spires flanking the Heart itself.
-        col(l, b, -3, 0, -4, 8, ModBlocks.PALE_CRYSTAL_BLOCK);
-        setReplace(l, off(b, -3, 9, 0), ModBlocks.CRYSTAL_CLUSTER);
-        col(l, b, 3, 0, -4, 8, ModBlocks.PALE_CRYSTAL_BLOCK);
-        setReplace(l, off(b, 3, 9, 0), ModBlocks.CRYSTAL_CLUSTER);
+        col(l, b, -3, 0, -4, 9, ModBlocks.PALE_CRYSTAL_BLOCK);
+        setReplace(l, off(b, -3, 10, 0), ModBlocks.CRYSTAL_CLUSTER);
+        col(l, b, 3, 0, -4, 9, ModBlocks.PALE_CRYSTAL_BLOCK);
+        setReplace(l, off(b, 3, 10, 0), ModBlocks.CRYSTAL_CLUSTER);
+        // A ring of shard monoliths standing in the barrens outside the dome.
+        for (int i = 0; i < 8; i++) {
+            double ang = i * Math.PI / 4.0D + 0.2D;
+            int mx = (int) Math.round(Math.cos(ang) * 15);
+            int mz = (int) Math.round(Math.sin(ang) * 15);
+            int h = 4 + (i % 3) * 2;
+            col(l, b, mx, mz, 1, h, i % 2 == 0 ? ModBlocks.DARK_CRYSTAL_BLOCK : ModBlocks.PALE_CRYSTAL_BLOCK);
+            setReplace(l, off(b, mx, h + 1, mz), ModBlocks.CRYSTAL_CLUSTER);
+        }
+        // A hovering halo of shards circles the apex, sheared loose eons ago.
+        for (int i = 0; i < 8; i++) {
+            double ang = i * Math.PI / 4.0D;
+            int hx = (int) Math.round(Math.cos(ang) * (9 + (i % 3) * 2));
+            int hz = (int) Math.round(Math.sin(ang) * (9 + (i % 3) * 2));
+            setReplace(l, off(b, hx, 19 + (i % 4), hz), ModBlocks.CRYSTAL_SHARD_BLOCK);
+            setReplace(l, off(b, hx, 20 + (i % 4), hz), i % 2 == 0 ? ModBlocks.PALE_CRYSTAL_BLOCK : ModBlocks.DARK_CRYSTAL_BLOCK);
+        }
         // Soft growth catching the apex light.
         for (int i = 0; i < 12; i++) {
             double ang = r.nextDouble() * Math.PI * 2.0D;
@@ -1011,11 +1221,11 @@ public final class BiomeStructureFeature {
             setReplace(l, p, r.nextBoolean() ? ModBlocks.LUMEN_MOSS : ModBlocks.CRYSTAL_CLUSTER);
         }
         // Loot alcoves sunk into the shell.
-        fill(l, b, -15, 1, -3, -13, 3, 3, Blocks.AIR);
-        lootChest(l, off(b, -14, 1, 0), r, "chests/crystal_heart");
-        lootBarrel(l, off(b, -14, 1, -2), r, "chests/crystal_heart");
-        lootChest(l, off(b, 13, 1, 6), r, "chests/end_spire_treasure");
-        inscribe(l, off(b, 0, 1, 15), InscribedSlateBlock.SYMBOL_EYE);
+        fill(l, b, -16, 1, -3, -14, 3, 3, Blocks.AIR);
+        lootChest(l, off(b, -15, 1, 0), r, "chests/crystal_heart");
+        lootBarrel(l, off(b, -15, 1, -2), r, "chests/crystal_heart");
+        lootChest(l, off(b, 14, 1, 6), r, "chests/end_spire_treasure");
+        inscribe(l, off(b, 0, 1, 16), InscribedSlateBlock.SYMBOL_EYE);
     }
 
     // =====================================================================
@@ -1025,11 +1235,19 @@ public final class BiomeStructureFeature {
     private static void voidSpire(WorldGenLevel l, BlockPos b, RandomSource r) {
         b = flattenGround(l, b, 19);
 
-        // Plaza terrace with beacon posts marking the cardinal approaches.
+        // Plaza terrace with beacon posts marking the cardinal approaches and
+        // a ring of standing monoliths.
         disc(l, b, 0, 0, 0, 17, ModBlocks.VOID_SLATE);
         for (int[] post : new int[][]{{0, -16}, {0, 16}, {-16, 0}, {16, 0}}) {
             col(l, b, post[0], post[1], 1, 3, ModBlocks.VOID_BRICK);
             setReplace(l, off(b, post[0], 4, post[1]), ModBlocks.VOID_LAMP);
+        }
+        for (int i = 0; i < 6; i++) {
+            double ang = i * Math.PI / 3.0D + 0.5D;
+            int mx = (int) Math.round(Math.cos(ang) * 13);
+            int mz = (int) Math.round(Math.sin(ang) * 13);
+            col(l, b, mx, mz, 1, 3 + (i % 2) * 2, ModBlocks.VOIDSTONE);
+            setReplace(l, off(b, mx, 4 + (i % 2) * 2, mz), ModBlocks.VOID_BRICK);
         }
         for (int i = 0; i < 24; i++) {
             double ang = r.nextDouble() * Math.PI * 2.0D;
@@ -1037,14 +1255,14 @@ public final class BiomeStructureFeature {
             int dz = (int) Math.round(Math.sin(ang) * (8 + r.nextInt(7)));
             setReplace(l, off(b, dx, 0, dz), ModBlocks.UMBRAL_GRASS.defaultBlockState().getBlock());
         }
-        // The spire itself: tapering voidstone shaft, forty blocks tall.
-        for (int y = 1; y <= 36; y++) {
-            int rad = Math.max(2, (int) Math.round(9.0D * Math.pow(1.0D - y / 40.0D, 1.05D)));
+        // The spire shaft: tapering voidstone column, hollow and climbable.
+        for (int y = 1; y <= 32; y++) {
+            int rad = Math.max(3, (int) Math.round(9.0D * Math.pow(1.0D - y / 38.0D, 1.05D)));
             for (int dx = -rad; dx <= rad; dx++)
                 for (int dz = -rad; dz <= rad; dz++) {
                     int d2 = dx * dx + dz * dz;
                     if (d2 > rad * rad) continue;
-                    if (y > 2 && d2 <= (rad - 1) * (rad - 1)) {
+                    if (y > 2 && d2 <= (rad - 2) * (rad - 2)) {
                         setReplace(l, off(b, dx, y, dz), Blocks.AIR); // climbable core
                         continue;
                     }
@@ -1052,7 +1270,7 @@ public final class BiomeStructureFeature {
                 }
         }
         // Spiral ledges up the hollow core.
-        for (int y = 3; y <= 33; y++) {
+        for (int y = 3; y <= 30; y++) {
             double ang = y * 0.6D;
             int lx = (int) Math.round(Math.cos(ang) * 2);
             int lz = (int) Math.round(Math.sin(ang) * 2);
@@ -1072,26 +1290,6 @@ public final class BiomeStructureFeature {
             setReplace(l, off(b, 0, y, spireRadius(y)), ModBlocks.VOID_LAMP);
             setReplace(l, off(b, 0, y, -spireRadius(y)), ModBlocks.VOID_LAMP);
         }
-        // Summit chamber housing the Spire core.
-        fill(l, b, -4, 37, -4, 4, 41, 4, ModBlocks.VOID_BRICK);
-        fill(l, b, -3, 37, -3, 3, 41, 3, Blocks.AIR);
-        for (int[] c : new int[][]{{-3, -3}, {3, -3}, {-3, 3}, {3, 3}}) {
-            col(l, b, c[0], c[1], 42, 43, ModBlocks.VOID_BRICK);
-            setReplace(l, off(b, c[0], 44, c[1]), ModBlocks.VOID_LAMP);
-        }
-        setReplace(l, off(b, 0, 42, 0), Blocks.END_STONE_BRICKS);
-        landmarkMechanism(l, off(b, 0, 43, 0), EndRuinVariant.SPIRE);
-        // Jagged broken crown with shards sheared clean off, hovering where
-        // they broke - the Spire's ancient wound.
-        for (int i = 0; i < 6; i++) {
-            double ang = i * Math.PI / 3.0D;
-            int dx = (int) Math.round(Math.cos(ang) * 3);
-            int dz = (int) Math.round(Math.sin(ang) * 3);
-            col(l, b, dx, dz, 42, 43 + r.nextInt(3), ModBlocks.VOID_BRICK);
-            int sx = (int) Math.round(Math.cos(ang) * (5 + r.nextInt(2)));
-            int sz = (int) Math.round(Math.sin(ang) * (5 + r.nextInt(2)));
-            setReplace(l, off(b, sx, 44 + r.nextInt(3), sz), ModBlocks.VOID_BRICK);
-        }
         // Mid-shaft balcony: a ring walk with railing posts partway up.
         int balY = 20;
         ring(l, b, 0, balY, 0, spireRadius(balY) + 1, ModBlocks.VOID_BRICK);
@@ -1102,22 +1300,66 @@ public final class BiomeStructureFeature {
             col(l, b, rx, rz, balY + 1, balY + 1, ModBlocks.VOID_BRICK);
             if (i % 3 == 0) setReplace(l, off(b, rx, balY + 2, rz), ModBlocks.VOID_LAMP);
         }
+        // The crown of the spire: a vast canopy disc spreading far past the
+        // shaft, layered upward with a raised rim, carried on under-ribs.
+        disc(l, b, 0, 33, 0, 20, ModBlocks.VOID_BRICK);
+        ring(l, b, 0, 34, 0, 19, ModBlocks.VOID_BRICK);   // raised rim
+        disc(l, b, 0, 34, 0, 17, ModBlocks.VOID_SLATE);
+        disc(l, b, 0, 35, 0, 12, ModBlocks.VOID_BRICK);
+        disc(l, b, 0, 36, 0, 7, ModBlocks.VOID_SLATE);
+        disc(l, b, 0, 37, 0, 3, ModBlocks.VOID_BRICK);
+        for (int i = 0; i < 8; i++) {
+            double ang = i * Math.PI / 4.0D;
+            double cos = Math.cos(ang), sin = Math.sin(ang);
+            for (int k = 8; k <= 19; k++) {
+                setReplace(l, off(b, (int) Math.round(cos * k), 32, (int) Math.round(sin * k)), ModBlocks.VOID_BRICK);
+            }
+        }
+        // Lamp tendrils swaying beneath the canopy rim.
+        for (int i = 0; i < 12; i++) {
+            double ang = i * 2.0D * Math.PI / 12.0D + 0.26D;
+            int dx = (int) Math.round(Math.cos(ang) * (14 + (i % 3) * 2));
+            int dz = (int) Math.round(Math.sin(ang) * (14 + (i % 3) * 2));
+            int len = 2 + (i % 3);
+            hangColumn(l, b, dx, 32, dz, len, Blocks.CHAIN);
+            setReplace(l, off(b, dx, 32 - len, dz), ModBlocks.VOID_LAMP);
+        }
+        // Summit chamber housing the Spire core, above the canopy.
+        fill(l, b, -4, 38, -4, 4, 42, 4, ModBlocks.VOID_BRICK);
+        fill(l, b, -3, 38, -3, 3, 42, 3, Blocks.AIR);
+        for (int[] c : new int[][]{{-3, -3}, {3, -3}, {-3, 3}, {3, 3}}) {
+            col(l, b, c[0], c[1], 43, 44, ModBlocks.VOID_BRICK);
+            setReplace(l, off(b, c[0], 45, c[1]), ModBlocks.VOID_LAMP);
+        }
+        setReplace(l, off(b, 0, 43, 0), Blocks.END_STONE_BRICKS);
+        landmarkMechanism(l, off(b, 0, 44, 0), EndRuinVariant.SPIRE);
+        // Jagged broken crown with shards sheared clean off, hovering where
+        // they broke - the Spire's ancient wound.
+        for (int i = 0; i < 6; i++) {
+            double ang = i * Math.PI / 3.0D;
+            int dx = (int) Math.round(Math.cos(ang) * 3);
+            int dz = (int) Math.round(Math.sin(ang) * 3);
+            col(l, b, dx, dz, 43, 44 + r.nextInt(3), ModBlocks.VOID_BRICK);
+            int sx = (int) Math.round(Math.cos(ang) * (5 + r.nextInt(2)));
+            int sz = (int) Math.round(Math.sin(ang) * (5 + r.nextInt(2)));
+            setReplace(l, off(b, sx, 45 + r.nextInt(3), sz), ModBlocks.VOID_BRICK);
+        }
         // Entry arch and markers; a void stalker lairs on the balcony ring,
         // ambushing climbers halfway up the shaft.
         fill(l, b, -2, 1, 8, 2, 4, 8, Blocks.AIR);
         col(l, b, -3, 8, 1, 5, ModBlocks.VOID_BRICK);
         col(l, b, 3, 8, 1, 5, ModBlocks.VOID_BRICK);
         placeSpawner(l, off(b, spireRadius(balY) - 1, balY + 1, 0), ModEntities.VOID_STALKER, r);
-        placeWarden(l, off(b, 0, 38, 1));
-        lootChest(l, off(b, 3, 38, 3), r, "chests/end_spire");
-        lootBarrel(l, off(b, -3, 38, 3), r, "chests/end_spire");
-        lootChest(l, off(b, 0, 38, -3), r, "chests/end_spire_treasure");
+        placeWarden(l, off(b, 0, 39, 1));
+        lootChest(l, off(b, 3, 39, 3), r, "chests/end_spire");
+        lootBarrel(l, off(b, -3, 39, 3), r, "chests/end_spire");
+        lootChest(l, off(b, 0, 39, -3), r, "chests/end_spire_treasure");
         inscribe(l, off(b, -4, 1, 9), InscribedSlateBlock.SYMBOL_SPIRE);
         inscribe(l, off(b, 4, 1, 9), InscribedSlateBlock.SYMBOL_RING);
     }
 
     private static int spireRadius(int y) {
-        return Math.max(2, (int) Math.round(9.0D * Math.pow(1.0D - y / 40.0D, 1.05D)));
+        return Math.max(3, (int) Math.round(9.0D * Math.pow(1.0D - y / 38.0D, 1.05D)));
     }
 
     // =====================================================================
@@ -1126,38 +1368,39 @@ public final class BiomeStructureFeature {
 
     private static void crownObservatory(WorldGenLevel l, BlockPos b, RandomSource r) {
         b = flattenGround(l, b, 19);
-        // Three stepped tiers of the ziggurat.
-        fill(l, b, -15, 0, -15, 15, 4, 15, ModBlocks.UMBRAL_STONE);
-        fill(l, b, -15, 5, -15, 15, 5, 15, ModBlocks.VOID_SLATE);
-        fill(l, b, -10, 6, -10, 10, 10, 10, ModBlocks.VOID_SLATE);
-        fill(l, b, -10, 11, -10, 10, 11, 10, ModBlocks.UMBRAL_STONE);
-        fill(l, b, -6, 12, -6, 6, 14, 6, ModBlocks.UMBRAL_STONE);
-        fill(l, b, -6, 15, -6, 6, 15, 6, ModBlocks.VOID_SLATE);
+        // Four stepped tiers of the ziggurat.
+        fill(l, b, -16, 0, -16, 16, 4, 16, ModBlocks.UMBRAL_STONE);
+        fill(l, b, -16, 5, -16, 16, 5, 16, ModBlocks.VOID_SLATE);
+        fill(l, b, -11, 6, -11, 11, 10, 11, ModBlocks.VOID_SLATE);
+        fill(l, b, -11, 11, -11, 11, 11, 11, ModBlocks.UMBRAL_STONE);
+        fill(l, b, -7, 12, -7, 7, 15, 7, ModBlocks.UMBRAL_STONE);
+        fill(l, b, -7, 15, -7, 7, 15, 7, ModBlocks.VOID_SLATE);
         // Grand stair climbing the southern faces, inlaid with seal blocks.
         for (int s = 0; s < 5; s++) {
-            fill(l, b, -2, 1 + s, 15 - s, 2, 1 + s, 16 - s, ModBlocks.VOID_SLATE);
-            fill(l, b, -2, 6 + s, 10 - s, 2, 6 + s, 11 - s, ModBlocks.VOID_SLATE);
-            fill(l, b, -2, 11 + s, 6 - s, 2, 11 + s, 7 - s, ModBlocks.VOID_SLATE);
-            if (s % 2 == 0) setReplace(l, off(b, 0, 1 + s, 15 - s), ModBlocks.CROWN_SEAL_BLOCK);
-            if (s % 2 == 0) setReplace(l, off(b, 0, 6 + s, 10 - s), ModBlocks.CROWN_SEAL_BLOCK);
+            fill(l, b, -2, 1 + s, 16 - s, 2, 1 + s, 17 - s, ModBlocks.VOID_SLATE);
+            fill(l, b, -2, 6 + s, 11 - s, 2, 6 + s, 12 - s, ModBlocks.VOID_SLATE);
+            fill(l, b, -2, 11 + s, 7 - s, 2, 11 + s, 8 - s, ModBlocks.VOID_SLATE);
+            if (s % 2 == 0) setReplace(l, off(b, 0, 1 + s, 16 - s), ModBlocks.CROWN_SEAL_BLOCK);
+            if (s % 2 == 0) setReplace(l, off(b, 0, 6 + s, 11 - s), ModBlocks.CROWN_SEAL_BLOCK);
         }
         // Corner needles crowned with crown-needle blocks.
-        for (int[] c : new int[][]{{-14, -14}, {14, -14}, {-14, 14}, {14, 14}}) {
-            col(l, b, c[0], c[1], 6, 16, ModBlocks.VOID_BRICK);
-            setReplace(l, off(b, c[0], 17, c[1]), ModBlocks.CROWN_NEEDLE_BLOCK);
+        for (int[] c : new int[][]{{-15, -15}, {15, -15}, {-15, 15}, {15, 15}}) {
+            col(l, b, c[0], c[1], 6, 18, ModBlocks.VOID_BRICK);
+            setReplace(l, off(b, c[0], 19, c[1]), ModBlocks.CROWN_NEEDLE_BLOCK);
         }
         // Watch tower with a balcony ring.
-        for (int y = 16; y <= 27; y++) {
-            int rr = y > 24 ? 3 : 4;
+        for (int y = 16; y <= 30; y++) {
+            int rr = y > 27 ? 3 : 4;
             ring(l, b, 0, y, 0, rr, y % 5 == 0 ? ModBlocks.VOID_BRICK : ModBlocks.VOIDSTONE);
-            if (y < 24) disc(l, b, 0, y, 0, rr - 1, Blocks.AIR);
+            if (y < 27) disc(l, b, 0, y, 0, rr - 1, Blocks.AIR);
         }
-        disc(l, b, 0, 20, 0, 6, ModBlocks.VOID_SLATE);
+        disc(l, b, 0, 21, 0, 6, ModBlocks.VOID_SLATE);
         for (int i = 0; i < 12; i++) {
             double ang = i * Math.PI / 6.0D;
             int rx = (int) Math.round(Math.cos(ang) * 6);
             int rz = (int) Math.round(Math.sin(ang) * 6);
-            col(l, b, rx, rz, 21, 22, ModBlocks.VOID_BRICK);
+            col(l, b, rx, rz, 22, 23, ModBlocks.VOID_BRICK);
+            if (i % 4 == 0) setReplace(l, off(b, rx, 24, rz), ModBlocks.VOID_LAMP);
         }
         // The sealed observation orb: glass shell over a seal-lattice core.
         for (int dy = -3; dy <= 3; dy++) {
@@ -1166,30 +1409,35 @@ public final class BiomeStructureFeature {
                 for (int dz = -hr; dz <= hr; dz++) {
                     double d = Math.sqrt(dx * dx + dz * dz);
                     if (d > hr) continue;
-                    if (d > hr - 1.2D) setReplace(l, off(b, dx, 28 + dy, dz), ModBlocks.VOID_GLASS);
-                    else if ((dx + dy + dz) % 2 == 0) setReplace(l, off(b, dx, 28 + dy, dz), ModBlocks.CROWN_SEAL_BLOCK);
+                    if (d > hr - 1.2D) setReplace(l, off(b, dx, 32 + dy, dz), ModBlocks.VOID_GLASS);
+                    else if ((dx + dy + dz) % 2 == 0) setReplace(l, off(b, dx, 32 + dy, dz), ModBlocks.CROWN_SEAL_BLOCK);
                 }
         }
-        col(l, b, 0, 0, 25, 27, ModBlocks.UMBRAL_STONE);
-        setReplace(l, off(b, 0, 28, 0), Blocks.END_STONE_BRICKS);
-        landmarkMechanism(l, off(b, 0, 29, 0), EndRuinVariant.CROWN_OBSERVATORY);
-        setReplace(l, off(b, 0, 32, 0), ModBlocks.CROWN_SEAL_BLOCK);
+        col(l, b, 0, 0, 28, 31, ModBlocks.UMBRAL_STONE);
+        setReplace(l, off(b, 0, 31, 0), Blocks.END_STONE_BRICKS);
+        landmarkMechanism(l, off(b, 0, 32, 0), EndRuinVariant.CROWN_OBSERVATORY);
+        setReplace(l, off(b, 0, 36, 0), ModBlocks.CROWN_SEAL_BLOCK);
+        // Orbiting seal fragments sheared from the orb, hovering in place.
+        for (int[] o : new int[][]{{6, 0}, {-6, 0}, {0, 6}, {0, -6}}) {
+            setReplace(l, off(b, o[0], 33, o[1]), ModBlocks.CROWN_SEAL_BLOCK);
+            setReplace(l, off(b, o[0], 34, o[1]), ModBlocks.VOID_GLASS);
+        }
         // Garden tufts along the tier rims.
         for (int i = 0; i < 20; i++) {
             double ang = r.nextDouble() * Math.PI * 2.0D;
-            int dx = (int) Math.round(Math.cos(ang) * (11 + r.nextInt(4)));
-            int dz = (int) Math.round(Math.sin(ang) * (11 + r.nextInt(4)));
+            int dx = (int) Math.round(Math.cos(ang) * (12 + r.nextInt(4)));
+            int dz = (int) Math.round(Math.sin(ang) * (12 + r.nextInt(4)));
             if (Math.abs(dx) > 15 || Math.abs(dz) > 15) continue;
             setReplace(l, off(b, dx, 6, dz), ModBlocks.UMBRAL_GRASS);
         }
-        lootChest(l, off(b, 12, 1, 12), r, "chests/crown_observatory");
-        lootBarrel(l, off(b, -12, 1, 12), r, "chests/crownstep_procession");
+        lootChest(l, off(b, 13, 1, 13), r, "chests/crown_observatory");
+        lootBarrel(l, off(b, -13, 1, 13), r, "chests/crownstep_procession");
         lootChest(l, off(b, 3, 13, -3), r, "chests/crownstep_procession");
         // A crown sentinel stands eternal watch on the second-tier walk.
         placeSpawner(l, off(b, 6, 12, 0), ModEntities.CROWN_SENTINEL, r);
         placeWarden(l, off(b, -8, 12, 8));
-        inscribe(l, off(b, -3, 6, 14), InscribedSlateBlock.SYMBOL_SPIRE);
-        inscribe(l, off(b, 3, 6, 14), InscribedSlateBlock.SYMBOL_EYE);
+        inscribe(l, off(b, -3, 6, 15), InscribedSlateBlock.SYMBOL_SPIRE);
+        inscribe(l, off(b, 3, 6, 15), InscribedSlateBlock.SYMBOL_EYE);
     }
 
     // =====================================================================
@@ -1202,21 +1450,26 @@ public final class BiomeStructureFeature {
         disc(l, b, 0, 0, 0, 15, ModBlocks.VOID_SOIL);
         fill(l, b, -1, 0, 6, 1, 0, 14, ModBlocks.VOID_WEAVE);
         // Blind facade: a windowless monolithic hall.
-        fill(l, b, -13, 1, -13, 13, 16, 13, ModBlocks.VOIDSTONE);
-        fill(l, b, -12, 1, -12, 12, 15, 12, Blocks.AIR);
+        fill(l, b, -13, 1, -13, 13, 19, 13, ModBlocks.VOIDSTONE);
+        fill(l, b, -12, 1, -12, 12, 18, 12, Blocks.AIR);
         for (int i = -12; i <= 12; i += 4) {
-            col(l, b, i, -13, 1, 16, ModBlocks.NULL_ARCHIVE_FRAME);
-            col(l, b, i, 13, 1, 16, ModBlocks.NULL_ARCHIVE_FRAME);
-            col(l, b, -13, i, 1, 16, ModBlocks.NULL_ARCHIVE_FRAME);
-            col(l, b, 13, i, 1, 16, ModBlocks.NULL_ARCHIVE_FRAME);
+            col(l, b, i, -13, 1, 19, ModBlocks.NULL_ARCHIVE_FRAME);
+            col(l, b, i, 13, 1, 19, ModBlocks.NULL_ARCHIVE_FRAME);
+            col(l, b, -13, i, 1, 19, ModBlocks.NULL_ARCHIVE_FRAME);
+            col(l, b, 13, i, 1, 19, ModBlocks.NULL_ARCHIVE_FRAME);
         }
         // Corbelled roof closing to a threshold-core table.
-        fill(l, b, -13, 17, -13, 13, 17, 13, ModBlocks.VOIDSTONE);
-        fill(l, b, -11, 18, -11, 11, 18, 11, ModBlocks.VOIDSTONE);
-        fill(l, b, -9, 19, -9, 9, 19, 9, ModBlocks.VOIDSTONE);
+        fill(l, b, -13, 20, -13, 13, 20, 13, ModBlocks.VOIDSTONE);
+        fill(l, b, -11, 21, -11, 11, 21, 11, ModBlocks.VOIDSTONE);
+        fill(l, b, -9, 22, -9, 9, 22, 9, ModBlocks.VOIDSTONE);
         for (int x = -8; x <= 8; x += 4)
             for (int z = -8; z <= 8; z += 4)
-                setReplace(l, off(b, x, 20, z), ModBlocks.THRESHOLD_CORE_BLOCK);
+                setReplace(l, off(b, x, 23, z), ModBlocks.THRESHOLD_CORE_BLOCK);
+        // The severed crown: two frame rings hover above the hall, the
+        // archive's unfinished spire still assembling itself in the dark.
+        ring(l, b, 0, 26, 0, 5, ModBlocks.NULL_ARCHIVE_FRAME);
+        ring(l, b, 0, 28, 0, 3, ModBlocks.NULL_ARCHIVE_FRAME);
+        setReplace(l, off(b, 0, 28, 0), ModBlocks.THRESHOLD_CORE_BLOCK);
         // Sole entrance: a recessed threshold portal facing south.
         fill(l, b, -1, 1, 13, 1, 5, 13, Blocks.AIR);
         col(l, b, -2, 13, 1, 6, ModBlocks.THRESHOLD_CORE_BLOCK);
@@ -1227,7 +1480,7 @@ public final class BiomeStructureFeature {
             for (int z = -10; z <= 10; z += 4) {
                 if (Math.abs(x) <= 2 && Math.abs(z) <= 2) continue;
                 col(l, b, x, z, 1, 2, ModBlocks.NULL_ARCHIVE_FRAME);
-                col(l, b, x, z, 3, 4, ModBlocks.NULL_ARCHIVE_FRAME);
+                col(l, b, x, z, 3, 5, ModBlocks.NULL_ARCHIVE_FRAME);
             }
         fill(l, b, -1, 1, -10, 1, 1, 10, ModBlocks.VOID_WEAVE);
         // The well shaft descending to the sealed core rotunda.

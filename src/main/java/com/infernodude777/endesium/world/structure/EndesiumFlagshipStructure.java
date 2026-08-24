@@ -42,8 +42,8 @@ public final class EndesiumFlagshipStructure extends Structure {
 					settingsCodec(instance)
 			).apply(instance, EndesiumFlagshipStructure::new));
 
-	/** Half-extent of the piece box: footprint radius + probe ring margin. */
-	private static final int BOX_MARGIN = BiomeStructureFeature.MAX_FOOTPRINT_RADIUS + 6;
+	/** Half-extent of the piece box: build extent plus a probe ring margin. */
+	private static final int BOX_MARGIN = BiomeStructureFeature.MAX_BUILD_EXTENT + 3;
 
 	private final int region;
 
@@ -59,10 +59,31 @@ public final class EndesiumFlagshipStructure extends Structure {
 		long d2 = (long) chunkPos.x * chunkPos.x + (long) chunkPos.z * chunkPos.z;
 		if (d2 < 100L) return Optional.empty();
 
-		if (!regionMatches(context, chunkPos)) return Optional.empty();
+		if (!siteSupportsStructure(context, chunkPos)) return Optional.empty();
 
 		return onTopOfChunkCenter(context, Heightmap.Types.WORLD_SURFACE_WG,
 				builder -> generatePieces(builder, context));
+	}
+
+	/**
+	 * Runs the piece's exact site checks against the noise surface, so /locate
+	 * and structure-set placement can only ever report candidates the piece
+	 * will actually build. This is the fix for locate pointing at empty
+	 * terrain: both paths call this same method, and it now refuses anything
+	 * the piece would refuse.
+	 */
+	private boolean siteSupportsStructure(GenerationContext context, ChunkPos chunkPos) {
+		int centerX = chunkPos.getMiddleBlockX();
+		int centerZ = chunkPos.getMiddleBlockZ();
+		try {
+			int surfaceY = context.chunkGenerator().getFirstOccupiedHeight(centerX, centerZ,
+					Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState());
+			return BiomeStructureFeature.siteValid(context, centerX, centerZ, surfaceY, region);
+		} catch (Exception e) {
+			// Noise queries should never throw; if one does, fall back to the
+			// cheap region check rather than blinding locate entirely.
+			return regionMatches(context, chunkPos);
+		}
 	}
 
 	private void generatePieces(StructurePiecesBuilder builder, GenerationContext context) {
@@ -78,7 +99,7 @@ public final class EndesiumFlagshipStructure extends Structure {
 				centerX, centerZ, region));
 	}
 
-	/** Best-effort biome gate so /locate only reports viable candidates. */
+	/** Best-effort biome gate used only as an exception fallback. */
 	private boolean regionMatches(GenerationContext context, ChunkPos chunkPos) {
 		try {
 			int qx = QuartPos.fromBlock(chunkPos.getMiddleBlockX());

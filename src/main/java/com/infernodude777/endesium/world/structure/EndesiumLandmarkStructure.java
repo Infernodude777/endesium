@@ -37,7 +37,7 @@ public final class EndesiumLandmarkStructure extends Structure {
 			).apply(instance, EndesiumLandmarkStructure::new));
 
 	/** Landmark footprints are compact; a small box margin covers them. */
-	private static final int BOX_MARGIN = 20;
+	private static final int BOX_MARGIN = 22;
 
 	private final int region;
 
@@ -52,10 +52,27 @@ public final class EndesiumLandmarkStructure extends Structure {
 		long d2 = (long) chunkPos.x * chunkPos.x + (long) chunkPos.z * chunkPos.z;
 		if (d2 < 100L) return Optional.empty();
 
-		if (!regionMatches(context, chunkPos)) return Optional.empty();
+		if (!siteSupportsStructure(context, chunkPos)) return Optional.empty();
 
 		return onTopOfChunkCenter(context, Heightmap.Types.WORLD_SURFACE_WG,
 				builder -> generatePieces(builder, context));
+	}
+
+	/**
+	 * Runs the piece's exact site checks against the noise surface, so /locate
+	 * and structure-set placement can only ever report candidates the piece
+	 * will actually build (see the flagship structure for the full rationale).
+	 */
+	private boolean siteSupportsStructure(GenerationContext context, ChunkPos chunkPos) {
+		int centerX = chunkPos.getMiddleBlockX();
+		int centerZ = chunkPos.getMiddleBlockZ();
+		try {
+			int surfaceY = context.chunkGenerator().getFirstOccupiedHeight(centerX, centerZ,
+					Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState());
+			return RegionLandmarkFeature.siteValid(context, centerX, centerZ, surfaceY, region);
+		} catch (Exception e) {
+			return regionMatches(context, chunkPos);
+		}
 	}
 
 	private void generatePieces(StructurePiecesBuilder builder, GenerationContext context) {
