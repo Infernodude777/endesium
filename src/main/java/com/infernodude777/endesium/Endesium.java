@@ -49,6 +49,8 @@ public class Endesium implements ModInitializer {
 	public void onInitialize() {
 		ModBlocks.register();
 		ModItems.register();
+		com.infernodude777.endesium.item.EndgearMaterials.register();
+		com.infernodude777.endesium.registry.ModEndgear.register();
 		ModItemGroups.register();
 		ModEntities.register();
 		ModBlockEntities.register();

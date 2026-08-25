@@ -125,6 +125,11 @@ public final class ModEndgear {
 									EquipmentSlotGroup.CHEST)
 							.build())));
 
+	public static void register() {
+		// Trigger static init: registers all 27 gear items + Dragon Wings.
+		// Must be called during onInitialize before the registry freezes.
+	}
+
 	private ModEndgear() {
 	}
 }

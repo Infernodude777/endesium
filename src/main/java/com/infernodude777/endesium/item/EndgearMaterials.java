@@ -169,4 +169,9 @@ public final class EndgearMaterials {
 			return Ingredient.of(ModItems.UMBRAL_SHARD);
 		}
 	}
+
+	public static void register() {
+		// Trigger static init: registers LUMINOUS and NULL armor materials.
+		// Must be called during onInitialize before the registry freezes.
+	}
 }
