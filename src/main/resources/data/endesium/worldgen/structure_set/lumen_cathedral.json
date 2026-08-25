@@ -1,12 +1,15 @@
 {
   "structures": [
-    {"structure": "endesium:lumen_cathedral", "weight": 1}
+    {
+      "structure": "endesium:lumen_cathedral",
+      "weight": 1
+    }
   ],
   "placement": {
     "type": "minecraft:random_spread",
-    "salt": 1182897011,
-    "spacing": 24,
-    "separation": 8,
+    "salt": 1182857419,
+    "spacing": 48,
+    "separation": 20,
     "spread_type": "linear"
   }
 }

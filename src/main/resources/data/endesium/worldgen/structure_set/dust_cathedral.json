@@ -1,12 +1,15 @@
 {
   "structures": [
-    {"structure": "endesium:dust_cathedral", "weight": 1}
+    {
+      "structure": "endesium:dust_cathedral",
+      "weight": 1
+    }
   ],
   "placement": {
     "type": "minecraft:random_spread",
-    "salt": 1182865335,
-    "spacing": 24,
-    "separation": 8,
+    "salt": 1182857416,
+    "spacing": 48,
+    "separation": 20,
     "spread_type": "linear"
   }
 }

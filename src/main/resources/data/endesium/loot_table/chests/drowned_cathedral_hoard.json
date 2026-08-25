@@ -1,0 +1,39 @@
+{
+  "pools": [
+    {
+      "rolls": 3,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:null_hoe",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:null_leggings",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:null_helmet",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:echo_shard",
+          "weight": 6
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:resonance_token",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:abyssal_thread",
+          "weight": 4
+        }
+      ]
+    }
+  ]
+}

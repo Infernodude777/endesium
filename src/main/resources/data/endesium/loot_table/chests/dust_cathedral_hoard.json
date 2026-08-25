@@ -1,0 +1,39 @@
+{
+  "pools": [
+    {
+      "rolls": 3,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:null_sword",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:null_chestplate",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:null_boots",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:dragonbone",
+          "weight": 8
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:resonance_token",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:void_gem",
+          "weight": 2
+        }
+      ]
+    }
+  ]
+}

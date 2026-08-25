@@ -2,6 +2,7 @@ package com.infernodude777.endesium.client.mixin;
 
 import com.infernodude777.endesium.Endesium;
 import com.infernodude777.endesium.registry.ModItems;
+import com.infernodude777.endesium.registry.ModEndgear;
 import net.minecraft.client.renderer.entity.layers.ElytraLayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -31,6 +32,9 @@ public abstract class ElytraLayerMixin {
 	@Unique
 	private static final ResourceLocation RESONANT_WINGS_TEXTURE =
 			Endesium.id("textures/entity/resonant_wings.png");
+	@Unique
+	private static final ResourceLocation DRAGON_WINGS_TEXTURE =
+			Endesium.id("textures/entity/dragon_wings.png");
 
 	@Unique
 	private LivingEntity endesium$renderingEntity;
@@ -59,6 +63,9 @@ public abstract class ElytraLayerMixin {
 	private ResourceLocation endesium$swapWingTexture() {
 		if (endesium$renderingEntity != null) {
 			ItemStack chest = endesium$renderingEntity.getItemBySlot(EquipmentSlot.CHEST);
+			if (chest.is(ModEndgear.DRAGON_WINGS)) {
+				return DRAGON_WINGS_TEXTURE;
+			}
 			if (chest.is(ModItems.RESONANT_WINGS)) {
 				return RESONANT_WINGS_TEXTURE;
 			}

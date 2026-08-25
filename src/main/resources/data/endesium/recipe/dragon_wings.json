@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "RSR",
+    "DHD",
+    "RSR"
+  ],
+  "key": {
+    "R": {
+      "items": [
+        "endesium:resonant_dragon_scale"
+      ]
+    },
+    "S": {
+      "items": [
+        "endesium:void_shard"
+      ]
+    },
+    "D": {
+      "items": [
+        "endesium:dragon_heart"
+      ]
+    },
+    "H": {
+      "items": [
+        "endesium:resonant_wings"
+      ]
+    }
+  },
+  "result": {
+    "id": "endesium:dragon_wings",
+    "count": 1
+  }
+}

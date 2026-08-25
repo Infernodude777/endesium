@@ -29,6 +29,7 @@ import com.infernodude777.endesium.registry.ModBlocks;
 import com.infernodude777.endesium.registry.ModEntities;
 import com.infernodude777.endesium.registry.ModItemGroups;
 import com.infernodude777.endesium.registry.ModItems;
+import com.infernodude777.endesium.registry.ModEndgear;
 import com.infernodude777.endesium.registry.ModSounds;
 import com.infernodude777.endesium.resonance.ResonanceSystem;
 import com.infernodude777.endesium.world.ModWorldgen;
@@ -67,6 +68,10 @@ public class Endesium implements ModInitializer {
 		FabricDefaultAttributeRegistry.register(ModEntities.END_WARDEN, EndWardenEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(ModEntities.END_GOLEM, EndGolemEntity.createAttributes());
 		ModWorldgen.register();
+		com.infernodude777.endesium.gear.GearAbilities.register();
+		EntityElytraEvents.CUSTOM.register((entity, tickElytra) ->
+				entity instanceof net.minecraft.world.entity.LivingEntity living
+						&& living.getItemBySlot(EquipmentSlot.CHEST).is(ModEndgear.DRAGON_WINGS));
 		com.infernodude777.endesium.registry.ModMenus.register();
 		EndesiumCommands.register();
 		EndesiumPackets.register();

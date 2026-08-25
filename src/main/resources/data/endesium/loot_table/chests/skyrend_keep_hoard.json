@@ -1,0 +1,39 @@
+{
+  "pools": [
+    {
+      "rolls": 3,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:ash_sword",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:ash_chestplate",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:ash_helmet",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:dragon_fang",
+          "weight": 6
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:resonance_token",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:magma_core",
+          "weight": 2
+        }
+      ]
+    }
+  ]
+}

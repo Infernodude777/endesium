@@ -18,6 +18,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -96,6 +97,10 @@ public final class BiomeStructureFeature extends Feature<NoneFeatureConfiguratio
 				default -> {
 					return false;
 				}
+			}
+			if (level instanceof ServerLevel serverLevel) {
+				StructureMinibosses.spawn(serverLevel, origin, region);
+				StructureDressing.decorate(serverLevel, origin, region);
 			}
 		} catch (Exception e) {
 			com.infernodude777.endesium.Endesium.LOGGER.error(

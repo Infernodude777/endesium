@@ -1,0 +1,39 @@
+{
+  "pools": [
+    {
+      "rolls": 3,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:luminous_sword",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:luminous_chestplate",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:luminous_helmet",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:lumen_dust",
+          "weight": 12
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:resonance_token",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "endesium:pale_crystal_block",
+          "weight": 4
+        }
+      ]
+    }
+  ]
+}
