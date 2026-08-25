@@ -48,6 +48,8 @@ public final class DragonAssaultHandler {
 	private static final AABB ARENA_BOX = new AABB(-256.0D, 0.0D, -256.0D, 256.0D, 256.0D, 256.0D);
 
 	private static final Map<net.minecraft.resources.ResourceKey<Level>, FightState> STATES = new HashMap<>();
+	/** Dragons already given the final-boss health buff. */
+	private static final java.util.Set<java.util.UUID> BUFFED_DRAGONS = new java.util.HashSet<>();
 
 	private DragonAssaultHandler() {
 	}
@@ -92,6 +94,18 @@ public final class DragonAssaultHandler {
 		EnderDragon dragon = dragons.get(0);
 		state.active = true;
 		state.lastDragonPos = dragon.blockPosition();
+		// Final boss buff: the dragon opens at 600 health (vanilla 200). The
+		// buff applies once, at full health, so a saved mid-fight dragon is
+		// never re-healed by a reload.
+		if (!BUFFED_DRAGONS.contains(dragon.getUUID())
+				&& dragon.getHealth() >= dragon.getMaxHealth() - 0.01D) {
+			BUFFED_DRAGONS.add(dragon.getUUID());
+			var endesium$hp = dragon.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+			if (endesium$hp != null) {
+				endesium$hp.setBaseValue(600.0D);
+			}
+			dragon.setHealth(600.0F);
+		}
 
 		int crystals = level.getEntitiesOfClass(EndCrystal.class, ARENA_BOX,
 				crystal -> crystal.distanceToSqr(0.0D, 64.0D, 0.0D) < ARENA_CRYSTAL_RADIUS_SQR).size();
@@ -119,10 +133,12 @@ public final class DragonAssaultHandler {
 
 		if (state.enrageLevel >= 2 && --state.breathDelay <= 0) {
 			state.breathDelay = 12;
+			state.breathDelay = 10;
 			spawnBreathCloud(level, dragon);
 		}
 		if (state.enrageLevel >= 1 && --state.waveDelay <= 0) {
 			state.waveDelay = Math.max(4, 16 - state.enrageLevel * 4);
+			state.waveDelay = Math.max(3, 12 - state.enrageLevel * 3);
 			spawnWave(level, dragon, state.enrageLevel);
 		}
 	}
@@ -138,6 +154,7 @@ public final class DragonAssaultHandler {
 		int alive = level.getEntitiesOfClass(VoidWispEntity.class,
 				dragon.getBoundingBox().inflate(128.0D), wisp -> true).size();
 		int wanted = Math.min(MAX_ADDS - alive, 1 + enrage);
+		wanted = Math.min(MAX_ADDS - alive, 2 + enrage);
 		if (wanted <= 0) {
 			return;
 		}

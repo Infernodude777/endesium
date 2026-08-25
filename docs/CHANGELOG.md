@@ -118,3 +118,13 @@
 - Column fills are stratified (ground cap, dithered transition band, substrate) with slope-aware faces - steep grades expose rock, gentle grades keep soil - and a one-block apron plus relaxation pass keeps surfaces continuous across chunk borders.
 - Carving only removes loose natural geology (end stone + region ground/substrate) and stops at structure shells or placed machinery, so structures and terrain coexist cleanly.
 - Structure builders are untouched: all twenty builds are byte-identical to their previous appearance.
+
+## [Unreleased] - Boss hard mode pass
+
+### Changed
+- End Warden: 300 HP (was 80), 16 damage (was 9), 14 armor + 4 toughness, 64-block aggro range (was 32), faster movement, attack knockback, 150 XP (was 35).
+- Enrage is now a real phase: damage 20, speed 0.36, permanent for the fight.
+- Special cooldowns nearly halved; every special attack hits harder; a second minion wave spawns below one-third health.
+- Crown Sentinel: 160 HP, 14 damage, 12 armor + 3 toughness, 48-block aggro range.
+- Dragon (final boss): 600 HP (was 200); enrage waves larger and faster; breath pools more frequent.
+- Fixed: boss aggro range allowed sniper immunity; enrage had no stat effect; special goals rarely fired; boss XP was trivial.

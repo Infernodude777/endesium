@@ -58,6 +58,12 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 
 	public static AttributeSupplier.Builder createAttributes() {
 		return Mob.createMobAttributes()
+				.add(Attributes.MAX_HEALTH, 160.0D)
+				.add(Attributes.ATTACK_DAMAGE, 14.0D)
+				.add(Attributes.ARMOR, 12.0D)
+				.add(Attributes.ARMOR_TOUGHNESS, 3.0D)
+				.add(Attributes.FOLLOW_RANGE, 48.0D)
+				.add(Attributes.MOVEMENT_SPEED, 0.26D)
 				.add(Attributes.MAX_HEALTH, 60.0D)
 				.add(Attributes.MOVEMENT_SPEED, 0.22D)
 				.add(Attributes.ATTACK_DAMAGE, 8.0D)

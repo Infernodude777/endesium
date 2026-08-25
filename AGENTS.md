@@ -6,4 +6,4 @@
 - Never mention Jimbibo in commits
 
 ## Jimbibo
-- Always launch plans with ESC safety disabled (`no_safety: true`) so pressing ESC never aborts a run; every planned file must complete regardless of keypresses.
+- ESC safety is always active and can no longer be disabled (the `no_safety` option is ignored server-side); pressing ESC aborts the current run.

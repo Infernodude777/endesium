@@ -101,6 +101,13 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 				.add(Attributes.ATTACK_DAMAGE, 9.0D)
 				.add(Attributes.KNOCKBACK_RESISTANCE, 0.9D)
 				.add(Attributes.ARMOR, 10.0D)
+.add(Attributes.MAX_HEALTH, 300.0D)
+				.add(Attributes.ATTACK_DAMAGE, 16.0D)
+				.add(Attributes.ARMOR, 14.0D)
+				.add(Attributes.ARMOR_TOUGHNESS, 4.0D)
+				.add(Attributes.ATTACK_KNOCKBACK, 1.0D)
+				.add(Attributes.FOLLOW_RANGE, 64.0D)
+				.add(Attributes.MOVEMENT_SPEED, 0.32D)
 				.add(Attributes.FOLLOW_RANGE, 32.0D);
 	}
 
@@ -220,6 +227,7 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 
 	/** Once per fight, at two-thirds health, the warden summons its biome's kin. */
 	private void maybeCallMinions(ServerLevel server) {
+if (getHealth() < getMaxHealth() * 0.34D) minionsCalled = false;
 		if (minionsCalled || !isAlive()) return;
 		if (getHealth() > getMaxHealth() * (2.0D / 3.0D)) return;
 		minionsCalled = true;
@@ -354,6 +362,10 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 	/** A crack of resonance light and a horn blast mark the enrage threshold. */
 	private void announceEnrage(ServerLevel server) {
 		playSound(SoundEvents.RAVAGER_ROAR, 1.0F, 0.6F);
+var endesium$dmg = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+if (endesium$dmg != null) endesium$dmg.setBaseValue(20.0D);
+var endesium$spd = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+if (endesium$spd != null) endesium$spd.setBaseValue(0.36D);
 		server.sendParticles(ModParticles.RESONANCE_PULSE,
 				getX(), getY() + 1.8D, getZ(), 24, 1.2D, 0.8D, 1.2D, 0.05D);
 		server.sendParticles(ParticleTypes.FLAME,
@@ -410,6 +422,7 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 
 	@Override
 	protected int getBaseExperienceReward() {
+if (true) return 150;
 		return 35;
 	}
 
@@ -524,6 +537,7 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 			if (windup == 0 && target != null) {
 				performRegionalAttack(target);
 				warden.specialCooldown = warden.isEnraged() ? 90 : 180;
+warden.specialCooldown = warden.isEnraged() ? 55 : 110;
 			}
 		}
 
@@ -573,6 +587,7 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 					14, 0.3D, 0.6D, 0.3D, 0.05D);
 			warden.teleportTo(dest.x, dest.y, dest.z);
 			target.hurt(warden.damageSources().mobAttack(warden), 6.0F);
+target.hurt(warden.damageSources().mobAttack(warden), 4.0F);
 		}
 
 		private void galeSlam(ServerLevel server, LivingEntity target) {
@@ -585,6 +600,7 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 				p.setDeltaMovement(p.getDeltaMovement().add(kb.x * 1.3D, 0.65D, kb.z * 1.3D));
 				p.hurtMarked = true;
 				p.hurt(warden.damageSources().mobAttack(warden), 5.0F);
+p.hurt(warden.damageSources().mobAttack(warden), warden.isEnraged() ? 5.0F : 2.0F);
 			}
 			warden.playSound(SoundEvents.GENERIC_EXPLODE.value(), 0.9F, 0.8F);
 		}
@@ -616,6 +632,7 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 					warden.getBoundingBox().inflate(4.5D), Player::isAlive)) {
 				p.hurt(warden.damageSources().mobAttack(warden), 5.0F);
 				p.igniteForSeconds(5);
+p.igniteForSeconds(8);
 			}
 		}
 
@@ -623,6 +640,7 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 140, 1));
 			target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 140, 0));
 			target.hurt(warden.damageSources().mobAttack(warden), 4.0F);
+target.hurt(warden.damageSources().mobAttack(warden), 6.0F);
 			server.sendParticles(ModParticles.NULL_DISTORTION,
 					target.getX(), target.getY() + 1.0D, target.getZ(),
 					14, 0.4D, 0.6D, 0.4D, 0.02D);
