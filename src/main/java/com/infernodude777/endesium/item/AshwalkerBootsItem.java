@@ -36,15 +36,20 @@ public final class AshwalkerBootsItem extends ArmorItem {
 	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
 		super.inventoryTick(stack, level, entity, slot, selected);
 		if (!(entity instanceof LivingEntity living)) return;
-		// Server-authoritative: effects and ground clamping happen server-side,
-		// driven by whichever inventory slot happens to hold the boots.
-		if (level.isClientSide()) return;
 		if (!living.getItemBySlot(EquipmentSlot.FEET).is(this)) return;
 
-		// Long-duration silent refresh so there is never an unprotected tick
-		// between applications (a 40-tick buffer under a 60-tick refresh).
-		living.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 120, 0, false, false, true));
-		living.clearFire();
+		// Server side: fire immunity so the lava can never burn the wearer.
+		if (!level.isClientSide()) {
+			// Long-duration silent refresh so there is never an unprotected
+			// tick between applications (a 40-tick buffer under a 60-tick
+			// refresh).
+			living.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 120, 0, false, false, true));
+			living.clearFire();
+		}
+
+		// BOTH sides run the surface clamp: the client predicts standing on
+		// the lava and the server agrees, so walking on lava is perfectly
+		// smooth instead of a rubber-band fight between the two.
 		walkOnLava(living);
 	}
 

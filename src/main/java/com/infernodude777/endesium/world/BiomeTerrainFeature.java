@@ -30,7 +30,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration> {
 	/** Depth of the geological reskin below the surface, so cliffs and basins
 	 * show full region geology instead of vanilla End Stone beneath a cap. */
-	private static final int SKIN_DEPTH = 40;
+	private static final int SKIN_DEPTH = 56;
 	/** Maximum carve depth per column, so basins never punch through islands. */
 	private static final int MAX_CARVE = 14;
 	/** Slope (blocks per column) above which a face reads as rock, not soil. */
@@ -58,6 +58,7 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 		ChunkPos chunk = new ChunkPos(origin);
 		Block ground = EndBiomeProfiles.groundBlock(region);
 		Block substrate = EndBiomeProfiles.substrateBlock(region);
+		Block[] palette = EndBiomeProfiles.palette(region);
 		boolean lowland = EndBiomeProfiles.isLowland(region);
 		boolean voidRegion = EndBiomeProfiles.isVoidRegion(region);
 
@@ -100,11 +101,11 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 						Math.max(Math.abs(offset - relaxed[gx + 1][gz]),
 								Math.max(Math.abs(offset - relaxed[gx][gz - 1]),
 										Math.abs(offset - relaxed[gx][gz + 1]))));
-				applyColumn(level, seed, region, x, z, ground, substrate, lowland, offset, slope);
+				applyColumn(level, seed, region, x, z, ground, substrate, palette, lowland, offset, slope);
 				if (voidRegion) {
 					applyVoidSurface(level, x, z, ground, substrate);
 				}
-				skinColumn(level, x, z, ground, substrate, voidRegion);
+				skinColumn(level, seed, x, z, voidRegion);
 			}
 		}
 		return true;
@@ -112,14 +113,20 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 
 	/**
 	 * Replaces the top {@link #SKIN_DEPTH} layers of a column with the region's
-	 * geology: ground cap on top, substrate beneath, and - for the void
-	 * regions - a sealed VOID_SOIL floor at the bottom so the dark biomes read
-	 * as their own strata rather than painted End Stone. Only End-family blocks
-	 * are ever replaced; foreign or placed blocks stop the reskin.
+	 * full geological palette, painted as a dithered gradient: topsoil, a
+	 * patchy transition band, deep stone, and a rare deep accent - so almost
+	 * no vanilla End Stone remains visible anywhere in a region. Only
+	 * End-family blocks are ever replaced; foreign or placed blocks stop the
+	 * reskin.
 	 */
-	private static void skinColumn(WorldGenLevel level, int x, int z, Block ground, Block substrate, boolean voidRegion) {
+	private static void skinColumn(WorldGenLevel level, long seed, int x, int z, boolean voidRegion) {
 		int surfaceTop = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1;
 		if (surfaceTop < level.getMinBuildHeight() + SKIN_DEPTH + 1) {
+			return;
+		}
+		Block[] palette = EndBiomeProfiles.palette(
+				EndBiomeProfiles.regionOf(level.getBiome(new BlockPos(x, surfaceTop, z))));
+		if (palette.length == 0) {
 			return;
 		}
 		for (int d = 0; d < SKIN_DEPTH; d++) {
@@ -128,13 +135,9 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 			if (!isEndFamily(state)) {
 				break; // never eat vanilla structures, plants, or the void
 			}
-			Block target;
+			Block target = paletteBlock(palette, d, seed, x, z);
 			if (voidRegion && d == SKIN_DEPTH - 1) {
 				target = ModBlocks.VOID_SOIL;
-			} else if (d < 2) {
-				target = ground;
-			} else {
-				target = substrate;
 			}
 			if (!state.is(target)) {
 				level.setBlock(p, target.defaultBlockState(), 3);
@@ -142,8 +145,34 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 		}
 	}
 
+	/**
+	 * Picks the palette block for a given depth: topsoil cap, patchy
+	 * transition band, deep stone with dithered accents. A coarse patch hash
+	 * varies the bands horizontally so strata look weathered, not drawn.
+	 */
+	private static Block paletteBlock(Block[] palette, int depth, long seed, int x, int z) {
+		int n = palette.length;
+		int patch = ((x >> 4) * 7 + (z >> 4) * 13) & 0x7;
+		if (depth == 0) {
+			return palette[0];
+		}
+		if (depth <= 2) {
+			return dither(seed, x, depth, z, 4, patch) && n > 1 ? palette[1] : palette[0];
+		}
+		if (depth <= 5) {
+			return dither(seed, x, depth, z, 3, patch) ? palette[0] : palette[Math.min(1, n - 1)];
+		}
+		if (n > 3 && depth > SKIN_DEPTH - 4 && dither(seed, x, depth, z, 7, patch)) {
+			return palette[3];
+		}
+		if (n > 2 && dither(seed, x, depth, z, 6, patch)) {
+			return palette[1];
+		}
+		return palette[Math.min(2, n - 1)];
+	}
+
 	private static void applyColumn(WorldGenLevel level, long seed, int region, int x, int z,
-			Block ground, Block substrate, boolean lowland, double offset, double slope) {
+			Block ground, Block substrate, Block[] palette, boolean lowland, double offset, double slope) {
 		int surfaceTop = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1;
 		if (surfaceTop < level.getMinBuildHeight() + 4) {
 			return;
@@ -154,7 +183,7 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 
 		int target = surfaceTop + (int) Math.round(offset);
 		if (target > surfaceTop) {
-			raise(level, seed, x, z, surfaceTop, target, ground, substrate, slope);
+			raise(level, seed, x, z, surfaceTop, target, palette, slope);
 		} else if (target < surfaceTop) {
 			lower(level, seed, x, z, surfaceTop, Math.min(surfaceTop - target, MAX_CARVE),
 					ground, substrate, lowland);
@@ -167,7 +196,7 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 	 * clean substrate - so slopes read as weathered rock, not stacked blocks.
 	 */
 	private static void raise(WorldGenLevel level, long seed, int x, int z, int surfaceTop, int target,
-			Block ground, Block substrate, double slope) {
+			Block[] palette, double slope) {
 		boolean rockyFace = slope >= ROCK_FACE_SLOPE;
 		for (int y = surfaceTop + 1; y <= target; y++) {
 			BlockPos pos = new BlockPos(x, y, z);
@@ -176,11 +205,11 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 			}
 			Block block;
 			if (y >= target - 1) {
-				block = rockyFace ? substrate : ground;
-			} else if (y >= target - 3 && dither(seed, x, y, z, 5)) {
-				block = ground;
+				block = rockyFace ? palette[Math.min(2, palette.length - 1)] : palette[0];
+			} else if (y >= target - 3 && dither(seed, x, y, z, 5, 0)) {
+				block = palette[1];
 			} else {
-				block = substrate;
+				block = palette[Math.min(2, palette.length - 1)];
 			}
 			level.setBlock(pos, block.defaultBlockState(), 3);
 		}
@@ -220,8 +249,8 @@ public final class BiomeTerrainFeature extends Feature<NoneFeatureConfiguration>
 	}
 
 	/** Cheap deterministic dither so strata boundaries never read as planes. */
-	private static boolean dither(long seed, int x, int y, int z, int bound) {
-		long h = seed + x * 341873128712L + y * 132897987541L + z * 604891948905L;
+	private static boolean dither(long seed, int x, int y, int z, int bound, int patch) {
+		long h = seed + x * 341873128712L + y * 132897987541L + z * 604891948905L + patch * 740511037L;
 		h ^= h >>> 33;
 		h *= 0xFF51AFD7ED558CCDL;
 		h ^= h >>> 29;

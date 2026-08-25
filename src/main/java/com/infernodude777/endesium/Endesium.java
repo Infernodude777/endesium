@@ -67,6 +67,7 @@ public class Endesium implements ModInitializer {
 		FabricDefaultAttributeRegistry.register(ModEntities.END_WARDEN, EndWardenEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(ModEntities.END_GOLEM, EndGolemEntity.createAttributes());
 		ModWorldgen.register();
+		com.infernodude777.endesium.registry.ModMenus.register();
 		EndesiumCommands.register();
 		EndesiumPackets.register();
 		ResonanceSystem.register();

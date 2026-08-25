@@ -10,6 +10,7 @@ import com.infernodude777.endesium.particle.ModParticles;
 import com.infernodude777.endesium.registry.ModBlocks;
 import com.infernodude777.endesium.registry.ModEntities;
 import com.infernodude777.endesium.registry.ModItems;
+import com.infernodude777.endesium.registry.ModMenus;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -23,6 +24,7 @@ import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.gui.screens.MenuScreens;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.world.InteractionHand;
@@ -36,6 +38,7 @@ public class EndesiumClient implements ClientModInitializer {
     private static KeyMapping sonicBoomKey;
 
     @Override public void onInitializeClient(){
+	MenuScreens.register(ModMenus.LORE_BOOK, ProgressionGuideScreen::new);
         // Every registered entity needs a renderer, otherwise LevelRenderer
         // NPEs the moment one of them comes into view (see crash 19.31.45).
         EntityRendererRegistry.register(ModEntities.VOID_STALKER, ProductionVoidStalkerRenderer::new);
@@ -104,16 +107,7 @@ public class EndesiumClient implements ClientModInitializer {
         });
 
         // Open the progression guide screen the same way as the guidebook.
-        UseItemCallback.EVENT.register((Player player, Level level, InteractionHand hand) -> {
-            ItemStack stack = player.getItemInHand(hand);
-            if (!stack.is(ModItems.PROGRESSION_GUIDE)) {
-                return InteractionResultHolder.pass(stack);
-            }
-            if (level.isClientSide()) {
-                Minecraft.getInstance().setScreen(new ProgressionGuideScreen());
-            }
-            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
-        });
+        
 
         // Void Sword charge bar: a restrained readout above the hotbar that
         // fills while the singularity charges, cyan to pale glow, and pulses

@@ -147,9 +147,31 @@ public final class RegionLandmarkFeature extends Feature<NoneFeatureConfiguratio
             }
     }
 
-    private static void setReplace(WorldGenLevel l, BlockPos p, Block block) {
-        StructurePlacement.set(l, p, block.defaultBlockState(), 3);
-    }
+	/** Fills air beneath a feature's base so nothing floats over a dip. */
+	private static void groundFill(WorldGenLevel l, BlockPos b, int dx, int dz, int fromY, Block block) {
+		for (int y = fromY; y >= fromY - 24 && y >= l.getMinBuildHeight(); y--) {
+			BlockPos p = off(b, dx, y, dz);
+			if (!l.getBlockState(p).isAir()) {
+				break;
+			}
+			setReplace(l, p, block);
+		}
+	}
+
+	/** Places a block on the column's actual surface (first air block). */
+	private static void surfacePlace(WorldGenLevel l, BlockPos b, int dx, int dz, Block block) {
+		int sy = l.getHeight(Heightmap.Types.WORLD_SURFACE_WG, b.getX() + dx, b.getZ() + dz);
+		setReplace(l, off(b, dx, sy, dz), block);
+	}
+
+	private static void setReplace(WorldGenLevel l, BlockPos p, Block block) {
+		BlockState state = block.defaultBlockState();
+		StructurePlacement.set(l, p, state, 3);
+		// Schedule fluid ticks so placed lava and water settle naturally.
+		if (!state.getFluidState().isEmpty()) {
+			l.scheduleTick(p, state.getFluidState().getType(), 0);
+		}
+	}
 
     private static void lootChest(WorldGenLevel l, BlockPos p, RandomSource rnd, String table) {
         setReplace(l, p, Blocks.CHEST);
@@ -188,27 +210,35 @@ public final class RegionLandmarkFeature extends Feature<NoneFeatureConfiguratio
     // =====================================================================
 
     private static void duneFossilArch(WorldGenLevel l, BlockPos b, RandomSource r) {
-        // A colossal petrified ribcage arching out of the dust.
+        // A colossal petrified ribcage arching out of the dust, rooted into
+        // the ground so no rib ever floats over a dip.
         for (int i = -3; i <= 3; i++) {
             if (i == 0) continue;
             int h = 11 - Math.abs(i) * 2;
             col(l, b, i * 3, 0, 1, h, ModBlocks.WASTES_STONE);
             setReplace(l, off(b, i * 3, h + 1, 0), ModBlocks.CRACKED_SPIRE_STONE);
+            groundFill(l, b, i * 3, 0, 0, ModBlocks.WASTES_STONE);
             // Rib spurs reaching toward the spine.
             fill(l, b, Math.min(i * 3, i * 3 - Integer.signum(i)), 1, 0,
                     Math.max(i * 3, i * 3 - Integer.signum(i)), h / 2 + 2, 0,
                     ModBlocks.CRACKED_SPIRE_STONE);
+            groundFill(l, b, i * 3 - Integer.signum(i), 0, 0, ModBlocks.WASTES_STONE);
         }
         // The skull, half-buried at the north end.
         fill(l, b, -2, 1, -8, 2, 4, -5, ModBlocks.CRACKED_SPIRE_STONE);
         fill(l, b, -1, 2, -8, 1, 3, -7, Blocks.AIR);
+        for (int sx = -2; sx <= 2; sx++) {
+            for (int sz = -8; sz <= -5; sz++) {
+                groundFill(l, b, sx, sz, 0, ModBlocks.CRACKED_SPIRE_STONE);
+            }
+        }
         setReplace(l, off(b, -1, 2, -9), ModBlocks.VOID_GLASS);
         setReplace(l, off(b, 1, 2, -9), ModBlocks.VOID_GLASS);
-        // Scree drifts piled against the ribs.
+        // Scree drifts piled against the ribs, snapped to the surface.
         for (int i = 0; i < 18; i++) {
             int dx = r.nextInt(17) - 8, dz = r.nextInt(13) - 6;
             if (dz == 0 && Math.abs(dx) <= 10) continue;
-            setReplace(l, off(b, dx, 1, dz), r.nextBoolean() ? ModBlocks.WASTES_GRAVEL : ModBlocks.WASTES_STONE);
+            surfacePlace(l, b, dx, dz, r.nextBoolean() ? ModBlocks.WASTES_GRAVEL : ModBlocks.WASTES_STONE);
         }
         lootBarrel(l, off(b, 0, 1, 4), r, "chests/landmark_end_wastes");
         landmarkBeacon(l, off(b, 0, 1, -3));
@@ -290,10 +320,11 @@ public final class RegionLandmarkFeature extends Feature<NoneFeatureConfiguratio
         fill(l, b, -2, 1, -2, 2, 2, 2, ModBlocks.TIDE_IRON);
         fill(l, b, -1, 3, -1, 1, 4, 1, ModBlocks.MARSH_MOSS);
         setReplace(l, off(b, 0, 5, 0), ModBlocks.TIDE_IRON);
-        // The bell: gold clapper suspended from a chain gallows.
+        // The bell: gold clapper suspended from a chain gallows, its posts
+        // rooted to the ground.
         col(l, b, 0, 3, 6, 8, Blocks.CHAIN);
-        col(l, b, -2, 3, 6, 7, ModBlocks.TIDE_IRON);
-        col(l, b, 2, 3, 6, 7, ModBlocks.TIDE_IRON);
+        col(l, b, -2, 3, 1, 7, ModBlocks.TIDE_IRON);
+        col(l, b, 2, 3, 1, 7, ModBlocks.TIDE_IRON);
         fill(l, b, -2, 8, 3, 2, 8, 3, ModBlocks.TIDE_IRON);
         setReplace(l, off(b, 0, 5, 3), Blocks.GOLD_BLOCK);
         // Drowned offerings ring the base; reeds take the rest.
@@ -318,7 +349,7 @@ public final class RegionLandmarkFeature extends Feature<NoneFeatureConfiguratio
     // =====================================================================
 
     private static void lightwellGazebo(WorldGenLevel l, BlockPos b, RandomSource r) {
-        disc(l, b, 0, 0, 0, 3, ModBlocks.LUMEN_STONE);
+        disc(l, b, 0, 0, 0, 4, ModBlocks.LUMEN_STONE);
         // Six lumen pilasters carrying a prism dome.
         for (int i = 0; i < 6; i++) {
             double ang = i * Math.PI / 3.0D;

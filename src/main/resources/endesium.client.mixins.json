@@ -4,6 +4,7 @@
   "package": "com.infernodude777.endesium.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "DragonBarNotchesMixin",
     "ElytraLayerMixin",
     "EnderDragonRendererMixin"
   ],

@@ -7,9 +7,6 @@ import com.infernodude777.endesium.entity.VoidWispEntity;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -179,10 +176,9 @@ public final class DragonAssaultHandler {
 
 	private static void announce(ServerLevel level, String title, String subtitle,
 			net.minecraft.sounds.SoundEvent sound) {
-		for (ServerPlayer player : level.players()) {
-			player.connection.send(new ClientboundSetTitleTextPacket(Component.literal(title)));
-			player.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(subtitle)));
-		}
+		// Phase changes are communicated through the boss bar's phase breaks
+		// (see the client bar-notches renderer) and a sound cue - no screen
+		// text, so the fight stays immersive.
 		level.playSound(null, new BlockPos(0, 64, 0), sound, SoundSource.AMBIENT, 1.2F, 0.9F);
 	}
 

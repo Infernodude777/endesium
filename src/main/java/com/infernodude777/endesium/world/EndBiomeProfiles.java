@@ -66,6 +66,47 @@ public final class EndBiomeProfiles {
 		}
 	}
 
+	/**
+	 * The full geological palette for a region, ordered surface to core. The
+	 * terrain reskin paints every column as a dithered gradient through these
+	 * blocks - topsoil, transition band, deep stone, and a rare accent - so
+	 * almost no vanilla End Stone remains visible anywhere in a region.
+	 */
+	public static Block[] palette(int region) {
+		return switch (region) {
+			case EndesiumRegions.SHATTERED_HIGHLANDS -> new Block[] {
+					ModBlocks.HIGHLAND_STONE, ModBlocks.HIGHLAND_SLATE,
+					ModBlocks.HIGHLAND_STONE, ModBlocks.HIGHLAND_LENSSTONE };
+			case EndesiumRegions.VOID_MARSHES -> new Block[] {
+					ModBlocks.VOID_MARSH_SOIL, ModBlocks.MARSH_MOSS,
+					ModBlocks.END_CLAY, ModBlocks.MIREGLASS };
+			case EndesiumRegions.CHORUS_WILDS -> new Block[] {
+					ModBlocks.CHORUS_MOSS, ModBlocks.CHORUS_ROOT,
+					ModBlocks.ELDER_CHORUS_BARK, ModBlocks.END_GRAY };
+			case EndesiumRegions.LUMINOUS_GROVES -> new Block[] {
+					ModBlocks.LUMEN_STONE, ModBlocks.PALE_CRYSTAL_BLOCK,
+					ModBlocks.LUMEN_STONE, ModBlocks.END_GRAY };
+			case EndesiumRegions.ASHEN_EXPANSE -> new Block[] {
+					ModBlocks.ASHEN_SOIL, ModBlocks.ASH_STONE,
+					ModBlocks.ASHEN_CRUST, ModBlocks.RESONANT_BASALT };
+			case EndesiumRegions.CRYSTAL_BARRENS -> new Block[] {
+					ModBlocks.CRYSTAL_SHARD_BLOCK, ModBlocks.END_CLAY,
+					ModBlocks.DARK_CRYSTAL_BLOCK, ModBlocks.PALE_CRYSTAL_BLOCK };
+			case EndesiumRegions.VOID_SKIRTS -> new Block[] {
+					ModBlocks.VOID_SLATE, ModBlocks.VOIDSTONE,
+					ModBlocks.VOID_GRAVEL, ModBlocks.VOID_SOIL };
+			case EndesiumRegions.VOID_CROWN -> new Block[] {
+					ModBlocks.UMBRAL_STONE, ModBlocks.VOID_SLATE,
+					ModBlocks.VOIDSTONE, ModBlocks.CROWN_SEAL_BLOCK };
+			case EndesiumRegions.UMBRAL_REACH -> new Block[] {
+					ModBlocks.VOID_SOIL, ModBlocks.UMBRAL_STONE,
+					ModBlocks.VOIDSTONE, ModBlocks.VOID_WEAVE };
+			default -> new Block[] {
+					ModBlocks.WASTES_STONE, ModBlocks.WASTES_GRAVEL,
+					ModBlocks.CRACKED_SPIRE_STONE, ModBlocks.END_GRAY };
+		};
+	}
+
 	/** Whether the region's terrain profile lowers toward basins rather than rising. */
 	public static boolean isLowland(int region) {
 		return region == EndesiumRegions.VOID_MARSHES

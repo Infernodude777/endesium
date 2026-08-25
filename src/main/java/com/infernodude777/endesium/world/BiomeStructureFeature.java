@@ -152,10 +152,34 @@ public final class BiomeStructureFeature extends Feature<NoneFeatureConfiguratio
             }
     }
 
-    private static void setReplace(WorldGenLevel l, BlockPos p, Block block) {
-        if (isProtected(l, p)) return;
-        StructurePlacement.set(l, p, block.defaultBlockState(), 3);
-    }
+	/** Fills air beneath a feature's base so nothing floats over a dip. */
+	private static void groundFill(WorldGenLevel l, BlockPos b, int dx, int dz, int fromY, Block block) {
+		for (int y = fromY; y >= fromY - 24 && y >= l.getMinBuildHeight(); y--) {
+			BlockPos p = off(b, dx, y, dz);
+			if (!l.getBlockState(p).isAir()) {
+				break;
+			}
+			setReplace(l, p, block);
+		}
+	}
+
+	/** Places a block on the column's actual surface (first air block). */
+	private static void surfacePlace(WorldGenLevel l, BlockPos b, int dx, int dz, Block block) {
+		int sy = l.getHeight(Heightmap.Types.WORLD_SURFACE_WG, b.getX() + dx, b.getZ() + dz);
+		setReplace(l, off(b, dx, sy, dz), block);
+	}
+
+	private static void setReplace(WorldGenLevel l, BlockPos p, Block block) {
+		if (isProtected(l, p)) return;
+		BlockState state = block.defaultBlockState();
+		StructurePlacement.set(l, p, state, 3);
+		// Fluids placed during worldgen stay static until ticked; schedule a
+		// tick so lava and water settle and flow naturally once the world is
+		// live instead of hanging in the air as dead sources.
+		if (!state.getFluidState().isEmpty()) {
+			l.scheduleTick(p, state.getFluidState().getType(), 0);
+		}
+	}
 
     private static boolean isProtected(WorldGenLevel l, BlockPos p) {
         BlockState s = l.getBlockState(p);
@@ -381,11 +405,12 @@ public final class BiomeStructureFeature extends Feature<NoneFeatureConfiguratio
         setReplace(l, off(b, 2, -5, -2), Blocks.MAGMA_BLOCK);
         placeWarden(l, off(b, 1, -4, -3));
 
-        // Scree field around the cathedral.
+        // Scree field around the cathedral, snapped to the surface so no
+        // piece ever hangs over a dip.
         for (int i = 0; i < 30; i++) {
             int dx = r.nextInt(35) - 17, dz = r.nextInt(43) - 21;
             if (Math.abs(dx) <= 9 && Math.abs(dz) <= 17) continue;
-            setReplace(l, off(b, dx, 1, dz), r.nextBoolean() ? ModBlocks.WASTES_GRAVEL : ModBlocks.CRACKED_SPIRE_STONE);
+            surfacePlace(l, b, dx, dz, r.nextBoolean() ? ModBlocks.WASTES_GRAVEL : ModBlocks.CRACKED_SPIRE_STONE);
         }
         inscribe(l, off(b, -4, 1, 18), InscribedSlateBlock.SYMBOL_SPIRE);
         inscribe(l, off(b, 4, 1, 18), InscribedSlateBlock.SYMBOL_EYE);
@@ -856,8 +881,9 @@ public final class BiomeStructureFeature extends Feature<NoneFeatureConfiguratio
         disc(l, b, 0, rimY, 0, lakeRad + 1, Blocks.OBSIDIAN);
         disc(l, b, 0, rimY, 0, lakeRad, Blocks.LAVA);
         ring(l, b, 0, rimY + 1, 0, lakeRad + 2, Blocks.CRYING_OBSIDIAN);
-        // Lava falls pouring from three rim notches.
-        for (double ang : new double[]{0.4D, 2.4D, 4.6D}) {
+        // Lava falls pouring from rim notches kept away from the southern
+        // vault tunnel, so the hoard room stays dry.
+        for (double ang : new double[]{0.4D, 2.6D, 3.5D, 5.2D}) {
             int nx = (int) Math.round(Math.cos(ang));
             int nz = (int) Math.round(Math.sin(ang));
             for (int y = 9; y >= 0; y--) {

@@ -1,147 +1,115 @@
 package com.infernodude777.endesium.client.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+
+import com.infernodude777.endesium.menu.LoreBookMenu;
 
 /**
- * The Progression Guide screen. Slate panel, gold trim, category tabs across
- * the top, and pages rendered verbatim from {@link ProgressionGuideContent}.
+ * The Progression Guide, Aether-style: place any item in the socket and the
+ * book tells you everything the Endesium archives know about it - what it is,
+ * how to get it, and what it is for. A button in the corner opens the written
+ * field-guide pages for the full progression path.
  */
-public class ProgressionGuideScreen extends Screen {
-    private static final int PANEL_WIDTH = 340;
-    private static final int PANEL_HEIGHT = 216;
-    private static final int MARGIN = 14;
-    private static final int TEXT_LEFT = MARGIN + 6;
-    private static final int TEXT_TOP = 56;
-    private static final int TEXT_WIDTH = PANEL_WIDTH - MARGIN * 2 - 8;
-    private static final int LINE_HEIGHT = 10;
+public class ProgressionGuideScreen extends AbstractContainerScreen<LoreBookMenu> {
+    private static final int PANEL_WIDTH = 248;
+    private static final int PANEL_HEIGHT = 186;
     private static final int COLOR_GOLD = 0xFFC9A227;
-    private static final int COLOR_CYAN = 0xFF6DC2CA;
     private static final int COLOR_TEXT = 0xFFDEEED6;
     private static final int COLOR_DIM = 0xFF8A80B0;
+    private static final int COLOR_PANEL = 0xF0141024;
+    private static final int COLOR_PANEL_EDGE = 0xFF3A2E5C;
+    private static final int COLOR_SOCKET = 0xFF241C3E;
 
-    private record Tab(String label, int x, int width) {
-    }
+    private String loreTitle = "Place an item in the socket";
+    private final List<FormattedCharSequence> loreLines = new ArrayList<>();
 
-    private final List<Tab> tabs = new ArrayList<>();
-    private List<ProgressionGuideContent.Entry> visible = List.of();
-    private int tab;
-    private int page;
-
-    public ProgressionGuideScreen() {
-        super(Component.literal("Endesium Progression Guide"));
+    public ProgressionGuideScreen(LoreBookMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title);
+        this.imageWidth = PANEL_WIDTH;
+        this.imageHeight = PANEL_HEIGHT;
     }
 
     @Override
     protected void init() {
-        int panelLeft = (this.width - PANEL_WIDTH) / 2;
-        int panelTop = (this.height - PANEL_HEIGHT) / 2;
-        int buttonY = panelTop + PANEL_HEIGHT - 26;
-        this.addRenderableWidget(Button.builder(Component.literal("<"), b -> turnPage(-1))
-                .bounds(panelLeft + 8, buttonY, 20, 18).build());
-        this.addRenderableWidget(Button.builder(Component.literal(">"), b -> turnPage(1))
-                .bounds(panelLeft + PANEL_WIDTH - 28, buttonY, 20, 18).build());
-        refresh();
+        super.init();
+        this.inventoryLabelY = PANEL_HEIGHT + 4;
+        this.addRenderableWidget(Button.builder(Component.literal("Field Guide"), b -> {
+            if (this.minecraft != null) {
+                this.minecraft.setScreen(new GuidePagesScreen());
+            }
+        }).bounds(this.leftPos + PANEL_WIDTH - 78, this.topPos + 5, 72, 14).build());
+        refreshLore();
     }
 
-    private void refresh() {
-        String cat = ProgressionGuideContent.CATEGORIES.get(this.tab);
-        this.visible = ProgressionGuideContent.PAGES.stream()
-                .filter(entry -> entry.category().equals(cat))
-                .toList();
-        if (this.page >= this.visible.size()) {
-            this.page = 0;
-        }
+    @Override
+    public void containerTick() {
+        super.containerTick();
+        refreshLore();
     }
 
-    private void turnPage(int dir) {
-        if (this.visible.isEmpty()) {
+    private void refreshLore() {
+        ItemStack stack = this.menu.getSlot(0).getItem();
+        if (stack.isEmpty()) {
+            loreTitle = "Place an item in the socket";
+            loreLines.clear();
+            loreLines.addAll(this.font.split(Component.literal(
+                    "The book is blank until you feed it something."), 160));
             return;
         }
-        this.page = Math.floorMod(this.page + dir, this.visible.size());
+        loreTitle = stack.getHoverName().getString();
+        loreLines.clear();
+        for (String line : EndesiumLore.forItem(stack.getItem())) {
+            loreLines.addAll(this.font.split(Component.literal(line), PANEL_WIDTH - 84));
+        }
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.fill(0, 0, this.width, this.height, 0xFF000000);
-        RenderSystem.disableDepthTest();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-
-        int left = (this.width - PANEL_WIDTH) / 2;
-        int top = (this.height - PANEL_HEIGHT) / 2;
-        graphics.fill(left - 3, top - 3, left + PANEL_WIDTH + 3, top + PANEL_HEIGHT + 3, 0xCC000000);
-        graphics.fill(left, top, left + PANEL_WIDTH, top + PANEL_HEIGHT, 0xFF14161C);
-        graphics.fill(left, top, left + PANEL_WIDTH, top + 2, COLOR_GOLD);
-        graphics.fill(left, top + PANEL_HEIGHT - 2, left + PANEL_WIDTH, top + PANEL_HEIGHT, COLOR_GOLD);
-
-        // Category tabs along the top edge.
-        this.tabs.clear();
-        int tx = left + MARGIN;
-        String active = ProgressionGuideContent.CATEGORIES.get(this.tab);
-        for (String cat : ProgressionGuideContent.CATEGORIES) {
-            int w = this.font.width(cat) + 10;
-            graphics.fill(tx, top + 8, tx + w, top + 20, cat.equals(active) ? 0xFF2A2440 : 0xFF1D1A28);
-            graphics.drawString(this.font, cat, tx + 5, top + 11, cat.equals(active) ? COLOR_CYAN : COLOR_DIM);
-            this.tabs.add(new Tab(cat, tx, w));
-            tx += w + 2;
-        }
-
-        if (!this.visible.isEmpty()) {
-            ProgressionGuideContent.Entry entry = this.visible.get(this.page);
-            graphics.drawCenteredString(this.font, entry.title(), this.width / 2, top + 32, COLOR_GOLD);
-
-            int y = top + TEXT_TOP;
-            for (String raw : entry.body()) {
-                for (FormattedCharSequence line : this.font.split(Component.literal(raw), TEXT_WIDTH)) {
-                    graphics.drawString(this.font, line, left + TEXT_LEFT, y, COLOR_TEXT);
-                    y += LINE_HEIGHT;
-                }
-                y += 2;
+        super.render(graphics, mouseX, mouseY, partialTick);
+        graphics.drawString(this.font, this.title, this.leftPos + 8, this.topPos + 6, COLOR_GOLD, false);
+        // Item name over the lore panel.
+        graphics.drawString(this.font, loreTitle, this.leftPos + 66, this.topPos + 22, COLOR_GOLD, false);
+        int y = this.topPos + 34;
+        for (FormattedCharSequence line : loreLines) {
+            graphics.drawString(this.font, line, this.leftPos + 66, y, COLOR_TEXT, false);
+            y += 10;
+            if (y > this.topPos + PANEL_HEIGHT - 12) {
+                break;
             }
-
-            String counter = (this.page + 1) + " / " + this.visible.size();
-            graphics.drawCenteredString(this.font, counter, this.width / 2, top + PANEL_HEIGHT - 22, COLOR_DIM);
         }
-        RenderSystem.enableDepthTest();
+        if (this.menu.getSlot(0).getItem().isEmpty()) {
+            graphics.drawString(this.font, "socket", this.leftPos + 26, this.topPos + 52, COLOR_DIM, false);
+        }
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        int top = (this.height - PANEL_HEIGHT) / 2;
-        if (button == 0 && mouseY >= top + 8 && mouseY <= top + 20) {
-            for (int i = 0; i < this.tabs.size(); i++) {
-                Tab t = this.tabs.get(i);
-                if (mouseX >= t.x() && mouseX <= t.x() + t.width()) {
-                    this.tab = i;
-                    this.page = 0;
-                    refresh();
-                    return true;
-                }
-            }
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_LEFT) {
-            turnPage(-1);
-            return true;
-        }
-        if (keyCode == GLFW.GLFW_KEY_RIGHT) {
-            turnPage(1);
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+        // Panel body and edge.
+        graphics.fill(this.leftPos, this.topPos,
+                this.leftPos + PANEL_WIDTH, this.topPos + PANEL_HEIGHT, COLOR_PANEL);
+        graphics.fill(this.leftPos, this.topPos,
+                this.leftPos + PANEL_WIDTH, this.topPos + 1, COLOR_PANEL_EDGE);
+        graphics.fill(this.leftPos, this.topPos + PANEL_HEIGHT - 1,
+                this.leftPos + PANEL_WIDTH, this.topPos + PANEL_HEIGHT, COLOR_PANEL_EDGE);
+        graphics.fill(this.leftPos, this.topPos,
+                this.leftPos + 1, this.topPos + PANEL_HEIGHT, COLOR_PANEL_EDGE);
+        graphics.fill(this.leftPos + PANEL_WIDTH - 1, this.topPos,
+                this.leftPos + PANEL_WIDTH, this.topPos + PANEL_HEIGHT, COLOR_PANEL_EDGE);
+        // The item socket: an inset square behind the slot.
+        int sx = this.leftPos + 30 - 1;
+        int sy = this.topPos + 34 - 1;
+        graphics.fill(sx - 1, sy - 1, sx + 19, sy + 19, COLOR_SOCKET);
+        // Divider between the socket page and the lore page.
+        graphics.fill(this.leftPos + 60, this.topPos + 16,
+                this.leftPos + 61, this.topPos + PANEL_HEIGHT - 10, COLOR_PANEL_EDGE);
     }
 }
