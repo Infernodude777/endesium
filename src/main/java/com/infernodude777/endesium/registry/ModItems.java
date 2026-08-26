@@ -187,7 +187,7 @@ public final class ModItems {
 			new Item(new Item.Properties().stacksTo(8).rarity(Rarity.RARE)));
 	public static final Item ASHWALKER_BOOTS = register("ashwalker_boots",
 			new AshwalkerBootsItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.BOOTS,
-					new Item.Properties().stacksTo(1).durability(429).rarity(Rarity.RARE)));
+					new Item.Properties().stacksTo(1).durability(620).rarity(Rarity.RARE)));
 	public static final Item EMBER_CHARM = register("ember_charm",
 			new EmberCharmItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
 	public static final Item ASHEN_CRUST_ITEM = blockItem("ashen_crust", ModBlocks.ASHEN_CRUST);

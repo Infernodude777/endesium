@@ -71,7 +71,7 @@ public final class EndgearMaterials {
 
 		@Override
 		public int getUses() {
-			return 1750;
+			return 2800;
 		}
 
 		@Override
@@ -100,13 +100,13 @@ public final class EndgearMaterials {
 		}
 	}
 
-	/** Ash tools: heat-tempered, modest durability, sets what it strikes alight. */
+	/** Ash tools: heat-tempered, high durability, for sustained firebending. */
 	public enum AshTool implements Tier {
 		INSTANCE;
 
 		@Override
 		public int getUses() {
-			return 1400;
+			return 2600;
 		}
 
 		@Override
@@ -141,7 +141,7 @@ public final class EndgearMaterials {
 
 		@Override
 		public int getUses() {
-			return 2031;
+			return 3400;
 		}
 
 		@Override

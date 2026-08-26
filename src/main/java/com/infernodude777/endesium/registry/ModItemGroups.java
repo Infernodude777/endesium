@@ -36,6 +36,7 @@ public final class ModItemGroups {
 						output.accept(ModEndgear.ASH_HELMET);
 						output.accept(ModEndgear.ASH_CHESTPLATE);
 						output.accept(ModEndgear.ASH_LEGGINGS);
+						output.accept(ModItems.ASHWALKER_BOOTS);
 						output.accept(ModEndgear.ASH_SWORD);
 						output.accept(ModEndgear.ASH_PICKAXE);
 						output.accept(ModEndgear.ASH_AXE);
@@ -112,7 +113,6 @@ public final class ModItemGroups {
 						output.accept(ModItems.VOID_ORE_ITEM);
 						output.accept(ModItems.ASHEN_EMBER);
 						output.accept(ModItems.MAGMA_CORE);
-						output.accept(ModItems.ASHWALKER_BOOTS);
 						output.accept(ModItems.EMBER_CHARM);
 						output.accept(ModItems.ASHEN_CRUST_ITEM);
 						output.accept(ModItems.RESONANT_SLATE_ITEM);

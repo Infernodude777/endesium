@@ -53,7 +53,31 @@ public final class AshwalkerBootsItem extends ArmorItem {
 		walkOnLava(living);
 	}
 
+	private static boolean isInLavaFluid(LivingEntity living) {
+		if (living.isInLava()) return true;
+		Level level = living.level();
+		BlockPos feet = BlockPos.containing(living.getX(), living.getY(), living.getZ());
+		for (int dy = -1; dy <= 1; dy++) {
+			if (level.getBlockState(feet.above(dy)).is(Blocks.LAVA)) return true;
+		}
+		return false;
+	}
+
 	private static void walkOnLava(LivingEntity living) {
+		// Shift-descend: hold Shift while in lava to sink like scaffolding. Releasing Shift stays down.
+		if (living.isShiftKeyDown() && isInLavaFluid(living)) {
+			var mot = living.getDeltaMovement();
+			double ny = mot.y - 0.18D;
+			if (ny < -0.55D) ny = -0.55D;
+			living.setDeltaMovement(mot.x * 0.90D, ny, mot.z * 0.90D);
+			living.resetFallDistance();
+			living.setOnGround(false);
+			if (living.level() instanceof ServerLevel sl && living.tickCount % 4 == 0) {
+				sl.sendParticles(ParticleTypes.LAVA, living.getX(), living.getY() + 0.2D, living.getZ(), 2, 0.2D, 0.1D, 0.2D, 0.01D);
+			}
+			return;
+		}
+
 		Level level = living.level();
 
 		// Probe the block directly beneath the bounding box, and the feet
@@ -101,7 +125,7 @@ public final class AshwalkerBootsItem extends ArmorItem {
 	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext context, java.util.List<Component> tooltip, TooltipFlag flag) {
 		tooltip.add(Component.literal("While worn: fire resistance").withStyle(ChatFormatting.GRAY));
-		tooltip.add(Component.literal("Stand on lava without sinking or burning").withStyle(ChatFormatting.GRAY));
+		tooltip.add(Component.literal("Stand on lava — Shift to sink like scaffolding").withStyle(ChatFormatting.GRAY));
 		tooltip.add(Component.literal("Full ash set: permanent Strength I (Volcanic Heart)").withStyle(ChatFormatting.GRAY));
 	}
 }

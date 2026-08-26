@@ -43,48 +43,52 @@ public final class ModEndgear {
 		return new Item.Properties().stacksTo(1).rarity(Rarity.RARE);
 	}
 
+	private static Item.Properties gearProps(int durability) {
+		return new Item.Properties().stacksTo(1).durability(durability).rarity(Rarity.RARE);
+	}
+
 	// --- Luminous armor ---
 	public static final Item LUMINOUS_HELMET = register("luminous_helmet",
-			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.HELMET, gearProps(),
+			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.HELMET, gearProps(480),
 					"Gleamsight: Night Vision while worn"));
 	public static final Item LUMINOUS_CHESTPLATE = register("luminous_chestplate",
-			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.CHESTPLATE, gearProps(),
+			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.CHESTPLATE, gearProps(640),
 					"Radiant Aegis: attackers get GLOWING 8s",
 					"Full set: attackers also get DARKNESS + 3 magic burn-back (Prism Ward)"));
 	public static final Item LUMINOUS_LEGGINGS = register("luminous_leggings",
-			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.LEGGINGS, gearProps(),
+			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.LEGGINGS, gearProps(600),
 					"Lightspeed: Speed I while worn (Speed II with full set)"));
 	public static final Item LUMINOUS_BOOTS = register("luminous_boots",
-			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.BOOTS, gearProps(),
+			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.BOOTS, gearProps(520),
 					"Lumen Leap: Jump Boost II while worn"));
 
 	// --- Ash armor ---
 	public static final Item ASH_HELMET = register("ash_helmet",
-			new GearArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.HELMET, gearProps(),
+			new GearArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.HELMET, gearProps(520),
 					"Ember Crown: Fire Resistance while worn"));
 	public static final Item ASH_CHESTPLATE = register("ash_chestplate",
-			new GearArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.CHESTPLATE, gearProps(),
+			new GearArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.CHESTPLATE, gearProps(680),
 					"Searing Plate: attackers that hit you catch fire 4s",
 					"When burning/in lava: Strength I",
 					"Full ash set: permanent Strength I (Volcanic Heart)"));
 	public static final Item ASH_LEGGINGS = register("ash_leggings",
-			new GearArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.LEGGINGS, gearProps(),
+			new GearArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.LEGGINGS, gearProps(640),
 					"Magma Blood: Regeneration I while burning or in lava"));
 	// The Ashwalker Boots remain the ash line's boots piece (see AshwalkerBootsItem).
 
 	// --- Null armor ---
 	public static final Item NULL_HELMET = register("null_helmet",
-			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.HELMET, gearProps(),
+			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.HELMET, gearProps(680),
 					"Erased Mind: removes Levitation, Darkness, and Nausea",
 					"   while worn (the void does not move or cloud you)"));
 	public static final Item NULL_CHESTPLATE = register("null_chestplate",
-			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.CHESTPLATE, gearProps(),
+			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.CHESTPLATE, gearProps(880),
 					"Erased Wound: when hit, gain Absorption 5s"));
 	public static final Item NULL_LEGGINGS = register("null_leggings",
-			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.LEGGINGS, gearProps(),
+			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.LEGGINGS, gearProps(820),
 					"Weightless: no fall damage while worn"));
 	public static final Item NULL_BOOTS = register("null_boots",
-			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.BOOTS, gearProps(),
+			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.BOOTS, gearProps(720),
 					"Null Step: walk up full blocks without jumping",
 					"Full set: 25 percent incoming projectiles simply vanish (Void Body)"));
 
