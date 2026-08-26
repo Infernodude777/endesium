@@ -14,7 +14,9 @@ import com.infernodude777.endesium.entity.VoidWispEntity;
 import com.infernodude777.endesium.entity.CrownSentinelEntity;
 import com.infernodude777.endesium.entity.EndWardenEntity;
 import com.infernodude777.endesium.entity.EndGolemEntity;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
+	import com.infernodude777.endesium.entity.DeepLurkerEntity;
+	import com.infernodude777.endesium.entity.GalefinEntity;
+	import com.infernodude777.endesium.entity.SkyJellyEntity;import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityDimensions;
@@ -110,6 +112,24 @@ public final class ModEntities {
 	);
 
 	private ModEntities() { }
+	public static final EntityType<SkyJellyEntity> SKY_JELLY = Registry.register(
+			BuiltInRegistries.ENTITY_TYPE,
+			Endesium.id("sky_jelly"),
+			FabricEntityTypeBuilder.create(MobCategory.AMBIENT, SkyJellyEntity::new)
+					.dimensions(EntityDimensions.fixed(0.9F, 0.9F)).trackRangeChunks(5).build()
+	);
+	public static final EntityType<GalefinEntity> GALEFIN = Registry.register(
+			BuiltInRegistries.ENTITY_TYPE,
+			Endesium.id("galefin"),
+			FabricEntityTypeBuilder.create(MobCategory.AMBIENT, GalefinEntity::new)
+					.dimensions(EntityDimensions.fixed(0.45F, 0.35F)).trackRangeChunks(5).build()
+	);
+	public static final EntityType<DeepLurkerEntity> DEEP_LURKER = Registry.register(
+			BuiltInRegistries.ENTITY_TYPE,
+			Endesium.id("deep_lurker"),
+			FabricEntityTypeBuilder.create(MobCategory.MONSTER, DeepLurkerEntity::new)
+					.dimensions(EntityDimensions.fixed(0.8F, 1.6F)).trackRangeChunks(6).build()
+	);
 
 	public static void register() {
 		SpawnPlacements.register(
@@ -192,5 +212,23 @@ public final class ModEntities {
 		);
 
 		Endesium.LOGGER.info("Registered Endesium ecology entities and spawn rules");
+		SpawnPlacements.register(
+				SKY_JELLY,
+				SpawnPlacementTypes.NO_RESTRICTIONS,
+				Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+				(entityType, level, spawnType, pos, random) -> level.getBlockState(pos).isAir() && level.getBlockState(pos.above()).isAir()
+		);
+		SpawnPlacements.register(
+				GALEFIN,
+				SpawnPlacementTypes.NO_RESTRICTIONS,
+				Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+				(entityType, level, spawnType, pos, random) -> level.getBlockState(pos).isAir() && level.getBlockState(pos.above()).isAir()
+		);
+		SpawnPlacements.register(
+				DEEP_LURKER,
+				SpawnPlacementTypes.ON_GROUND,
+				Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+				Monster::checkMonsterSpawnRules
+		);
 	}
 }

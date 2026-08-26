@@ -293,6 +293,12 @@ public final class ModItems {
 	public static final Item CROWN_SENTINEL_SPAWN_EGG = register("crown_sentinel_spawn_egg", new SpawnEggItem(ModEntities.CROWN_SENTINEL, 0x2A2A3A, 0xC9A227, new Item.Properties()));
 	public static final Item END_WARDEN_SPAWN_EGG = register("end_warden_spawn_egg", new SpawnEggItem(ModEntities.END_WARDEN, 0x1F2B3A, 0x7EA7A6, new Item.Properties()));
 	public static final Item END_GOLEM_SPAWN_EGG = register("end_golem_spawn_egg", new SpawnEggItem(ModEntities.END_GOLEM, 0x14101F, 0xB08AD2, new Item.Properties()));
+	public static final Item SKY_JELLY_SPAWN_EGG = register("sky_jelly_spawn_egg",
+			new SpawnEggItem(ModEntities.SKY_JELLY, 0x9FE7E7, 0xFFEEB5, new Item.Properties()));
+	public static final Item GALEFIN_SPAWN_EGG = register("galefin_spawn_egg",
+			new SpawnEggItem(ModEntities.GALEFIN, 0x7EA7A6, 0x2A2F3A, new Item.Properties()));
+	public static final Item DEEP_LURKER_SPAWN_EGG = register("deep_lurker_spawn_egg",
+			new SpawnEggItem(ModEntities.DEEP_LURKER, 0x140821, 0xC7C7C7, new Item.Properties()));
 
 	// --- Boss rewards ---
 	public static final Item WARDEN_SIGIL = register("warden_sigil",
@@ -333,6 +339,9 @@ public final class ModItems {
 			entries.accept(CROWN_SENTINEL_SPAWN_EGG);
 			entries.accept(END_WARDEN_SPAWN_EGG);
 			entries.accept(END_GOLEM_SPAWN_EGG);
+			entries.accept(SKY_JELLY_SPAWN_EGG);
+			entries.accept(GALEFIN_SPAWN_EGG);
+			entries.accept(DEEP_LURKER_SPAWN_EGG);
 		});
 		Endesium.LOGGER.info("Registered Endesium production items");
 	}

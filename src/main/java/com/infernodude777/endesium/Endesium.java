@@ -69,6 +69,10 @@ public class Endesium implements ModInitializer {
 		FabricDefaultAttributeRegistry.register(ModEntities.CROWN_SENTINEL, CrownSentinelEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(ModEntities.END_WARDEN, EndWardenEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(ModEntities.END_GOLEM, EndGolemEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(ModEntities.SKY_JELLY, com.infernodude777.endesium.entity.SkyJellyEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(ModEntities.GALEFIN, com.infernodude777.endesium.entity.GalefinEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(ModEntities.DEEP_LURKER, com.infernodude777.endesium.entity.DeepLurkerEntity.createAttributes());
+		com.infernodude777.endesium.world.AmbientSkyManager.register();
 		ModWorldgen.register();
 		com.infernodude777.endesium.gear.GearAbilities.register();
 		EntityElytraEvents.CUSTOM.register((entity, tickElytra) ->

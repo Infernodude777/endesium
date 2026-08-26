@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:item",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:lumen_dust",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": { "type": "minecraft:uniform", "min": 0.0, "max": 2.0 }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        { "condition": "minecraft:random_chance", "chance": 0.1 }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:lumen_wing"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "endesium:entities/sky_jelly"
+}

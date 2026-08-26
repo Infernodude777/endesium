@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:item",
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        { "condition": "minecraft:random_chance", "chance": 0.25 }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:null_fragment"
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "endesium:echo_shard",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": { "type": "minecraft:uniform", "min": 0.0, "max": 2.0 }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "endesium:entities/deep_lurker"
+}

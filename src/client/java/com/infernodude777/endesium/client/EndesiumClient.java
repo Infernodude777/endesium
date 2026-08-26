@@ -54,6 +54,9 @@ public class EndesiumClient implements ClientModInitializer {
         EntityRendererRegistry.register(ModEntities.CROWN_SENTINEL, CrownSentinelRenderer::new);
         EntityRendererRegistry.register(ModEntities.END_WARDEN, EndWardenRenderer::new);
         EntityRendererRegistry.register(ModEntities.END_GOLEM, EndGolemRenderer::new);
+		EntityRendererRegistry.register(ModEntities.SKY_JELLY, SkyJellyRenderer::new);
+		EntityRendererRegistry.register(ModEntities.GALEFIN, GalefinRenderer::new);
+		EntityRendererRegistry.register(ModEntities.DEEP_LURKER, DeepLurkerRenderer::new);
         EntityModelLayerRegistry.registerModelLayer(EndesiumDragonArmorModel.LAYER, EndesiumDragonArmorModel::createBodyLayer);
         BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.VOID_GLASS, RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.MIREGLASS, RenderType.translucent());
