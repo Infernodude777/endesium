@@ -3,6 +3,7 @@ package com.infernodude777.endesium.registry;
 import com.infernodude777.endesium.Endesium;
 import com.infernodude777.endesium.item.AshwalkerBootsItem;
 import com.infernodude777.endesium.item.DragonWingsItem;
+import com.infernodude777.endesium.item.GearArmorItem;
 import com.infernodude777.endesium.item.AshenArmorMaterials;
 import com.infernodude777.endesium.item.EndgearMaterials;
 import com.infernodude777.endesium.item.EndgearTools;
@@ -24,6 +25,14 @@ import net.minecraft.world.item.component.ItemAttributeModifiers;
  * Registry for the Luminous, Ash, and Null gear lines plus the Dragon Wings.
  * Every texture follows the Void set's model: same silhouettes, recolored
  * palettes (luminous gold-cyan, ash gray-ember, null violet-void).
+ *
+ * <p>Per-piece armor powers (see GearAbilities):
+ * <ul>
+ *   <li>Luminous: Gleamsight (night vision), Radiant Aegis (foe glows), Lightspeed, Lumen Leap (jump).</li>
+ *   <li>Ash: Ember Crown (fire res), Searing Plate (foe ignites), Magma Blood (regen while burning).</li>
+ *   <li>Null: Erased Mind (levitation/darkness purge), Weightless (no fall damage), Null Step (step height).</li>
+ * </ul>
+ * Full sets amplify these with a capstone retaliation / sustain bonus.
  */
 public final class ModEndgear {
 	private static Item register(String name, Item item) {
@@ -36,32 +45,48 @@ public final class ModEndgear {
 
 	// --- Luminous armor ---
 	public static final Item LUMINOUS_HELMET = register("luminous_helmet",
-			new ArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.HELMET, gearProps()));
+			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.HELMET, gearProps(),
+					"Gleamsight: Night Vision while worn"));
 	public static final Item LUMINOUS_CHESTPLATE = register("luminous_chestplate",
-			new ArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.CHESTPLATE, gearProps()));
+			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.CHESTPLATE, gearProps(),
+					"Radiant Aegis: attackers get GLOWING 8s",
+					"Full set: attackers also get DARKNESS + 3 magic burn-back (Prism Ward)"));
 	public static final Item LUMINOUS_LEGGINGS = register("luminous_leggings",
-			new ArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.LEGGINGS, gearProps()));
+			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.LEGGINGS, gearProps(),
+					"Lightspeed: Speed I while worn (Speed II with full set)"));
 	public static final Item LUMINOUS_BOOTS = register("luminous_boots",
-			new ArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.BOOTS, gearProps()));
+			new GearArmorItem(EndgearMaterials.LUMINOUS, ArmorItem.Type.BOOTS, gearProps(),
+					"Lumen Leap: Jump Boost II while worn"));
 
 	// --- Ash armor ---
 	public static final Item ASH_HELMET = register("ash_helmet",
-			new ArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.HELMET, gearProps()));
+			new GearArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.HELMET, gearProps(),
+					"Ember Crown: Fire Resistance while worn"));
 	public static final Item ASH_CHESTPLATE = register("ash_chestplate",
-			new ArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.CHESTPLATE, gearProps()));
+			new GearArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.CHESTPLATE, gearProps(),
+					"Searing Plate: attackers that hit you catch fire 4s",
+					"When burning/in lava: Strength I",
+					"Full ash set: permanent Strength I (Volcanic Heart)"));
 	public static final Item ASH_LEGGINGS = register("ash_leggings",
-			new ArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.LEGGINGS, gearProps()));
-	// The Ashwalker Boots remain the ash line's boots piece.
+			new GearArmorItem(AshenArmorMaterials.ASHEN, ArmorItem.Type.LEGGINGS, gearProps(),
+					"Magma Blood: Regeneration I while burning or in lava"));
+	// The Ashwalker Boots remain the ash line's boots piece (see AshwalkerBootsItem).
 
 	// --- Null armor ---
 	public static final Item NULL_HELMET = register("null_helmet",
-			new ArmorItem(EndgearMaterials.NULL, ArmorItem.Type.HELMET, gearProps()));
+			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.HELMET, gearProps(),
+					"Erased Mind: removes Levitation, Darkness, and Nausea",
+					"   while worn (the void does not move or cloud you)"));
 	public static final Item NULL_CHESTPLATE = register("null_chestplate",
-			new ArmorItem(EndgearMaterials.NULL, ArmorItem.Type.CHESTPLATE, gearProps()));
+			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.CHESTPLATE, gearProps(),
+					"Erased Wound: when hit, gain Absorption 5s"));
 	public static final Item NULL_LEGGINGS = register("null_leggings",
-			new ArmorItem(EndgearMaterials.NULL, ArmorItem.Type.LEGGINGS, gearProps()));
+			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.LEGGINGS, gearProps(),
+					"Weightless: no fall damage while worn"));
 	public static final Item NULL_BOOTS = register("null_boots",
-			new ArmorItem(EndgearMaterials.NULL, ArmorItem.Type.BOOTS, gearProps()));
+			new GearArmorItem(EndgearMaterials.NULL, ArmorItem.Type.BOOTS, gearProps(),
+					"Null Step: walk up full blocks without jumping",
+					"Full set: 25 percent incoming projectiles simply vanish (Void Body)"));
 
 	// --- Luminous tools ---
 	public static final Item LUMINOUS_SWORD = register("luminous_sword",

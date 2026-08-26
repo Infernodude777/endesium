@@ -102,5 +102,6 @@ public final class AshwalkerBootsItem extends ArmorItem {
 	public void appendHoverText(ItemStack stack, TooltipContext context, java.util.List<Component> tooltip, TooltipFlag flag) {
 		tooltip.add(Component.literal("While worn: fire resistance").withStyle(ChatFormatting.GRAY));
 		tooltip.add(Component.literal("Stand on lava without sinking or burning").withStyle(ChatFormatting.GRAY));
+		tooltip.add(Component.literal("Full ash set: permanent Strength I (Volcanic Heart)").withStyle(ChatFormatting.GRAY));
 	}
 }
