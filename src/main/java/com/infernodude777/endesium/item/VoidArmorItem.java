@@ -16,12 +16,29 @@ import net.minecraft.world.item.Item;
  * netherite-plus-trim workflow the set is designed around.
  */
 public final class VoidArmorItem extends ArmorItem {
+	private final Type armorType;
 	public VoidArmorItem(Holder<ArmorMaterial> material, Type type, Item.Properties properties) {
 		super(material, type, properties);
+		this.armorType = type;
 	}
 
 	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext context, java.util.List<Component> tooltip, TooltipFlag flag) {
-		tooltip.add(Component.literal("Void plate; accepts trims like netherite").withStyle(ChatFormatting.GRAY));
+		switch (armorType) {
+			case HELMET -> {
+				tooltip.add(Component.literal("Void Sight: Night Vision + Water Breathing").withStyle(ChatFormatting.GRAY));
+				tooltip.add(Component.literal("Marks void ore within 16 blocks with a faint glint").withStyle(ChatFormatting.DARK_GRAY));
+			}
+			case CHESTPLATE -> {
+				tooltip.add(Component.literal("Gravitic Guard: Resistance I + emergency absorption").withStyle(ChatFormatting.GRAY));
+				tooltip.add(Component.literal("below 50% health — the void holds you together").withStyle(ChatFormatting.DARK_GRAY));
+			}
+			case LEGGINGS -> tooltip.add(Component.literal("Void Channeling: Haste II while worn").withStyle(ChatFormatting.GRAY));
+			case BOOTS -> tooltip.add(Component.literal("Anchor: +25% knockback resistance").withStyle(ChatFormatting.GRAY));
+			default -> tooltip.add(Component.literal("Void plate; accepts trims like netherite").withStyle(ChatFormatting.GRAY));
+		}
+		if (armorType == Type.CHESTPLATE) {
+			tooltip.add(Component.literal("Full set: unlocks singularity on Void Sword (hold 3s)").withStyle(ChatFormatting.DARK_GRAY));
+		}
 	}
 }

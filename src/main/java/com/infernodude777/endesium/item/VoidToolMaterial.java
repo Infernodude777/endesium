@@ -14,17 +14,17 @@ public enum VoidToolMaterial implements Tier {
 
 	@Override
 	public int getUses() {
-		return 2031;
+		return 3040;
 	}
 
 	@Override
 	public float getSpeed() {
-		return 9.0F;
+		return 9.2F;
 	}
 
 	@Override
 	public float getAttackDamageBonus() {
-		return 4.0F;
+		return 4.2F;
 	}
 
 	@Override

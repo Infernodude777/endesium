@@ -161,13 +161,13 @@ public final class ModItems {
 
 	// --- Void Skirts armor ---
 	public static final Item VOID_HELMET = register("void_helmet",
-			new VoidArmorItem(VoidArmorMaterials.VOID, ArmorItem.Type.HELMET, new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+			new VoidArmorItem(VoidArmorMaterials.VOID, ArmorItem.Type.HELMET, new Item.Properties().stacksTo(1).durability(620).rarity(Rarity.RARE)));
 	public static final Item VOID_CHESTPLATE = register("void_chestplate",
-			new VoidArmorItem(VoidArmorMaterials.VOID, ArmorItem.Type.CHESTPLATE, new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+			new VoidArmorItem(VoidArmorMaterials.VOID, ArmorItem.Type.CHESTPLATE, new Item.Properties().stacksTo(1).durability(850).rarity(Rarity.RARE)));
 	public static final Item VOID_LEGGINGS = register("void_leggings",
-			new VoidArmorItem(VoidArmorMaterials.VOID, ArmorItem.Type.LEGGINGS, new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+			new VoidArmorItem(VoidArmorMaterials.VOID, ArmorItem.Type.LEGGINGS, new Item.Properties().stacksTo(1).durability(800).rarity(Rarity.RARE)));
 	public static final Item VOID_BOOTS = register("void_boots",
-			new VoidArmorItem(VoidArmorMaterials.VOID, ArmorItem.Type.BOOTS, new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+			new VoidArmorItem(VoidArmorMaterials.VOID, ArmorItem.Type.BOOTS, new Item.Properties().stacksTo(1).durability(700).rarity(Rarity.RARE)));
 
 	// --- Void Skirts functional items ---
 	public static final Item VOID_COMPASS = register("void_compass",
