@@ -1,73 +1,80 @@
-# Devlog 20 - The Custom Pass
+# Devlog 20 - Three New Sets
 
 hey guys.
 
-this one is the pass where the custom gear finally stops feeling like a recolor.
+this one adds the thing that's been missing since the void set went in — actual custom armor that isn't void.
 
-playtests kept circling the same three complaints: the textures were rotated, the names were `item.endesium.___`, and the powers were just slow falling with extra steps. which is fair. if the reward for wearing all four null armor is an effect everyone hates, it's not a reward.
+ Luminous, Ash, and Null are new. 12 armor pieces, 15 tools, all with their own textures, their own powers, and their own place in the creative tab. void is still there exactly how it was — this is about the other three.
 
-so everything custom got touched. not just the numbers — the feel.
+## three sets, three identities
 
-## the rotated ashen set
+the void set already had its silhouette and its trim workflow. the new sets follow the same P-mode two-layer model so trims work the same, but they're recolored palettes with their own read:
 
-the ashen armor layers were straight up 90 degrees off. `ashen_layer_1.png` and `ashen_layer_2.png` had the helmet as a horizontal bar and the body as vertical strips. you wore it and the game tried to map that onto a human. it looked broken because it was.
+- **Luminous** gold-cyan, glassy, the grove's light. high enchantability, diamond-tier defense with a light-mobility kit.
+- **Ash** gray-ember with ember-orange highlights, volcano-forged. slightly lighter than void but built for fire.
+- **Null** violet-void, deleted matter. void-tier defense, hungrier enchant cost, gravity-deletion kit.
 
-regenerated both from the void silhouette with the correct 64x32 layout, recolored into warm gray-ember with the ember-orange highlight at the same luminance rank the luminous and null sets use. same silhouette, correct palette, actually maps to a body now.
+`luminous_layer_1/2.png`, `ashen_layer_1/2.png`, and `null_layer_1/2.png` all use the correct 64x32 humanoid layout. the ashen pair was regenerated from the void silhouette at the right luminance rank so the helmet actually sits on a head and the body actually sits on a body — no more horizontal bar helmet.
 
-## the missing names
+## you can read them now
 
-26 lang keys were capitalized. `Luminous_helmet` instead of `luminous_helmet`. fabric's `translationBuilder.add(item, name)` generates lowercase `item.endesium.luminous_helmet`, so every luminous/ash/null armor and tool showed `item.endesium.___` in inventory.
+none of the three sets had working names before — datagen was fine, but the generated lang had `Luminous_helmet` with a capital L, so the game looked for `item.endesium.luminous_helmet` and found nothing. 26 keys showed `item.endesium.___` in inventories.
 
-fixed `src/main/generated/assets/endesium/lang/en_us.json` to lowercase, removed the phantom `Ash_boots` that never had an item. datagen already generates the right keys — the generated file had been hand-edited with the wrong case.
+`src/main/generated/assets/endesium/lang/en_us.json` is now lowercase for all luminous/ash/null armor and tools, the phantom `Ash_boots` is gone. hover a luminous sword and it actually says luminous sword.
 
-ashwalker boots also lived 80 slots away from its own set in the creative tab. `ModItemGroups` now lists `ASH_HELMET/CHEST/LEGGINGS/ASHWALKER_BOOTS/SWORD...` so the set is contiguous.
+ashwalker boots also finally sit with their set. they were registered in `ModItems` and listed 80 slots away from `ASH_HELMET/CHEST/LEGGINGS` in `ModItemGroups`. now it's `ASH_HELMET/CHEST/LEGGINGS/ASHWALKER_BOOTS/SWORD...` — contiguous.
 
-## armor stopped being one potion
+## armor is per-piece now
 
-old `GearAbilities`: full luminous = night vision + glowing on yourself (a downside), full ash = fire res you already had from boots, full null = forced slow falling. no reason to mix, no reason to care about a single piece.
+new rule: every single piece does something on its own. the full set is an upgrade, not the only reason to wear it.
 
-now every piece is its own thing, and the full set is an upgrade:
+**Luminous — the grove's light** — `GearAbilities` per piece + tooltips on `GearArmorItem`:
+- helmet `Gleamsight` — night vision while worn
+- chest `Radiant Aegis` — attackers get glowing 8s; full set `Prism Ward` adds darkness 3s + 3 magic burn-back
+- leggings `Lightspeed` — speed I (II with full set)
+- boots `Lumen Leap` — jump II
 
-**Luminous (grove light)** — helmet `Gleamsight` night vision, chest `Radiant Aegis` (attackers get glowing 8s; full set adds darkness 3s + 3 magic burn-back as `Prism Ward`), leggings `Lightspeed` speed I (II with full set), boots `Lumen Leap` jump II.
+**Ash — the volcano** — volcano kit, fire is fuel:
+- helmet `Ember Crown` — fire resistance while worn
+- chest `Searing Plate` — attackers ignite 4s; burning/in lava gives strength I
+- leggings `Magma Blood` — regen I while burning/in lava
+- boots `Ashwalker` — stand on lava, and now hold shift in lava to sink at -0.18/tick to -0.55 like scaffolding, release and you stay down with `LAVA` puffs every 4t
 
-**Ash (volcano)** — helmet `Ember Crown` fire res, chest `Searing Plate` (attackers ignite 4s; burning/in lava gives strength I), leggings `Magma Blood` (regen I while burning/in lava), boots lava-walk stays, full set `Volcanic Heart` permanent strength I.
+full ash `Volcanic Heart` is permanent strength I. the set wants you in lava.
 
-**Null (deletion)** — helmet `Erased Mind` purges levitation/darkness/nausea every tick, chest `Erased Wound` absorption 5s on hit, leggings `Weightless` no fall damage, boots `Null Step` +1 step height via attribute, full set `Void Body` 25% projectile delete with smoke + shield block feedback.
+**Null — deleted matter** — `Erased Mind` helmet purges levitation/darkness/nausea every tick, `Erased Wound` chest gives absorption 5s on hit, `Weightless` leggings no fall damage, `Null Step` boots +1 step height via attribute, full set `Void Body` deletes 25% of incoming projectiles with smoke + shield block feedback.
 
-**Void** got the same treatment: per-piece tooltips now say what they do, durability added (620/850/800/700), tool tier buffed to 3040 uses / 9.2 speed.
+all ticks use a 40t refresh with 120t buffer so there's never a flicker, and the luminous retaliation has a reentrancy guard.
 
-all of it ticks with a 40t refresh and 120t buffer so there's never a flicker, and the damage hooks use a reentrancy guard so luminous retaliation doesn't ping-pong forever.
+## tools are not potions anymore
 
-ashwalker boots also learned scaffolding: hold shift in lava and you sink at -0.18/tick to -0.55 like scaffolding, release and you stay down. no rebound. `LAVA` particles every 4t while sinking.
+old `EndgearTools` was 15 tools sharing 4 `MobEffectInstance`s. axes did almost nothing, pickaxe did the same cone as sword.
 
-## tools stopped being potions
+rewrote all 15, zero potions, every `use` and `hurtEnemy` is particles + physics + world:
 
-every `EndgearTools` class was `MobEffectInstance` on hit or on use. 15 tools shared like 4 effects. axes did basically nothing, pickaxe did the same cone as sword.
+- **Luminous** — sword 20b prism beam piercing 4 (6 dmg, flash at 10b) + shard splash, pick lamp + light pulse, axe 120° arc cleave to 2 + 8b dash trail, shovel sky-launch + shockwave, hoe 7x7 till + 40x growth and 3x3 reap.
+- **Ash** — sword is the 3s toggle you asked for: right-click toggles `Firebending Stance` 60t (72t cooldown), swings shoot small fireball + 5s burn + 2 bonus dmg, with flame/lava particles. pick `Magma Quench` superheats 3x3x3 (stone->smooth, ores pop raw), axe 10b crescent + 6b ring slam, shovel hurls 3x3 falling blocks as flaming projectiles, hoe 5x5 scorch till.
+- **Null** — sword shreds 4 armor durability + portal burst, pull 7b then implodes 5 dmg, pick 12b aimed void-step, axe shreds 3 + lifts and phases through wall 4b, shovel phase-slips and folds 5x5 ground down 1b lifting foes then unfolds after 80t, hoe phases 5x5 harvest direct to inventory.
 
-all 15 rewritten, no `MobEffects` at all. every use/hit is particles + physics + world:
+each tool now has two gray tooltip lines, so hover tells you what it actually does.
 
-- **Luminous Sword** 20b prism beam (6 dmg piercing 4, flash at 10b), hit splashes 2 dmg to nearby foes. Pick places void lamp + 3-block light pulse. Axe arc cleaves 2 extra in 120° for 4 dmg + 8b dash trail. Shovel sky-launches + 5-block shockwave. Hoe 7x7 till + 40x randomTick growth and 3x3 reap on hit.
+## durability you can feel
 
-- **Ash Sword** is the request: toggle firebending, 3s. right-click toggles `Firebending Stance` 60t (cooldown 72). while active every swing fires a small fireball, ignites 3s (5s + 2 bonus dmg in stance), flame/lava particles. Pick `Magma Quench` superheats 3x3x3 (stone->smooth, cobble->stone, ores pop raw), axe throws 10b crescent flame piercing 3 and 6b ring slam, shovel hurls 3x3 falling blocks as flaming projectiles, hoe scorches till 5x5 with flame edge.
+only `ashwalker_boots` had a durability before (429). the other 11 armor pieces were `stacksTo(1)` infinite. tool tiers were also low.
 
-- **Null Sword** shreds 4 armor durability + portal burst, use pulls 7b then implodes 5 dmg falloff and deletes projectiles. Pick aimed 12b void-step to solid top + afterimage invuln. Axe shreds 3 durability + lifts, use phases through wall 4b. Shovel hit phase-slips foe, use folds 5x5 ground down 1b, lifts foes 0.95b, unfolds after 80t. Hoe phases 5x5 crops/leaves direct to inventory + shreds 5 durability on hit.
-
-each tool has two gray tooltip lines now, so hover tells you the actual ability.
-
-## durability finally exists
-
-only `ashwalker_boots` had `durability(429)`. everything else was `stacksTo(1)` with no durability — infinite armor and tools that used tier `getUses()` but felt disposable.
-
-all non-void armor now has explicit durability via `gearProps(durability)`: luminous 480/640/600/520, ash 520/680/640/580 (boots 620), null 680/880/820/720. void 620/850/800/700. tool tiers buffed: luminous 1750->2800, ash 1400->2600, null 2031->3400, void 2031->3040 and +0.2 speed/damage where it made sense.
+now via `gearProps(durability)`:
+- luminous 480/640/600/520
+- ash 520/680/640/580 (boots 620)
+- null 680/880/820/720
+void left alone. tool `getUses()` buffed: luminous 1750->2800, ash 1400->2600, null 2031->3400. they actually wear now, and they last.
 
 ## numbers
 
-- 6 files for the gear pass, ~672 lines added in the toolkit rewrite alone, plus 241 before that
-- 2 armor layer textures re-saved, 26 lang keys fixed, 15 tools rewritten, 11 armor pieces given durability
-- `gradlew build` still green — 8 tasks, no potion imports left in `EndgearTools`
+- 3 new armor sets (12 pieces) + 15 new tools, 2 layer textures regenerated, 26 lang keys, 15 tools rewritten (~672 lines), 11 armor pieces given durability
+- `gradlew build` green
 
 ## what's next
 
-deeper void armor physical abilities (right now void still leans on potions for night vision/resistance — want to replace with attribute/outline versions), more landmark variants, and the deep end still being ominous on the roadmap.
+more landmark variants, ambient life for the empty skies, and the deep end is still sitting there being ominous.
 
-go wear a set. it should finally feel like a set.
+go pick a set. they finally play differently.
