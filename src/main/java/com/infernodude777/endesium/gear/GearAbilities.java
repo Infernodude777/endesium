@@ -54,6 +54,12 @@ public final class GearAbilities {
 	private GearAbilities() {
 	}
 
+	/** Loader: starts the set-synergy layer and the Void HOVER ability so
+	 *  the constructors' self-registered ticks run from ring-up. */
+	private static final EndgearSetBonuses SET_BONUSES = new EndgearSetBonuses();
+	private static final com.infernodude777.endesium.item.VoidHoverAbility VOID_HOVER
+			= new com.infernodude777.endesium.item.VoidHoverAbility();
+
 	public static void register() {
 		ServerTickEvents.END_SERVER_TICK.register(GearAbilities::tick);
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register(GearAbilities::onDamage);

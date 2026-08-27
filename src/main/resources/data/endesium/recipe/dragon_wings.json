@@ -8,24 +8,16 @@
   ],
   "key": {
     "R": {
-      "items": [
-        "endesium:resonant_dragon_scale"
-      ]
+      "item": "endesium:resonant_dragon_scale"
     },
     "S": {
-      "items": [
-        "endesium:void_shard"
-      ]
+      "item": "endesium:void_shard"
     },
     "D": {
-      "items": [
-        "endesium:dragon_heart"
-      ]
+      "item": "endesium:dragon_heart"
     },
     "H": {
-      "items": [
-        "endesium:resonant_wings"
-      ]
+      "item": "endesium:resonant_wings"
     }
   },
   "result": {

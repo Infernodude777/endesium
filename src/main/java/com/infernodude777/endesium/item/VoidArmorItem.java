@@ -14,6 +14,9 @@ import net.minecraft.world.item.Item;
  * {@code void_layer_1} and {@code void_layer_2} textures. The {@code void_trim}
  * overlay recolors when Ancient Gold trim is applied, matching the
  * netherite-plus-trim workflow the set is designed around.
+ *
+ * <p>Full-set HOVER: with all four pieces worn, sneaking while airborne
+ * cancels your fall so you drift — the Void set's signature mobility.
  */
 public final class VoidArmorItem extends ArmorItem {
 	private final Type armorType;
@@ -34,11 +37,14 @@ public final class VoidArmorItem extends ArmorItem {
 				tooltip.add(Component.literal("below 50% health — the void holds you together").withStyle(ChatFormatting.DARK_GRAY));
 			}
 			case LEGGINGS -> tooltip.add(Component.literal("Void Channeling: Haste II while worn").withStyle(ChatFormatting.GRAY));
-			case BOOTS -> tooltip.add(Component.literal("Anchor: +25% knockback resistance").withStyle(ChatFormatting.GRAY));
+			case BOOTS -> {
+				tooltip.add(Component.literal("Anchor: +25% knockback resistance").withStyle(ChatFormatting.GRAY));
+				tooltip.add(Component.literal("Full set HOVER: sneak while airborne to drift in place").withStyle(ChatFormatting.DARK_PURPLE));
+			}
 			default -> tooltip.add(Component.literal("Void plate; accepts trims like netherite").withStyle(ChatFormatting.GRAY));
 		}
 		if (armorType == Type.CHESTPLATE) {
-			tooltip.add(Component.literal("Full set: unlocks singularity on Void Sword (hold 3s)").withStyle(ChatFormatting.DARK_GRAY));
+			tooltip.add(Component.literal("Full set: unlocks singularity on Void Sword + HOVER (sneak midair)").withStyle(ChatFormatting.DARK_GRAY));
 		}
 	}
 }
