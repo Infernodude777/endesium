@@ -1,8 +1,11 @@
 package com.infernodude777.endesium.mixin;
 
+import com.infernodude777.endesium.dragon.DragonAssaultHandler;
 import com.infernodude777.endesium.registry.ModItems;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -77,5 +80,22 @@ public abstract class LivingEntityMixin {
 		if (self.getItemBySlot(EquipmentSlot.CHEST).is(ModItems.RESONANT_WINGS)) {
 			cir.setReturnValue(Math.max(0, cir.getReturnValue() / 2));
 		}
+	}
+
+	/**
+	 * Crystal aegis for Endesium dragons: surviving pillar crystals reduce
+	 * incoming damage, and the window after the last pillar falls staggers the
+	 * dragon into taking bonus damage. EnderDragon does not override
+	 * {@code hurt}, so the LivingEntity hook is the single damage gate.
+	 */
+	@ModifyVariable(method = "hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z",
+			at = @At("HEAD"), argsOnly = true, ordinal = 1)
+	private float endesium$aegisDragonDamage(float amount) {
+		LivingEntity self = (LivingEntity) (Object) this;
+		if (self instanceof EnderDragon
+				&& self.level() instanceof ServerLevel server) {
+			return DragonAssaultHandler.modifyDragonDamage(server, amount);
+		}
+		return amount;
 	}
 }

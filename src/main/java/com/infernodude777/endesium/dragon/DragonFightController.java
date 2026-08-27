@@ -63,6 +63,7 @@ public final class DragonFightController {
 		int voidRiftCooldown;
 		int howlCooldown;
 		int meteorCooldown;
+		int resonanceCollapseCooldown;
 		int perchPulseTicks;
 		int fissureTicks;
 		int zoneTick;
@@ -112,6 +113,7 @@ public final class DragonFightController {
 			tag.putInt("EndesiumVoidRiftCooldown", voidRiftCooldown);
 			tag.putInt("EndesiumHowlCooldown", howlCooldown);
 			tag.putInt("EndesiumMeteorCooldown", meteorCooldown);
+			tag.putInt("EndesiumResonanceCollapseCooldown", resonanceCollapseCooldown);
 		}
 
 		public void load(net.minecraft.nbt.CompoundTag tag) {
@@ -137,6 +139,7 @@ public final class DragonFightController {
 			voidRiftCooldown = tag.getInt("EndesiumVoidRiftCooldown");
 			howlCooldown = tag.getInt("EndesiumHowlCooldown");
 			meteorCooldown = tag.getInt("EndesiumMeteorCooldown");
+			resonanceCollapseCooldown = tag.getInt("EndesiumResonanceCollapseCooldown");
 		}
 	}
 
@@ -169,7 +172,7 @@ public final class DragonFightController {
 		SCREECH, BARRAGE, BARRAGE_PLUS, GALE, TALON, SWEEP, STORM, COLLAPSE,
 		FINAL_ROAR, CATASTROPHE,
 		// Transformed-Dragon exclusive attacks
-		VOID_RIFT, RESONANCE_HOWL, METEOR_SHOWER
+		VOID_RIFT, RESONANCE_HOWL, METEOR_SHOWER, RESONANCE_COLLAPSE
 	}
 
 	public static void tick(EnderDragon dragon, ServerLevel level, State state) {
@@ -182,14 +185,11 @@ public final class DragonFightController {
 		tickCooldowns(state);
 		PostDragonState postDragon = PostDragonState.get(level);
 		boolean transformed = postDragon.isTransformationActive();
-		// The first Dragon is intentionally vanilla-compatible. The custom
-		// scheduler belongs to the awakened, respawned Dragon only; otherwise
-		// players would be punished by a post-Dragon system before reaching the
-		// milestone that unlocks it.
-		if (!transformed) {
-			state.clearZones();
-			return;
-		}
+		// Every Endesium Dragon - the first and the respawned alike - fights
+		// with the full authored grammar. The transformation is an escalation,
+		// not the unlock key: the first Dragon runs the base phase pools, while
+		// the awakened Dragon adds its 1.6x scale and the resonance-exclusive
+		// attacks in the scheduler below.
 
 		// --- Transformed (post-Dragon respawn) buffs, applied exactly once. ---
 		if (transformed && !state.transformed) {
@@ -395,6 +395,7 @@ public final class DragonFightController {
 			if (state.phase >= 2) pool.add(AttackType.VOID_RIFT);
 			if (state.phase >= 2 && close) pool.add(AttackType.RESONANCE_HOWL);
 			if (state.phase >= 3) pool.add(AttackType.METEOR_SHOWER);
+			if (state.phase >= 2) pool.add(AttackType.RESONANCE_COLLAPSE);
 		}
 
 		// Cooldowns gate the heavy attacks.
@@ -410,6 +411,7 @@ public final class DragonFightController {
 		if (state.voidRiftCooldown > 0) pool.remove(AttackType.VOID_RIFT);
 		if (state.howlCooldown > 0) pool.remove(AttackType.RESONANCE_HOWL);
 		if (state.meteorCooldown > 0) pool.remove(AttackType.METEOR_SHOWER);
+		if (state.resonanceCollapseCooldown > 0) pool.remove(AttackType.RESONANCE_COLLAPSE);
 		// Never repeat the same attack twice in a row.
 		pool.removeIf(type -> type.ordinal() == state.lastAttack);
 		if (pool.isEmpty()) {
@@ -522,6 +524,18 @@ public final class DragonFightController {
 					state.meteorZones.add(zone);
 					telegraphCircle(level, new Vec3(mx, my, mz), 30, ParticleTypes.END_ROD);
 				}
+			}
+			case RESONANCE_COLLAPSE -> {
+				// Transformed-exclusive: drags every player toward the Dragon,
+				// then detonates at its position. The converging rings telegraph
+				// the pull so the counterplay - gain distance, break line - is
+				// readable instead of a silent vacuum.
+				Vec3 core = dragon.position();
+				level.playSound(null, dragon.blockPosition(), ModSounds.RESONANCE_STRIKE,
+						SoundSource.HOSTILE, 1.4F, 0.4F);
+				level.sendParticles(ModParticles.RESONANCE_PULSE, core.x, core.y + 2.0D, core.z,
+						70, 18.0D, 3.0D, 18.0D, 0.10D);
+				telegraphCircle(level, core, 60, ParticleTypes.END_ROD);
 			}
 			default -> {
 			}
@@ -716,6 +730,31 @@ public final class DragonFightController {
 					state.meteorCooldown = 400;
 				}
 			}
+			case RESONANCE_COLLAPSE -> {
+				// Pull for just under three seconds, then detonate. Standing still
+				// loses: the counterplay is putting distance and using cover while
+				// the rings converge.
+				Vec3 core = dragon.position();
+				if (state.attackTick <= 55) {
+					for (ServerPlayer player : level.players()) {
+						if (!player.isAlive() || player.isSpectator()) continue;
+						double distance = Math.sqrt(player.distanceToSqr(core));
+						if (distance > 34.0D || distance < 1.5D) continue;
+						Vec3 pull = core.subtract(player.position()).normalize().scale(0.16D);
+						player.setDeltaMovement(player.getDeltaMovement().add(
+								pull.x, Math.max(-0.1D, pull.y * 0.4D), pull.z));
+						player.hurtMarked = true;
+					}
+					if (state.attackTick % 6 == 0) {
+						telegraphCircle(level, core, 30, ModParticles.RESONANCE_PULSE);
+					}
+				}
+				if (state.attackTick == 56) {
+					collapseBurst(dragon, level, core);
+					finishAttack(dragon, state, 130);
+					state.resonanceCollapseCooldown = 520;
+				}
+			}
 			default -> {
 			}
 		}
@@ -738,6 +777,7 @@ public final class DragonFightController {
 		state.voidRiftCooldown = Math.max(0, state.voidRiftCooldown - 1);
 		state.howlCooldown = Math.max(0, state.howlCooldown - 1);
 		state.meteorCooldown = Math.max(0, state.meteorCooldown - 1);
+		state.resonanceCollapseCooldown = Math.max(0, state.resonanceCollapseCooldown - 1);
 	}
 
 	// ------------------------------------------------------------------
@@ -863,6 +903,24 @@ public final class DragonFightController {
 			if (dx * dx + dz * dz > zone.radius() * zone.radius()) continue;
 			player.hurt(level.damageSources().mobAttack(dragon), damage);
 			player.knockback(0.9D, dx, dz);
+		}
+	}
+
+	private static void collapseBurst(EnderDragon dragon, ServerLevel level, Vec3 core) {
+		level.playSound(null, dragon.blockPosition(), ModSounds.DRAGON_ROAR, SoundSource.HOSTILE, 1.7F, 0.6F);
+		level.sendParticles(ParticleTypes.EXPLOSION, core.x, core.y + 1.0D, core.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+		level.sendParticles(ModParticles.RESONANCE_PULSE, core.x, core.y + 1.0D, core.z,
+				140, 20.0D, 4.0D, 20.0D, 0.12D);
+		level.sendParticles(ParticleTypes.CRIMSON_SPORE, core.x, core.y + 1.0D, core.z,
+				80, 14.0D, 3.0D, 14.0D, 0.10D);
+		for (ServerPlayer player : level.players()) {
+			if (!player.isAlive() || player.isSpectator()) continue;
+			double distance = Math.sqrt(player.distanceToSqr(core));
+			if (distance > 26.0D) continue;
+			player.hurt(level.damageSources().mobAttack(dragon),
+					9.0F * (float) (1.0D - distance / 30.0D));
+			player.knockback(1.8D, player.getX() - core.x, player.getZ() - core.z);
+			player.setDeltaMovement(player.getDeltaMovement().add(0.0D, 0.3D, 0.0D));
 		}
 	}
 
