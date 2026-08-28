@@ -8,17 +8,20 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
 
 /**
- * Registry for Endesium's container menus.
+ * Registry for Endesium's container menus. The Lore Book menu is the
+ * only container in the mod.
  */
 public final class ModMenus {
-	public static final MenuType<LoreBookMenu> LORE_BOOK =
-			Registry.register(BuiltInRegistries.MENU, Endesium.id("lore_book"),
-					new MenuType<>(LoreBookMenu::new, FeatureFlags.VANILLA_SET));
+    public static final MenuType<LoreBookMenu> LORE_BOOK =
+            Registry.register(
+                    BuiltInRegistries.MENU,
+                    Endesium.id("lore_book"),
+                    new MenuType<>(LoreBookMenu::new, FeatureFlags.VANILLA_SET)
+            );
 
-	private ModMenus() {
-	}
+    private ModMenus() { }
 
-	public static void register() {
-		Endesium.LOGGER.info("Registered Endesium menus");
-	}
+    public static void register() {
+        Endesium.LOGGER.info("Registered Endesium menus");
+    }
 }

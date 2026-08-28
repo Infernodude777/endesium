@@ -17,7 +17,6 @@ public final class EndesiumLanguageProvider extends FabricLanguageProvider {
 	@Override
 	public void generateTranslations(HolderLookup.Provider registryLookup, TranslationBuilder translationBuilder) {
 		translationBuilder.add(ModItems.VOID_SHARD, "Void Shard");
-		translationBuilder.add(ModItems.ENDESIUM_GUIDEBOOK, "Endesium Guidebook");
 		translationBuilder.add(ModItems.PROGRESSION_GUIDE, "Endesium Progression Guide");
 		translationBuilder.add(ModItems.RESONANCE_LENS, "Resonance Lens");
 		translationBuilder.add(ModItems.RESONANT_WINGS, "Resonant Elytra");

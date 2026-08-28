@@ -1,3 +1,4 @@
+// Jimbibo retyped session
 package com.infernodude777.endesium.entity;
 
 import com.infernodude777.endesium.Endesium;
@@ -20,6 +21,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -40,6 +42,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.EnumSet;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimationController;
@@ -61,6 +65,9 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 	private static final RawAnimation ATTACK = RawAnimation.begin().thenPlay("animation.end_golem.attack");
 	private static final RawAnimation CAST = RawAnimation.begin().thenPlay("animation.end_golem.cast");
 	private static final RawAnimation STAGGER_ANIM = RawAnimation.begin().thenLoop("animation.end_golem.stagger");
+	private static final RawAnimation PICKUP_ANIM = RawAnimation.begin().thenPlay("animation.end_golem.pickup");
+	private static final RawAnimation CARRY_ANIM = RawAnimation.begin().thenLoop("animation.end_golem.carry");
+	private static final RawAnimation THROW_ANIM = RawAnimation.begin().thenPlay("animation.end_golem.throw");
 
 	private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_PHASE =
 			net.minecraft.network.syncher.SynchedEntityData.defineId(EndGolemEntity.class, EntityDataSerializers.INT);
@@ -102,20 +109,22 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 	private int summonCooldown = 200;
 	private int shockwaveCooldown = 140;
 	private int beamCooldown = 160;
+	private int seizeCooldown = 200;
 
 	public EndGolemEntity(EntityType<? extends EndGolemEntity> type, Level level) {
 		super(type, level);
-		xpReward = 200;
+		xpReward = 300;
 	}
 
 	public static AttributeSupplier.Builder createAttributes() {
 		return Mob.createMobAttributes()
-				.add(Attributes.MAX_HEALTH, 300.0D)
+				.add(Attributes.MAX_HEALTH, 480.0D)
 				.add(Attributes.MOVEMENT_SPEED, 0.24D)
-				.add(Attributes.ATTACK_DAMAGE, 14.0D)
+				.add(Attributes.ATTACK_DAMAGE, 18.0D)
 				.add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
-				.add(Attributes.ARMOR, 14.0D)
-				.add(Attributes.FOLLOW_RANGE, 48.0D)
+				.add(Attributes.ARMOR, 18.0D)
+				.add(Attributes.ARMOR_TOUGHNESS, 5.0D)
+				.add(Attributes.FOLLOW_RANGE, 64.0D)
 				.add(Attributes.STEP_HEIGHT, 1.0D);
 	}
 
@@ -124,6 +133,7 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 		super.defineSynchedData(builder);
 		builder.define(DATA_PHASE, 1);
 		builder.define(DATA_FLAGS, (byte) 0);
+		builder.define(DATA_GRAB, GRAB_IDLE);
 	}
 
 	public int getPhase() {
@@ -142,14 +152,15 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 	@Override
 	protected void registerGoals() {
 		goalSelector.addGoal(0, new FloatGoal(this));
-		goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
-		goalSelector.addGoal(2, new BarrageGoal(this));
-		goalSelector.addGoal(3, new ShockwaveGoal(this));
-		goalSelector.addGoal(4, new BeamSweepGoal(this));
-		goalSelector.addGoal(5, new SummonGoal(this));
-		goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.4D));
-		goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 24.0F));
-		goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+		goalSelector.addGoal(1, new GravitonSeizeGoal(this));
+		goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, true));
+		goalSelector.addGoal(3, new BarrageGoal(this));
+		goalSelector.addGoal(4, new ShockwaveGoal(this));
+		goalSelector.addGoal(5, new BeamSweepGoal(this));
+		goalSelector.addGoal(6, new SummonGoal(this));
+		goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 0.4D));
+		goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 24.0F));
+		goalSelector.addGoal(9, new RandomLookAroundGoal(this));
 		targetSelector.addGoal(1, new HurtByTargetGoal(this));
 		targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
 	}
@@ -190,6 +201,13 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 			if (barrageCooldown > 0) barrageCooldown--;
 			if (summonCooldown > 0) summonCooldown--;
 			if (shockwaveCooldown > 0) shockwaveCooldown--;
+			if (seizeCooldown > 0) seizeCooldown--;
+			if (grabPhase == GRAB_CARRY) {
+				tickGravitonCarry(server);
+			} else if (grabPhase == GRAB_THROW) {
+				// Brief committed window for the throw animation to read.
+				if (--carryTicks <= 0) setGrabPhase(GRAB_IDLE);
+			}
 			tickArenaTether(server);
 			// Ambient dread: the golem's core hums visible resonance.
 			server.sendParticles(ModParticles.RESONANCE_PULSE,
@@ -233,6 +251,130 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 		return getPhase() >= 3;
 	}
 
+	// --- Graviton Seize: crane-hoist grab, carry, hurl ---
+
+	/** Grab phases: 0 idle, 1 windup (pickup anim), 2 carrying, 3 throwing. */
+	public static final int GRAB_IDLE = 0;
+	public static final int GRAB_WINDUP = 1;
+	public static final int GRAB_CARRY = 2;
+	public static final int GRAB_THROW = 3;
+	/** Damage that must be dealt to the golem mid-carry to force an early drop. */
+	private static final float CARRY_BREAK_DAMAGE = 24.0F;
+
+	private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_GRAB =
+			net.minecraft.network.syncher.SynchedEntityData.defineId(EndGolemEntity.class, EntityDataSerializers.INT);
+
+	private int grabPhase;
+	private int carryTicks;
+	private float carryDamage;
+
+	public int getGrabPhase() {
+		return getEntityData().get(DATA_GRAB);
+	}
+
+	private void setGrabPhase(int phase) {
+		grabPhase = phase;
+		getEntityData().set(DATA_GRAB, phase);
+	}
+
+	public boolean isGrabbing() {
+		return grabPhase != GRAB_IDLE;
+	}
+
+	/** True while any committed animation owns the body: casting or grabbing. */
+	public boolean isBusy() {
+		return isCasting() || isGrabbing();
+	}
+
+	private boolean beginSeize(ServerLevel server, LivingEntity target) {
+		if (grabPhase != GRAB_IDLE || isStaggered() || isBusy()) return false;
+		if (target.isPassenger() || target.isVehicle() || !target.onGround()) return false;
+		if (target instanceof Player player && player.isSpectator()) return false;
+		double dist = distanceToSqr(target);
+		if (dist < 3.0D || dist > 14.0D * 14.0D || !hasLineOfSight(target)) return false;
+
+		setGrabPhase(GRAB_WINDUP);
+		carryTicks = 18; // windup duration; reused as the throw-committed window later
+		carryDamage = 0.0F;
+		getNavigation().stop();
+		playSound(SoundEvents.PISTON_EXTEND, 1.4F, 0.6F);
+		server.sendParticles(ModParticles.RESONANCE_PULSE,
+				getX(), getY() + 3.0D, getZ(), 16, 0.9D, 0.8D, 0.9D, 0.03D);
+		return true;
+	}
+
+	private void tickGravitonCarry(ServerLevel server) {
+		Entity held = getFirstPassenger();
+		if (held == null || !held.isAlive() || held.isRemoved()) {
+			endGrab(120);
+			return;
+		}
+		if (carryTicks-- <= 0) {
+			hurlHeld(server, held);
+			return;
+		}
+		// Crane dust + a slow servo rotation so the carry reads mechanical.
+		if (tickCount % 4 == 0) {
+			server.sendParticles(ParticleTypes.REVERSE_PORTAL,
+					getX(), getY() + 3.2D, getZ(), 3, 1.0D, 0.6D, 1.0D, 0.03D);
+		}
+		setYRot(getYRot() + 0.8F);
+		held.fallDistance = 0.0F;
+	}
+
+	private void hurlHeld(ServerLevel server, Entity held) {
+		setGrabPhase(GRAB_THROW);
+		carryTicks = 12; // committed throw animation window
+		if (held instanceof LivingEntity living) {
+			living.stopRiding();
+		}
+		double speed = isEnragedPhase() ? 2.3D : 1.8D;
+		double up = isEnragedPhase() ? 1.1D : 0.9D;
+		Vec3 dir = Vec3.directionFromRotation(0.0F, getYRot());
+		held.setDeltaMovement(dir.x * speed, up, dir.z * speed);
+		held.hurtMarked = true;
+		if (held instanceof LivingEntity living) {
+			living.hurt(damageSources().mobAttack(this), isEnragedPhase() ? 14.0F : 10.0F);
+			// Mercy only below phase three; the engine at full burn lets the fall work.
+			if (!isEnragedPhase()) {
+				living.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 200, 0));
+			}
+		}
+		playSound(SoundEvents.GENERIC_EXPLODE.value(), 1.4F, 0.7F);
+		server.sendParticles(ParticleTypes.SONIC_BOOM, getX(), getY() + 3.0D, getZ(), 1, 0, 0, 0, 0);
+	}
+
+	/** Cancels an in-progress grab and reapplies its cooldown. */
+	private void endGrab(int cooldown) {
+		setGrabPhase(GRAB_IDLE);
+		carryTicks = 0;
+		seizeCooldown = Math.max(seizeCooldown, cooldown);
+	}
+
+	@Override
+	protected void positionRider(Entity passenger, Entity.MoveFunction callback) {
+		if (grabPhase == GRAB_CARRY) {
+			// Hoisted on the crane arms, front and center.
+			Vec3 dir = Vec3.directionFromRotation(0.0F, getYRot());
+			callback.accept(passenger,				getX() + dir.x * 1.6D,
+				getY() + 3.4D,
+				getZ() + dir.z * 1.6D);
+		passenger.setYRot(getYRot());
+			passenger.fallDistance = 0.0F;
+		} else {
+			super.positionRider(passenger, callback);
+		}
+	}
+
+	@Override
+	public void removePassenger(Entity passenger) {
+		super.removePassenger(passenger);
+		// A player who wriggles free (sneak-dismount, death, teleport) ends the seize.
+		if (grabPhase == GRAB_CARRY && level() instanceof ServerLevel) {
+			endGrab(100);
+		}
+	}
+
 	@Override
 	public void aiStep() {
 		super.aiStep();
@@ -250,6 +392,13 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 		if (source.is(DamageTypeTags.IS_EXPLOSION)) amount *= 0.6F;
 		// The punish window: a staggered golem's core is exposed.
 		if (isStaggered()) amount *= 2.0F;
+		// Counterplay for the seize: chunky damage mid-carry forces an early drop.
+		if (grabPhase == GRAB_CARRY) {
+			carryDamage += amount;
+			if (carryDamage >= CARRY_BREAK_DAMAGE) {
+				endGrab(60);
+			}
+		}
 		// Stagger accumulation: 60+ damage inside 8 seconds breaks its stance.
 		// Self-inflicted upkeep damage and non-entity sources never count.
 		if (!bypassStagger && source.getEntity() != this) {
@@ -283,6 +432,12 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 		setStaggered(true);
 		getNavigation().stop();
 		setCasting(false);
+		// A staggered engine cannot finish a lift.
+		if (grabPhase != GRAB_IDLE) {
+			Entity held = getFirstPassenger();
+			if (held instanceof LivingEntity living) living.stopRiding();
+			endGrab(100);
+		}
 		playSound(SoundEvents.RAVAGER_STUNNED, 1.2F, 0.8F);
 		if (level() instanceof ServerLevel server) {
 			server.sendParticles(ParticleTypes.CRIT,
@@ -311,6 +466,9 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 
 	private <E extends EndGolemEntity> PlayState animate(AnimationState<E> state) {
 		if (isDeadOrDying()) return state.setAndContinue(RawAnimation.begin().thenPlay("animation.end_golem.death"));
+		int grab = getGrabPhase();
+		if (grab == GRAB_WINDUP || grab == GRAB_THROW) return state.setAndContinue(PICKUP_ANIM);
+		if (grab == GRAB_CARRY) return state.setAndContinue(CARRY_ANIM);
 		if (isStaggered()) return state.setAndContinue(STAGGER_ANIM);
 		if (isCasting()) return state.setAndContinue(CAST);
 		if (swinging) return state.setAndContinue(ATTACK);
@@ -362,6 +520,11 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
 		setPhase(tag.getInt("EndesiumGolemPhase"));
+		// Grabs never survive a save: a reloaded golem starts clean.
+		if (getFirstPassenger() instanceof LivingEntity living) {
+			living.stopRiding();
+		}
+		setGrabPhase(GRAB_IDLE);
 		if (this.hasCustomName()) bossBar.setName(getDisplayName());
 	}
 
@@ -386,7 +549,7 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 
 		@Override
 		public boolean canUse() {
-			if (golem.barrageCooldown > 0 || golem.isCasting() || golem.isStaggered()) return false;
+			if (golem.barrageCooldown > 0 || golem.isBusy() || golem.isStaggered()) return false;
 			LivingEntity target = golem.getTarget();
 			if (target == null) return false;
 			double dist = golem.distanceToSqr(target);
@@ -397,9 +560,11 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 		public void start() {
 			golem.setCasting(true);
 			golem.barrageCooldown = golem.isEnragedPhase() ? 90 : 160;
-		}		@Override
+		}
+
+		@Override
 		public boolean canContinueToUse() {
-			return golem.isCasting();
+			return golem.isBusy();
 		}
 
 		@Override
@@ -454,7 +619,7 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 
 		@Override
 		public boolean canUse() {
-			if (golem.shockwaveCooldown > 0 || golem.isCasting() || golem.isStaggered()) return false;
+			if (golem.shockwaveCooldown > 0 || golem.isBusy() || golem.isStaggered()) return false;
 			LivingEntity target = golem.getTarget();
 			if (target == null) return false;
 			return golem.distanceToSqr(target) <= 36.0D;
@@ -478,6 +643,7 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 		}
 
 		private int windup = 30;
+		private boolean rang2;
 
 		@Override
 		public void tick() {
@@ -491,22 +657,32 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 				}
 				return;
 			}
-			golem.setCasting(false);
-			windup = 30;
+			boolean second = rang2;
+			double radius = second ? 9.0D : 6.5D;
+			float damage = second ? 6.0F : 10.0F;
 			ServerLevel server = (ServerLevel) golem.level();
 			server.sendParticles(ParticleTypes.POOF,
 					golem.getX(), golem.getY() + 0.3D, golem.getZ(),
-					50, 4.5D, 0.4D, 4.5D, 0.08D);
+					40, radius, 0.4D, radius, 0.08D);
 			for (Player p : server.getEntitiesOfClass(Player.class,
-					golem.getBoundingBox().inflate(6.5D), Player::isAlive)) {
+					golem.getBoundingBox().inflate(radius), Player::isAlive)) {
 				Vec3 kb = p.position().subtract(golem.position()).normalize();
 				p.setDeltaMovement(p.getDeltaMovement().add(kb.x * 1.5D, 0.7D, kb.z * 1.5D));
 				p.hurtMarked = true;
-				p.hurt(golem.damageSources().mobAttack(golem), 8.0F);
+				p.hurt(golem.damageSources().mobAttack(golem), damage);
 			}
-			golem.playSound(SoundEvents.GENERIC_EXPLODE.value(), 1.2F, 0.7F);
-			if (golem.isEnragedPhase()) golem.selfHurt(2.0F);
+			golem.playSound(SoundEvents.GENERIC_EXPLODE.value(), 1.2F, second ? 0.55F : 0.7F);
+			if (golem.isEnragedPhase() && !second) golem.selfHurt(2.0F);
 			golem.swing(InteractionHand.MAIN_HAND);
+			if (golem.isEnragedPhase() && !rang2) {
+				// Phase three: the quake echoes - a second, wider ring catches the jumpers.
+				rang2 = true;
+				windup = 10;
+				return;
+			}
+			rang2 = false;
+			golem.setCasting(false);
+			windup = 30;
 		}
 	}
 
@@ -520,7 +696,7 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 
 		@Override
 		public boolean canUse() {
-			if (golem.summonCooldown > 0 || golem.isCasting() || golem.isStaggered()) return false;
+			if (golem.summonCooldown > 0 || golem.isBusy() || golem.isStaggered()) return false;
 			return golem.getHealth() < golem.getMaxHealth() * PHASE_TWO_AT
 					&& golem.getTarget() != null;
 		}
@@ -529,7 +705,7 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 		public void start() {
 			golem.summonCooldown = golem.isEnragedPhase() ? 400 : 700;
 			ServerLevel server = (ServerLevel) golem.level();
-			int count = golem.isEnragedPhase() ? 2 : 3;
+			int count = golem.isEnragedPhase() ? 4 : 2;
 			for (int i = 0; i < count; i++) {
 				double ang = golem.random.nextDouble() * Math.PI * 2.0D;
 				double px = golem.getX() + Math.cos(ang) * 4.0D;
@@ -564,7 +740,7 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 
 		@Override
 		public boolean canUse() {
-			if (golem.beamCooldown > 0 || golem.isCasting() || golem.isStaggered()) return false;
+			if (golem.beamCooldown > 0 || golem.isBusy() || golem.isStaggered()) return false;
 			LivingEntity target = golem.getTarget();
 			if (target == null || golem.getPhase() < 2) return false;
 			double dist = golem.distanceToSqr(target);
@@ -626,6 +802,77 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 					}
 				}
 				golem.playSound(SoundEvents.GUARDIAN_ATTACK, 1.4F, 0.7F);
+			}
+		}
+	}
+
+	/**
+	 * GRAVITON SEIZE: the engine's crane arms hoist a player overhead, carry
+	 * them like cargo, then hurl them across the arena. Counterplay: break
+	 * line of sight in the windup, sneak-dismount, or deal 24 damage while
+	 * held to force an early drop.
+	 */
+	private static final class GravitonSeizeGoal extends Goal {
+		private final EndGolemEntity golem;
+
+		GravitonSeizeGoal(EndGolemEntity golem) {
+			this.golem = golem;
+			setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+		}
+
+		@Override
+		public boolean canUse() {
+			if (golem.seizeCooldown > 0 || golem.isGrabbing()) return false;
+			LivingEntity target = golem.getTarget();
+			if (target == null || !(golem.level() instanceof ServerLevel server)) return false;
+			return golem.beginSeize(server, target);
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return golem.isGrabbing();
+		}
+
+		@Override
+		public void tick() {
+			golem.getNavigation().stop();
+			LivingEntity target = golem.getTarget();
+			if (golem.grabPhase == EndGolemEntity.GRAB_WINDUP) {
+				// Track the victim through the windup; escaping the cone whiffs the grab.
+				if (target != null) {
+					golem.getLookControl().setLookAt(target);
+					if (golem.tickCount % 4 == 0 && golem.level() instanceof ServerLevel server) {
+						server.sendParticles(ParticleTypes.REVERSE_PORTAL,
+								target.getX(), target.getY() + 1.0D, target.getZ(), 4, 0.3D, 0.5D, 0.3D, 0.02D);
+					}
+				}
+				if (--golem.carryTicks <= 0) {
+					if (target != null && target.isAlive()
+							&& !target.isPassenger()
+							&& golem.distanceToSqr(target) <= 16.0D * 16.0D
+							&& golem.hasLineOfSight(target)) {
+						// LIFT OFF.
+						target.startRiding(golem, true);
+						golem.setGrabPhase(EndGolemEntity.GRAB_CARRY);
+						golem.carryTicks = golem.isEnragedPhase() ? 40 : 60;
+						golem.carryDamage = 0.0F;
+						golem.playSound(SoundEvents.PISTON_CONTRACT, 1.2F, 0.5F);
+						if (target instanceof Player player) {
+							player.displayClientMessage(
+									Component.literal("The End Golem hoists you into its arms!"), true);
+							player.hurt(golem.damageSources().mobAttack(golem), golem.isEnragedPhase() ? 7.0F : 5.0F);
+						}
+					} else {
+						golem.endGrab(120);
+					}
+				}
+			}
+		}
+
+		@Override
+		public void stop() {
+			if (golem.grabPhase != EndGolemEntity.GRAB_IDLE) {
+				golem.endGrab(120);
 			}
 		}
 	}

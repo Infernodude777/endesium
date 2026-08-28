@@ -82,20 +82,6 @@ public abstract class LivingEntityMixin {
 		}
 	}
 
-	/**
-	 * Crystal aegis for Endesium dragons: surviving pillar crystals reduce
-	 * incoming damage, and the window after the last pillar falls staggers the
-	 * dragon into taking bonus damage. EnderDragon does not override
-	 * {@code hurt}, so the LivingEntity hook is the single damage gate.
-	 */
-	@ModifyVariable(method = "hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z",
-			at = @At("HEAD"), argsOnly = true, ordinal = 1)
-	private float endesium$aegisDragonDamage(float amount) {
-		LivingEntity self = (LivingEntity) (Object) this;
-		if (self instanceof EnderDragon
-				&& self.level() instanceof ServerLevel server) {
-			return DragonAssaultHandler.modifyDragonDamage(server, amount);
-		}
-		return amount;
-	}
+	// The crystal aegis damage gate moved to EntityMixin: 1.21.1 declares
+	// hurt(DamageSource, float) on Entity, not on LivingEntity.
 }

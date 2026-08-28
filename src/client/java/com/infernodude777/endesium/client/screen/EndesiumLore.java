@@ -25,20 +25,20 @@ public final class EndesiumLore {
 	static {
 		add(ModItems.VOID_SHARD,
 				"A splinter of void glass that hums against your palm.",
-				"Shatters out of voidstone, or falls from wounded stalkers.",
-				"Smelts into void ingots - the spine of all void gear.");
+				"Obtain: mine Void Ore/voidstone, kill Void Stalkers, loot ruins or wake mechanisms.",
+				"Used in: Resonance Lens, Echo Compass, Void Gem, and Void Ingot recipes.");
 		add(ModItems.VOID_INGOT,
 				"Void glass, forged and reforged until it holds an edge.",
-				"Smelt a Void Shard in any furnace.",
-				"Forges void tools, armor, and the lantern frames.");
+				"Obtain: smelt Void Ore, Voidstone, Umbral Shards, or Void Shards in a furnace.",
+				"Used in: all Void tools and armor, plus Void utility recipes; repairs Void gear.");
 		add(ModItems.VOID_GEM,
 				"A cut stone that drinks light and gives it back colder.",
-				"Nine void shards, cut and set at a crafting table.",
-				"Powers the finest void equipment and the compass frame.");
+				"Obtain: craft 9 Void Shards together, or mine crystal deposits in the Void Skirts.",
+				"Used in: Void Sword, Void Dash, Void Flare, Void Filter, Void Compass, and Void Core recipes.");
 		add(ModItems.VOID_CORE,
 				"The beating heart of voidstone machinery.",
-				"Cut from a void gem and bound with ender essence.",
-				"Anchors the Resonant Wings and the black hole charm.");
+				"Obtain: craft from a Void Gem, Ender Essence, and Void Ingots; rare deep-ruin loot.",
+				"Used in: Resonant Wings, Void tools, Void armor, anchors, and Golem Effigy recipes.");
 		add(ModItems.VOID_ANCHOR,
 				"A thrown anchor that drags you across the void to it.",
 				"Forged from void ingots and abyssal thread.",
@@ -69,8 +69,8 @@ public final class EndesiumLore {
 				"Needles toward the End Wastes heartland.");
 		add(ModItems.ECHO_COMPASS,
 				"Listens for structures instead of places.",
-				"Echo shard in a copper frame.",
-				"Needles toward the nearest Endesium structure.");
+				"Obtain: craft with a Resonance Token and 4 Void Shards; alternate recipe uses an Echo Shard.",
+				"Used for: locating the strongest loaded resonance source and guiding exploration.");
 		add(ModItems.ECHO_SHARD,
 				"A shard that repeats the last sound it heard, quietly.",
 				"Dug from the deepest end stone, or bartered from nullwalkers.",
@@ -277,20 +277,16 @@ public final class EndesiumLore {
 				"Reads resonance and finds mechanisms.");
 		add(ModItems.RESONANCE_TOKEN,
 				"A promise the mechanism keeps.",
-				"Wake a resonance mechanism to earn one.",
-				"Spends on the deepest rewards.");
+				"Obtain: wake a Resonant Mechanism with the Resonance Lens; craft the alternate token recipe.",
+				"Used in: Echo Compass recipes and deep progression rewards.");
 		add(ModItems.PROGRESSION_GUIDE,
 				"You are holding the answer key.",
-				"Crafted from an inscribed slate and lumen dust.",
-				"Place any item in the socket to read its lore.");
-		add(ModItems.ENDESIUM_GUIDEBOOK,
-				"The long story, chapter by chapter.",
-				"Crafted from a progression guide and lumen moss.",
-				"Reads as a full written guide.");
+				"Obtain: craft with a book, 2 paper, and an Ender Pearl; the first Dragon kill also grants one.",
+				"Used for: item lookup, every known acquisition route, every known recipe, and item pairings.");
 		add(Items.ENDER_PEARL,
 				"Vanilla, but the End remembers what you did with it.",
-				"Dropped by endermen.",
-				"Feeds essence, pearls, and void travel.");
+				"Obtain: kill Endermen, barter, or find it in vanilla loot.",
+				"Used in: Ender Essence, Progression Guide, Eyes of Ender, Void Pearl, and many Endesium recipes.");
 		add(Items.END_CRYSTAL,
 				"You know what these are for. So does the dragon.",
 				"Ghast tears and eyes of ender over glass.",

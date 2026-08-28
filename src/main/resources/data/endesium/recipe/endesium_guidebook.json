@@ -1,9 +1,0 @@
-{
-  "type": "minecraft:crafting_shapeless",
-  "category": "misc",
-  "ingredients": [
-    { "item": "minecraft:book" },
-    { "item": "endesium:resonance_token" }
-  ],
-  "result": { "id": "endesium:endesium_guidebook", "count": 1 }
-}

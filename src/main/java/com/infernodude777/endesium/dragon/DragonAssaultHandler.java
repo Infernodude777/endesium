@@ -52,6 +52,8 @@ public final class DragonAssaultHandler {
     public static void register() {
         ServerTickEvents.END_SERVER_TICK.register(DragonAssaultHandler::tick);
         DragonSpecialAttacks.register();
+        ArenaReactionHandler.register();
+        EndFightSky.register();
         DragonFightCommand.register();
         Endesium.LOGGER.info("Dragon assault layer registered");
     }
@@ -78,6 +80,7 @@ public final class DragonAssaultHandler {
         if (dragons.isEmpty()) {
             if (state.active) {
                 state.active = false;
+                DragonHoard.spawnHoard(level, state.lastDragonPos);
                 DragonRewards.dropEnhancedLoot(level, state.lastDragonPos);
                 announce(level, "The Sky Falls Silent", "The dragon's hoard reveals itself",
                         SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);

@@ -162,7 +162,7 @@ public final class ProgressionGuideContent {
             "NULL ARCHIVE (Umbral): SEALED until the Dragon dies.")),
         new Entry("Endgame", "The Dragon", List.of(
             "The first fight stays vanilla - prepare like classic End.",
-            "FIRST KILL drops: guidebook, 4 Dragon Scales, Dragonbone,",
+            "FIRST KILL drops: this guide, 4 Dragon Scales, Dragonbone,",
             "Ender Essence, Resonance Echo, Archive Fragment:",
             "the entire Resonant Wings kit plus more.")),
         new Entry("Endgame", "The Transformation", List.of(

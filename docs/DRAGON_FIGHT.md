@@ -132,3 +132,33 @@ exception: each set-piece parks the dragon in the hover phase, disables its AI,
 and puppets its position tick by tick for the duration, then hands control back
 to the holding pattern. Rewards drop through `DragonRewards`, and the live
 readout lives in `DragonFightCommand`.
+## The world answers
+
+Beyond the dragon's own moves, the arena itself reacts to the fight
+(`ArenaReactionHandler`, `EndFightSky`, `DragonHoard`):
+
+- **The island cracking** — while the dragon lives, the island's fracture
+  lines crackle and glow, escalating with enrage: dust at enrage 1, end-rod
+  sparks at 2, crimson embers at 3. Every enrage spike rolls a shockwave ring
+  across the surface, every destroyed crystal makes the ground bite back, and
+  when the aegis breaks the island shudders with counter-rotating resonance
+  rings.
+- **The sky answering** — motes drift in the high air during the fight, light
+  tears streak down at enrage 2+, and each enrage spike pulls a deep answering
+  pulse from above the island with a beam of light falling on every player.
+- **The hoard becomes a location** — when the dragon falls, a chest is placed
+  on the island at the death site holding the curated materials, and a
+  resonance beacon - a pulsing base and a pillar of light - marks the kill
+  spot for ten minutes.
+
+All three are server-side particles and sound (plus the one intentional chest
+block): the arena stays intact, but it stops feeling like a stage.
+
+### Testing
+
+- `/dragonfight` still prints the fight readout; the world layers piggyback on
+  the same enrage and crystal signals, so the existing damage commands drive
+  them too.
+- Watch a full fight and confirm the fracture crackle scales with enrage, the
+  sky pulses on each enrage spike, and a chest with a beacon remains after the
+  kill.

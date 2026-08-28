@@ -22,6 +22,7 @@ import com.infernodude777.endesium.menu.LoreBookMenu;
 public class ProgressionGuideScreen extends AbstractContainerScreen<LoreBookMenu> {
     private static final int PANEL_WIDTH = 248;
     private static final int PANEL_HEIGHT = 186;
+    private static final int LORE_WIDTH = PANEL_WIDTH - 72;
     private static final int COLOR_GOLD = 0xFFC9A227;
     private static final int COLOR_TEXT = 0xFFDEEED6;
     private static final int COLOR_DIM = 0xFF8A80B0;
@@ -68,7 +69,7 @@ public class ProgressionGuideScreen extends AbstractContainerScreen<LoreBookMenu
         loreTitle = stack.getHoverName().getString();
         loreLines.clear();
         for (String line : EndesiumLore.forItem(stack.getItem())) {
-            loreLines.addAll(this.font.split(Component.literal(line), PANEL_WIDTH - 84));
+            loreLines.addAll(this.font.split(Component.literal(line), LORE_WIDTH));
         }
     }
 

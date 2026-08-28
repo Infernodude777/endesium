@@ -16,10 +16,12 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 public final class EndesiumStructureTypes {
 	public static StructureType<EndesiumFlagshipStructure> FLAGSHIP;
 	public static StructureType<EndesiumLandmarkStructure> LANDMARK;
+	public static StructureType<EndStrongholdStructure> END_STRONGHOLD;
 
 	/** Piece serializers (region-tagged on NBT). */
 	public static StructurePieceType FLAGSHIP_PIECE;
 	public static StructurePieceType LANDMARK_PIECE;
+	public static StructurePieceType END_STRONGHOLD_PIECE;
 
 	private EndesiumStructureTypes() {
 	}
@@ -33,6 +35,12 @@ public final class EndesiumStructureTypes {
 				EndesiumFlagshipStructure.Piece::load);
 		LANDMARK_PIECE = Registry.register(BuiltInRegistries.STRUCTURE_PIECE, Endesium.id("landmark_piece"),
 				EndesiumLandmarkStructure.Piece::load);
+		// The Endesium stronghold replaces vanilla's: the data-driven override
+		// at data/minecraft/worldgen/structure/stronghold.json points at it.
+		END_STRONGHOLD = Registry.register(BuiltInRegistries.STRUCTURE_TYPE, Endesium.id("end_stronghold"),
+				new EndStrongholdStructure.Type());
+		END_STRONGHOLD_PIECE = Registry.register(BuiltInRegistries.STRUCTURE_PIECE, Endesium.id("end_stronghold_piece"),
+				EndStrongholdStructure.Piece::load);
 		Endesium.LOGGER.info("Registered Endesium structure types");
 	}
 }

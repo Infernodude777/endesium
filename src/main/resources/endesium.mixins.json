@@ -5,10 +5,10 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "TheEndBiomeSourceMixin",
-    "RandomStateMixin",
-    "EndDragonFightMixin",
-    "EnderDragonMixin",
-    "LivingEntityMixin"
+    "RandomStateMixin",		"EndDragonFightMixin",
+		"EnderDragonMixin",
+		"LivingEntityMixin",
+		"EntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

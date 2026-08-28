@@ -1,3 +1,4 @@
+// Jimbibo retyped session
 package com.infernodude777.endesium.entity;
 
 import com.infernodude777.endesium.Endesium;
@@ -54,6 +55,9 @@ import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.EnumSet;
+import java.util.List;
+
 /**
  * The regional miniboss: one ancient warden construct per flagship, attuned
  * to whichever Endesium region it was forged in. Its body language, its
@@ -62,21 +66,43 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  *
  * <p>Fight contract: it periodically RAISES GUARD - frontal damage is almost
  * nullified while the guard is up, so flanking or patience is mandatory. At
- * two-thirds health it calls its biome's lesser kin. Below half health it
- * enrages: faster movement and halved special cooldowns. It guards the vault
- * loot and always carries a Warden Sigil keyed to its region.</p>
+ * two-thirds and one-third health it calls its biome's lesser kin in two
+ * escalating waves. Below half health it enrages permanently: harder hits,
+ * faster movement, halved special cooldowns, and no mercy on the throw.</p>
+ *
+ * <p>Signature moves: the SKYWARD SEIZE hoists a player in its claws
+ * (full GeckoLib pickup / carry / throw animation set) and hurls them across
+ * the vault; the RESONANCE SLAM detonates a two-ring shockwave that must be
+ * jumped; each region keeps its own telegraphed special.</p>
  */
 public class EndWardenEntity extends Monster implements GeoEntity {
 	private static final EntityDataAccessor<Byte> DATA_FLAGS =
 			SynchedEntityData.defineId(EndWardenEntity.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Byte> DATA_REGION_ACCESSOR =
 			SynchedEntityData.defineId(EndWardenEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Integer> DATA_GRAB_PHASE =
+			SynchedEntityData.defineId(EndWardenEntity.class, EntityDataSerializers.INT);
 
 	private static final byte FLAG_CASTING = 1;
 	private static final byte FLAG_GUARDING = 2;
+	private static final byte FLAG_SLAM = 4;
+
+	/** Grab phases: 0 idle, 1 windup (pickup anim), 2 carrying, 3 throwing. */
+	public static final int GRAB_IDLE = 0;
+	public static final int GRAB_WINDUP = 1;
+	public static final int GRAB_CARRY = 2;
+	public static final int GRAB_THROW = 3;
+
+	/** Damage that must be dealt to the warden mid-carry to force an early drop. */
+	private static final float CARRY_BREAK_DAMAGE = 20.0F;
 
 	/** Players closer than this see the boss bar; beyond it the bar retracts. */
 	private static final double BOSS_BAR_RANGE = 64.0D;
+
+	private static final RawAnimation PICKUP_ANIM = RawAnimation.begin().thenPlay("animation.end_warden.pickup");
+	private static final RawAnimation CARRY_ANIM = RawAnimation.begin().thenLoop("animation.end_warden.carry");
+	private static final RawAnimation THROW_ANIM = RawAnimation.begin().thenPlay("animation.end_warden.throw");
+	private static final RawAnimation SLAM_ANIM = RawAnimation.begin().thenPlay("animation.end_warden.slam");
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 
@@ -86,29 +112,35 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 
 	private int specialCooldown = 120;
 	private int guardCooldown = 200;
+	private int seizeCooldown = 160;
+	private int slamCooldown = 140;
 	private int guardTicks;
-	private boolean minionsCalled;
+	/** 0 = no waves called, 1 = first wave called, 2 = both waves called. */
+	private int minionWaves;
 	private boolean enragedAnnounced;
+
+	// Grab state (server side)
+	private int grabPhase;
+	private int carryTicks;
+	private float carryDamage;
 
 	public EndWardenEntity(EntityType<? extends EndWardenEntity> type, Level level) {
 		super(type, level);
 	}
 
 	public static AttributeSupplier.Builder createAttributes() {
+		// One entry per attribute - duplicated keys would silently clobber each
+		// other (last wins), which once reduced this boss's aggro range to 32.
 		return Mob.createMobAttributes()
-				.add(Attributes.MAX_HEALTH, 80.0D)
-				.add(Attributes.MOVEMENT_SPEED, 0.28D)
-				.add(Attributes.ATTACK_DAMAGE, 9.0D)
-				.add(Attributes.KNOCKBACK_RESISTANCE, 0.9D)
-				.add(Attributes.ARMOR, 10.0D)
-.add(Attributes.MAX_HEALTH, 300.0D)
-				.add(Attributes.ATTACK_DAMAGE, 16.0D)
-				.add(Attributes.ARMOR, 14.0D)
-				.add(Attributes.ARMOR_TOUGHNESS, 4.0D)
-				.add(Attributes.ATTACK_KNOCKBACK, 1.0D)
+				.add(Attributes.MAX_HEALTH, 400.0D)
+				.add(Attributes.MOVEMENT_SPEED, 0.33D)
+				.add(Attributes.ATTACK_DAMAGE, 18.0D)
+				.add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
+				.add(Attributes.ARMOR, 16.0D)
+				.add(Attributes.ARMOR_TOUGHNESS, 6.0D)
+				.add(Attributes.ATTACK_KNOCKBACK, 1.5D)
 				.add(Attributes.FOLLOW_RANGE, 64.0D)
-				.add(Attributes.MOVEMENT_SPEED, 0.32D)
-				.add(Attributes.FOLLOW_RANGE, 32.0D);
+				.add(Attributes.STEP_HEIGHT, 1.0D);
 	}
 
 	@Override
@@ -116,6 +148,7 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 		super.defineSynchedData(builder);
 		builder.define(DATA_FLAGS, (byte) 0);
 		builder.define(DATA_REGION_ACCESSOR, (byte) -1);
+		builder.define(DATA_GRAB_PHASE, GRAB_IDLE);
 	}
 
 	/** Region index this warden is attuned to, or -1 before first resolve. */
@@ -164,15 +197,40 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 		getEntityData().set(DATA_FLAGS, guarding ? (byte) (flags | FLAG_GUARDING) : (byte) (flags & ~FLAG_GUARDING));
 	}
 
+	public boolean isSlamming() {
+		return (getEntityData().get(DATA_FLAGS) & FLAG_SLAM) != 0;
+	}
+
+	private void setSlamming(boolean slamming) {
+		byte flags = getEntityData().get(DATA_FLAGS);
+		getEntityData().set(DATA_FLAGS, slamming ? (byte) (flags | FLAG_SLAM) : (byte) (flags & ~FLAG_SLAM));
+	}
+
+	/** Current grab phase, mirrored to the client for animation playback. */
+	public int getGrabPhase() {
+		return getEntityData().get(DATA_GRAB_PHASE);
+	}
+
+	private void setGrabPhase(int phase) {
+		grabPhase = phase;
+		getEntityData().set(DATA_GRAB_PHASE, phase);
+	}
+
+	public boolean isGrabbing() {
+		return grabPhase != GRAB_IDLE;
+	}
+
 	@Override
 	protected void registerGoals() {
 		goalSelector.addGoal(0, new FloatGoal(this));
-		goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.05D, true));
-		goalSelector.addGoal(2, new RegionalSpecialGoal(this));
-		goalSelector.addGoal(3, new GuardStanceGoal(this));
-		goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 0.5D));
-		goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 16.0F));
-		goalSelector.addGoal(6, new RandomLookAroundGoal(this));
+		goalSelector.addGoal(1, new SeizeGoal(this));
+		goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.05D, true));
+		goalSelector.addGoal(3, new RegionalSpecialGoal(this));
+		goalSelector.addGoal(4, new ResonanceSlamGoal(this));
+		goalSelector.addGoal(5, new GuardStanceGoal(this));
+		goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.5D));
+		goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 16.0F));
+		goalSelector.addGoal(8, new RandomLookAroundGoal(this));
 		targetSelector.addGoal(1, new HurtByTargetGoal(this));
 		targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
 	}
@@ -199,12 +257,114 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 			// Cooldowns tick down centrally so goal polling can never stall them.
 			if (specialCooldown > 0) specialCooldown--;
 			if (guardCooldown > 0) guardCooldown--;
-			// A guarding warden plants its feet.
-			if (isGuarding()) {
+			if (seizeCooldown > 0) seizeCooldown--;
+			if (slamCooldown > 0) slamCooldown--;
+			// A guarding or carrying warden plants its feet.
+			if (isGuarding() || grabPhase == GRAB_CARRY) {
 				getNavigation().stop();
+			}
+			if (grabPhase == GRAB_CARRY) {
+				tickCarry(server);
+			} else if (grabPhase == GRAB_THROW) {
+				// Brief committed window for the throw animation to read.
+				if (--carryTicks <= 0) setGrabPhase(GRAB_IDLE);
 			}
 			bossBar.setProgress((float) java.lang.Math.clamp(getHealth() / getMaxHealth(), 0.0D, 1.0D));
 			maybeCallMinions(server);
+		}
+	}
+
+	// --- Skyward Seize: grab, carry, hurl ---
+
+	/** Attempts the seize on a validated target; returns false if ineligible. */
+	private boolean beginSeize(ServerLevel server, LivingEntity target) {
+		if (grabPhase != GRAB_IDLE || isGuarding() || isCasting() || isSlamming()) return false;
+		if (target.isPassenger() || target.isVehicle() || !target.onGround()) return false;
+		if (target instanceof Player player && player.isSpectator()) return false;
+		double dist = distanceToSqr(target);
+		if (dist < 2.25D || dist > 14.0D * 14.0D || !hasLineOfSight(target)) return false;
+
+		setGrabPhase(GRAB_WINDUP);
+		carryTicks = 16; // windup duration, reused as throw-committed window later
+		carryDamage = 0.0F;
+		getNavigation().stop();
+		playSound(SoundEvents.EVOKER_PREPARE_ATTACK, 1.4F, 0.6F);
+		server.sendParticles(ModParticles.RESONANCE_PULSE,
+				getX(), getY() + 2.2D, getZ(), 14, 0.7D, 0.6D, 0.7D, 0.03D);
+		return true;
+	}
+
+	private void tickCarry(ServerLevel server) {
+		Entity held = getFirstPassenger();
+		if (held == null || !held.isAlive() || held.isRemoved()) {
+			endGrab(120);
+			return;
+		}
+		if (carryTicks-- <= 0) {
+			hurlHeld(server, held);
+			return;
+		}
+		// Telekinetic claw dust + a subtle rotation so the carry reads alive.
+		if (tickCount % 3 == 0) {
+			server.sendParticles(ParticleTypes.REVERSE_PORTAL,
+					getX(), getY() + 2.4D, getZ(), 3, 0.8D, 0.5D, 0.8D, 0.03D);
+		}
+		setYRot(getYRot() + 1.4F);
+		held.fallDistance = 0.0F;
+	}
+
+	private void hurlHeld(ServerLevel server, Entity held) {
+		setGrabPhase(GRAB_THROW);
+		carryTicks = 12; // committed throw animation window
+		if (held instanceof LivingEntity living) {
+			living.stopRiding();
+		}
+		double speed = isEnraged() ? 2.1D : 1.6D;
+		double up = isEnraged() ? 1.05D : 0.85D;
+		Vec3 dir = Vec3.directionFromRotation(0.0F, getYRot());
+		held.setDeltaMovement(dir.x * speed, up, dir.z * speed);
+		held.hurtMarked = true;
+		if (held instanceof LivingEntity living) {
+			living.hurt(damageSources().mobAttack(this), isEnraged() ? 12.0F : 8.0F);
+			// Mercy only while calm: an enraged warden lets the fall do the work.
+			if (!isEnraged()) {
+				living.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 200, 0));
+			}
+		}
+		playSound(SoundEvents.GENERIC_EXPLODE.value(), 1.2F, 0.9F);
+		server.sendParticles(ParticleTypes.SONIC_BOOM, getX(), getY() + 2.2D, getZ(), 1, 0, 0, 0, 0);
+	}
+
+	/** Cancels an in-progress grab and reapplies its cooldown. */
+	private void endGrab(int cooldown) {
+		setGrabPhase(GRAB_IDLE);
+		carryTicks = 0;
+		seizeCooldown = Math.max(seizeCooldown, cooldown);
+	}
+
+	@Override
+	protected void positionRider(Entity passenger, Entity.MoveFunction callback) {
+		if (grabPhase == GRAB_CARRY) {
+			// Held in front at claw height, like the pickup animation ends.
+			Vec3 dir = Vec3.directionFromRotation(0.0F, getYRot());
+			callback.accept(passenger,
+					getX() + dir.x * 1.15D,
+					getY() + 2.55D,
+					getZ() + dir.z * 1.15D);
+			passenger.setYRot(getYRot());
+			passenger.fallDistance = 0.0F;
+		} else {
+			super.positionRider(passenger, callback);
+		}
+	}
+
+	@Override
+	public void removePassenger(Entity passenger) {
+		super.removePassenger(passenger);
+		// A player who wriggles free (sneak-dismount, death, teleport) ends the
+		// seize immediately; the warden must recommit before trying again.
+		if (grabPhase == GRAB_CARRY && level() instanceof ServerLevel) {
+			endGrab(100);
 		}
 	}
 
@@ -225,30 +385,32 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 		}
 	}
 
-	/** Once per fight, at two-thirds health, the warden summons its biome's kin. */
+	/** Two escalating minion waves: two-thirds and one-third health. */
 	private void maybeCallMinions(ServerLevel server) {
-if (getHealth() < getMaxHealth() * 0.34D) minionsCalled = false;
-		if (minionsCalled || !isAlive()) return;
-		if (getHealth() > getMaxHealth() * (2.0D / 3.0D)) return;
-		minionsCalled = true;
-		playSound(SoundEvents.EVOKER_CAST_SPELL, 1.0F, 0.7F);
-		server.sendParticles(ParticleTypes.REVERSE_PORTAL,
-				getX(), getY() + 1.5D, getZ(), 30, 1.0D, 1.0D, 1.0D, 0.06D);
-		for (Vec3 spot : minionSpots()) {
-			Mob minion = createRegionalMinion(server);
-			if (minion == null) continue;
-			minion.moveTo(spot.x, getY(), spot.z, getYRot(), 0.0F);
-			server.addFreshEntity(minion);
-			server.sendParticles(ParticleTypes.REVERSE_PORTAL,
-					spot.x, getY() + 1.0D, spot.z, 14, 0.3D, 0.8D, 0.3D, 0.04D);
+		if (!isAlive()) return;
+		float fraction = getHealth() / getMaxHealth();
+		while (minionWaves < 2 && fraction <= (minionWaves == 0 ? 2.0D / 3.0D : 1.0D / 3.0D)) {
+			callMinionWave(server, minionWaves == 0 ? 2 : 3);
+			minionWaves++;
 		}
 	}
 
-	private Vec3[] minionSpots() {
-		return new Vec3[]{
-				position().add(3.5D, 0, 0),
-				position().add(-3.5D, 0, 0)
-		};
+	private void callMinionWave(ServerLevel server, int count) {
+		if (isEnraged()) count++;
+		playSound(SoundEvents.EVOKER_CAST_SPELL, 1.0F, 0.7F);
+		server.sendParticles(ParticleTypes.REVERSE_PORTAL,
+				getX(), getY() + 1.5D, getZ(), 30, 1.0D, 1.0D, 1.0D, 0.06D);
+		for (int i = 0; i < count; i++) {
+			double angle = random.nextDouble() * Math.PI * 2.0D;
+			double px = getX() + Math.cos(angle) * 3.5D;
+			double pz = getZ() + Math.sin(angle) * 3.5D;
+			Mob minion = createRegionalMinion(server);
+			if (minion == null) continue;
+			minion.moveTo(px, getY(), pz, getYRot(), 0.0F);
+			server.addFreshEntity(minion);
+			server.sendParticles(ParticleTypes.REVERSE_PORTAL,
+					px, getY() + 1.0D, pz, 14, 0.3D, 0.8D, 0.3D, 0.04D);
+		}
 	}
 
 	private Mob createRegionalMinion(ServerLevel server) {
@@ -283,6 +445,10 @@ if (getHealth() < getMaxHealth() * 0.34D) minionsCalled = false;
 
 	private <E extends EndWardenEntity> PlayState animate(AnimationState<E> state) {
 		if (isDeadOrDying()) return state.setAndContinue(RawAnimation.begin().thenPlay("animation.end_warden.death"));
+		int grab = getGrabPhase();
+		if (grab == GRAB_WINDUP || grab == GRAB_THROW) return state.setAndContinue(PICKUP_ANIM);
+		if (grab == GRAB_CARRY) return state.setAndContinue(CARRY_ANIM);
+		if (isSlamming()) return state.setAndContinue(SLAM_ANIM);
 		if (isCasting()) return state.setAndContinue(RawAnimation.begin().thenPlay("animation.end_warden.cast"));
 		if (isGuarding()) return state.setAndContinue(RawAnimation.begin().thenLoop("animation.end_warden.guard"));
 		if (swinging) return state.setAndContinue(RawAnimation.begin().thenPlay("animation.end_warden.attack"));
@@ -309,6 +475,13 @@ if (getHealth() < getMaxHealth() * 0.34D) minionsCalled = false;
 						getX() + getLookAngle().x, getY() + 1.4D, getZ() + getLookAngle().z,
 						6, 0.4D, 0.4D, 0.4D, 0.05D);
 				playSound(SoundEvents.SHIELD_BLOCK, 0.7F, 1.1F);
+			}
+		}
+		// Counterplay for the seize: chunky damage mid-carry forces an early drop.
+		if (grabPhase == GRAB_CARRY) {
+			carryDamage += amount;
+			if (carryDamage >= CARRY_BREAK_DAMAGE) {
+				endGrab(60);
 			}
 		}
 		return super.hurt(source, amount);
@@ -362,14 +535,17 @@ if (getHealth() < getMaxHealth() * 0.34D) minionsCalled = false;
 	/** A crack of resonance light and a horn blast mark the enrage threshold. */
 	private void announceEnrage(ServerLevel server) {
 		playSound(SoundEvents.RAVAGER_ROAR, 1.0F, 0.6F);
-var endesium$dmg = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
-if (endesium$dmg != null) endesium$dmg.setBaseValue(20.0D);
-var endesium$spd = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
-if (endesium$spd != null) endesium$spd.setBaseValue(0.36D);
+		setAttributeValueSafe(Attributes.ATTACK_DAMAGE, 24.0D);
+		setAttributeValueSafe(Attributes.MOVEMENT_SPEED, 0.38D);
 		server.sendParticles(ModParticles.RESONANCE_PULSE,
 				getX(), getY() + 1.8D, getZ(), 24, 1.2D, 0.8D, 1.2D, 0.05D);
 		server.sendParticles(ParticleTypes.FLAME,
 				getX(), getY() + 1.2D, getZ(), 20, 0.9D, 0.4D, 0.9D, 0.04D);
+	}
+
+	private void setAttributeValueSafe(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attribute, double value) {
+		var instance = getAttribute(attribute);
+		if (instance != null) instance.setBaseValue(value);
 	}
 
 	@Override
@@ -422,8 +598,7 @@ if (endesium$spd != null) endesium$spd.setBaseValue(0.36D);
 
 	@Override
 	protected int getBaseExperienceReward() {
-if (true) return 150;
-		return 35;
+		return 200;
 	}
 
 	@Override
@@ -443,7 +618,7 @@ if (true) return 150;
 	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
 		tag.putInt("EndesiumWardenRegion", getRegion());
-		tag.putBoolean("EndesiumWardenMinionsCalled", minionsCalled);
+		tag.putInt("EndesiumWardenMinionWaves", minionWaves);
 		tag.putBoolean("EndesiumWardenEnraged", enragedAnnounced);
 	}
 
@@ -451,8 +626,13 @@ if (true) return 150;
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
 		setRegion(tag.getInt("EndesiumWardenRegion"));
-		minionsCalled = tag.getBoolean("EndesiumWardenMinionsCalled");
+		minionWaves = tag.getInt("EndesiumWardenMinionWaves");
 		enragedAnnounced = tag.getBoolean("EndesiumWardenEnraged");
+		// Grabs never survive a save: a reloaded warden starts clean.
+		if (getFirstPassenger() instanceof LivingEntity living) {
+			living.stopRiding();
+		}
+		setGrabPhase(GRAB_IDLE);
 		if (hasCustomName()) bossBar.setName(getDisplayName());
 		// Restore the bar to the health it had before unload.
 		bossBar.setProgress((float) java.lang.Math.clamp(getHealth() / getMaxHealth(), 0.0D, 1.0D));
@@ -493,7 +673,177 @@ if (true) return 150;
 	}
 
 	/**
-	 * The signature attack, switched by region attunement. Each variant keeps
+	 * SKYWARD SEIZE: telegraphed pickup, claws-up carry, then a committed hurl.
+	 * Counterplay: break line of sight during the windup, sneak-dismount, or
+	 * deal 20 damage while held to force an early drop.
+	 */
+	private static final class SeizeGoal extends Goal {
+		private final EndWardenEntity warden;
+
+		SeizeGoal(EndWardenEntity warden) {
+			this.warden = warden;
+			setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+		}
+
+		@Override
+		public boolean canUse() {
+			if (warden.seizeCooldown > 0 || warden.isGrabbing()) return false;
+			LivingEntity target = warden.getTarget();
+			if (target == null || !(warden.level() instanceof ServerLevel server)) return false;
+			return warden.beginSeize(server, target);
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return warden.isGrabbing();
+		}
+
+		@Override
+		public void tick() {
+			warden.getNavigation().stop();
+			LivingEntity target = warden.getTarget();
+			if (warden.grabPhase == EndWardenEntity.GRAB_WINDUP) {
+				// Track the victim through the windup; if it escapes the cone
+				// the grab whiffs and costs a short cooldown.
+				if (target != null) {
+					warden.getLookControl().setLookAt(target);
+					if (warden.tickCount % 4 == 0 && warden.level() instanceof ServerLevel server) {
+						server.sendParticles(ParticleTypes.REVERSE_PORTAL,
+								target.getX(), target.getY() + 1.0D, target.getZ(), 4, 0.3D, 0.5D, 0.3D, 0.02D);
+					}
+				}
+				if (--warden.carryTicks <= 0) {
+					if (target != null && target.isAlive()
+							&& !target.isPassenger()
+							&& warden.distanceToSqr(target) <= 16.0D * 16.0D
+							&& warden.hasLineOfSight(target)) {
+						// LIFT OFF.
+						target.startRiding(warden, true);
+						warden.setGrabPhase(EndWardenEntity.GRAB_CARRY);
+						warden.carryTicks = warden.isEnraged() ? 50 : 70;
+						warden.carryDamage = 0.0F;
+						warden.playSound(SoundEvents.SHULKER_BOX_OPEN, 1.2F, 0.6F);
+						if (target instanceof ServerPlayer player) {
+							player.displayClientMessage(
+									Component.literal("The Warden hoists you into its claws!"), true);
+							player.hurt(warden.damageSources().mobAttack(warden), warden.isEnraged() ? 6.0F : 4.0F);
+						}
+					} else {
+						warden.endGrab(120);
+					}
+				}
+			}
+		}
+
+		@Override
+		public void stop() {
+			if (warden.grabPhase != EndWardenEntity.GRAB_IDLE) {
+				warden.endGrab(120);
+			}
+		}
+	}
+
+	/**
+	 * RESONANCE SLAM: a two-ring ground shockwave. The first ring punishes
+	 * hugging the warden, the second catches anyone who dodged only the first.
+	 * Jump timing and dashes both work - on the telegraph, not after.
+	 */
+	private static final class ResonanceSlamGoal extends Goal {
+		private final EndWardenEntity warden;
+		private int timeline; // ticks since start; impact1 at 16, impact2 at 26
+		private boolean rang1;
+		private boolean rang2;
+
+		ResonanceSlamGoal(EndWardenEntity warden) {
+			this.warden = warden;
+		}
+
+		@Override
+		public boolean canUse() {
+			if (warden.slamCooldown > 0 || warden.isSlamming() || warden.isGrabbing()) return false;
+			LivingEntity target = warden.getTarget();
+			if (target == null) return false;
+			return warden.distanceToSqr(target) <= 18.0D * 18.0D && warden.onGround();
+		}
+
+		@Override
+		public void start() {
+			timeline = 16;
+			rang1 = false;
+			rang2 = false;
+			warden.setSlamming(true);
+			warden.getNavigation().stop();
+			warden.playSound(SoundEvents.IRON_GOLEM_ATTACK, 1.4F, 0.5F);
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return timeline > 0;
+		}
+
+		@Override
+		public void stop() {
+			warden.setSlamming(false);
+		}
+
+		@Override
+		public void tick() {
+			timeline--;
+			ServerLevel server = (ServerLevel) warden.level();
+			if (timeline > 0) {
+				// Telegraph: two creeping telegraph rings as the warden rears up.
+				if (timeline % 3 == 0) {
+					server.sendParticles(ParticleTypes.CLOUD,
+							warden.getX(), warden.getY() + 0.2D, warden.getZ(),
+							6, 2.2D, 0.05D, 2.2D, 0.01D);
+					server.sendParticles(ModParticles.RESONANCE_PULSE,
+							warden.getX(), warden.getY() + 0.4D, warden.getZ(),
+							3, 2.8D, 0.05D, 2.8D, 0.01D);
+				}
+				return;
+			}
+			if (!rang1) {
+				rang1 = true;
+				detonate(server, 4.5D, warden.isEnraged() ? 12.0F : 10.0F, 0.85D);
+				warden.playSound(SoundEvents.GENERIC_EXPLODE.value(), 1.3F, 0.7F);
+				timeline = 10; // second wave follows
+				return;
+			}
+			if (!rang2) {
+				rang2 = true;
+				detonate(server, 7.5D, warden.isEnraged() ? 8.0F : 6.0F, 0.7D);
+				warden.playSound(SoundEvents.GENERIC_EXPLODE.value(), 1.1F, 0.55F);
+				warden.slamCooldown = warden.isEnraged() ? 90 : 160;
+				timeline = 0;
+			}
+		}
+
+		private void detonate(ServerLevel server, double radius, float damage, double launch) {
+			server.sendParticles(ParticleTypes.POOF,
+					warden.getX(), warden.getY() + 0.3D, warden.getZ(),
+					40, radius, 0.3D, radius, 0.08D);
+			server.sendParticles(ParticleTypes.EXPLOSION,
+					warden.getX(), warden.getY() + 0.5D, warden.getZ(),
+					2, radius * 0.5D, 0.2D, radius * 0.5D, 0.0D);
+			for (Player p : server.getEntitiesOfClass(Player.class,
+					warden.getBoundingBox().inflate(radius), Player::isAlive)) {
+				double dx = p.getX() - warden.getX();
+				double dz = p.getZ() - warden.getZ();
+				double distSqr = dx * dx + dz * dz;
+				if (distSqr > radius * radius) continue;
+				Vec3 kb = new Vec3(dx, 0, dz);
+				if (kb.lengthSqr() < 0.01D) kb = new Vec3(0.5D, 0, 0);
+				kb = kb.normalize();
+				p.setDeltaMovement(p.getDeltaMovement().add(kb.x * launch, launch * 0.8D, kb.z * launch));
+				p.hurtMarked = true;
+				p.hurt(warden.damageSources().mobAttack(warden), damage);
+			}
+			warden.swing(InteractionHand.MAIN_HAND);
+		}
+	}
+
+	/**
+	 * The signature region attack, switched by attunement. Each variant keeps
 	 * the same contract: telegraphed, ranged-or-area, and dodgeable.
 	 */
 	private static final class RegionalSpecialGoal extends Goal {
@@ -502,11 +852,12 @@ if (true) return 150;
 
 		RegionalSpecialGoal(EndWardenEntity warden) {
 			this.warden = warden;
+			setFlags(EnumSet.of(Flag.LOOK));
 		}
 
 		@Override
 		public boolean canUse() {
-			if (windup > 0 || warden.specialCooldown > 0 || warden.isGuarding()) return false;
+			if (windup > 0 || warden.specialCooldown > 0 || warden.isGuarding() || warden.isGrabbing()) return false;
 			LivingEntity target = warden.getTarget();
 			if (target == null) return false;
 			double dist = warden.distanceToSqr(target);
@@ -536,8 +887,7 @@ if (true) return 150;
 			if (target != null) warden.getLookControl().setLookAt(target);
 			if (windup == 0 && target != null) {
 				performRegionalAttack(target);
-				warden.specialCooldown = warden.isEnraged() ? 90 : 180;
-warden.specialCooldown = warden.isEnraged() ? 55 : 110;
+				warden.specialCooldown = warden.isEnraged() ? 45 : 90;
 			}
 		}
 
@@ -550,13 +900,13 @@ warden.specialCooldown = warden.isEnraged() ? 55 : 110;
 			ServerLevel server = (ServerLevel) warden.level();
 			int region = warden.getRegion();
 			switch (region < 0 ? EndesiumRegions.END_WASTES : region) {
-				case EndesiumRegions.END_WASTES -> fireShards(server, target, 4); // dust bolt fan
+				case EndesiumRegions.END_WASTES -> fireShards(server, target, 5); // dust bolt fan
 				case EndesiumRegions.CHORUS_WILDS -> blinkBehind(server, target); // flank blink
 				case EndesiumRegions.SHATTERED_HIGHLANDS -> galeSlam(server, target); // knockback burst
 				case EndesiumRegions.VOID_MARSHES -> mireGrasp(server, target); // pull + slow
 				case EndesiumRegions.LUMINOUS_GROVES -> lumenFlash(server, target); // blind + self heal
 				case EndesiumRegions.ASHEN_EXPANSE -> emberNova(server, target); // ignite ring
-				case EndesiumRegions.CRYSTAL_BARRENS -> fireShards(server, target, 3); // homing shards
+				case EndesiumRegions.CRYSTAL_BARRENS -> fireShards(server, target, 4); // homing shards
 				case EndesiumRegions.VOID_SKIRTS -> mireGrasp(server, target); // drag toward edge
 				case EndesiumRegions.VOID_CROWN -> galeSlam(server, target); // seal slam
 				default -> suppress(server, target); // umbral null suppression
@@ -586,8 +936,11 @@ warden.specialCooldown = warden.isEnraged() ? 55 : 110;
 					warden.getX(), warden.getY() + 1.0D, warden.getZ(),
 					14, 0.3D, 0.6D, 0.3D, 0.05D);
 			warden.teleportTo(dest.x, dest.y, dest.z);
-			target.hurt(warden.damageSources().mobAttack(warden), 6.0F);
-target.hurt(warden.damageSources().mobAttack(warden), 4.0F);
+			target.hurt(warden.damageSources().mobAttack(warden), 10.0F);
+			target.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 60, 0));
+			server.sendParticles(ParticleTypes.PORTAL,
+					warden.getX(), warden.getY() + 1.0D, warden.getZ(),
+					14, 0.3D, 0.6D, 0.3D, 0.05D);
 		}
 
 		private void galeSlam(ServerLevel server, LivingEntity target) {
@@ -595,21 +948,20 @@ target.hurt(warden.damageSources().mobAttack(warden), 4.0F);
 					warden.getX(), warden.getY() + 0.5D, warden.getZ(),
 					24, 2.2D, 0.3D, 2.2D, 0.05D);
 			for (Player p : server.getEntitiesOfClass(Player.class,
-					warden.getBoundingBox().inflate(5.0D), Player::isAlive)) {
+					warden.getBoundingBox().inflate(6.0D), Player::isAlive)) {
 				Vec3 kb = p.position().subtract(warden.position()).normalize();
-				p.setDeltaMovement(p.getDeltaMovement().add(kb.x * 1.3D, 0.65D, kb.z * 1.3D));
+				p.setDeltaMovement(p.getDeltaMovement().add(kb.x * 1.5D, 0.85D, kb.z * 1.5D));
 				p.hurtMarked = true;
-				p.hurt(warden.damageSources().mobAttack(warden), 5.0F);
-p.hurt(warden.damageSources().mobAttack(warden), warden.isEnraged() ? 5.0F : 2.0F);
+				p.hurt(warden.damageSources().mobAttack(warden), warden.isEnraged() ? 8.0F : 5.0F);
 			}
 			warden.playSound(SoundEvents.GENERIC_EXPLODE.value(), 0.9F, 0.8F);
 		}
 
 		private void mireGrasp(ServerLevel server, LivingEntity target) {
-			Vec3 pull = warden.position().subtract(target.position()).normalize().scale(1.1D);
-			target.setDeltaMovement(target.getDeltaMovement().add(pull.x, 0.15D, pull.z));
+			Vec3 pull = warden.position().subtract(target.position()).normalize().scale(1.4D);
+			target.setDeltaMovement(target.getDeltaMovement().add(pull.x, 0.2D, pull.z));
 			target.hurtMarked = true;
-			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1));
+			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 1));
 			server.sendParticles(ParticleTypes.SQUID_INK,
 					target.getX(), target.getY() + 0.5D, target.getZ(),
 					10, 0.3D, 0.3D, 0.3D, 0.02D);
@@ -619,8 +971,8 @@ p.hurt(warden.damageSources().mobAttack(warden), warden.isEnraged() ? 5.0F : 2.0
 			server.sendParticles(ParticleTypes.END_ROD,
 					warden.getX(), warden.getY() + 1.5D, warden.getZ(),
 					20, 1.0D, 0.8D, 1.0D, 0.08D);
-			target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
-			warden.heal(8.0F);
+			target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 80, 0));
+			warden.heal(12.0F);
 			warden.playSound(SoundEvents.ALLAY_ITEM_GIVEN, 1.0F, 0.6F);
 		}
 
@@ -629,18 +981,17 @@ p.hurt(warden.damageSources().mobAttack(warden), warden.isEnraged() ? 5.0F : 2.0
 					warden.getX(), warden.getY() + 0.6D, warden.getZ(),
 					40, 2.5D, 0.4D, 2.5D, 0.1D);
 			for (Player p : server.getEntitiesOfClass(Player.class,
-					warden.getBoundingBox().inflate(4.5D), Player::isAlive)) {
-				p.hurt(warden.damageSources().mobAttack(warden), 5.0F);
-				p.igniteForSeconds(5);
-p.igniteForSeconds(8);
+					warden.getBoundingBox().inflate(6.0D), Player::isAlive)) {
+				p.hurt(warden.damageSources().mobAttack(warden), 8.0F);
+				p.igniteForSeconds(8);
 			}
 		}
 
 		private void suppress(ServerLevel server, LivingEntity target) {
-			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 140, 1));
-			target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 140, 0));
-			target.hurt(warden.damageSources().mobAttack(warden), 4.0F);
-target.hurt(warden.damageSources().mobAttack(warden), 6.0F);
+			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 160, 1));
+			target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 0));
+			target.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 80, 0));
+			target.hurt(warden.damageSources().mobAttack(warden), 8.0F);
 			server.sendParticles(ModParticles.NULL_DISTORTION,
 					target.getX(), target.getY() + 1.0D, target.getZ(),
 					14, 0.4D, 0.6D, 0.4D, 0.02D);

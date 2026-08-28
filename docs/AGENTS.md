@@ -9,4 +9,4 @@
 - Never mention Jimbibo in commits
 
 ## Jimbibo
-- Always launch Jimbibo in keyboard mode
+- Always launch Jimbibo in keyboard mode, always keep the esc listener enabled. When I say make an x hour session, you should enter the contents that are supposed to be typed, then modify the typing speed so it lasts that long always.

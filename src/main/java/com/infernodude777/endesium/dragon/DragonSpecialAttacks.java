@@ -85,6 +85,7 @@ public final class DragonSpecialAttacks {
         if (state.seizeCd > 0) state.seizeCd--;
         if (state.riftCd > 0) state.riftCd--;
         if (state.chargeCd > 0) state.chargeCd--;
+        if (state.meteorCd > 0) state.meteorCd--;
         long now = level.getGameTime();
         // One set-piece is guaranteed about thirty seconds in; enrage escalations
         // and a broken crystal aegis pre-empt the random cadence via forceNext.
@@ -123,6 +124,7 @@ public final class DragonSpecialAttacks {
         if (state.burrowCd <= 0) options.add("BURROW");
         if (enrage >= 2 && state.seizeCd <= 0) options.add("SEIZE");
         if (enrage >= 2 && state.chargeCd <= 0) options.add("CHARGE");
+        if (enrage >= 2 && state.meteorCd <= 0) options.add("METEOR");
         if (enrage >= 3 && state.riftCd <= 0) options.add("RIFT");
         if (options.isEmpty()) return null;
         if (state.lastAttack != null && options.size() > 1) {
@@ -169,6 +171,22 @@ public final class DragonSpecialAttacks {
                 // here we lock invulnerability and play the ascent cue.
                 dragon.setInvulnerable(true);
                 level.playSound(null, dragon.blockPosition(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.AMBIENT, 1.6F, 0.5F);
+            }
+            case "METEOR" -> {
+                // Paint the storm: rings of impact points around every player.
+                List<Vec3> targets = new ArrayList<>();
+                int count = 10 + 4 * enrage;
+                List<ServerPlayer> players = level.players();
+                for (int i = 0; i < count; i++) {
+                    ServerPlayer anchor = players.get(level.random.nextInt(players.size()));
+                    double angle = level.random.nextDouble() * Math.PI * 2.0D;
+                    double dist = level.random.nextDouble() * 7.0D;
+                    targets.add(new Vec3(anchor.getX() + Math.cos(angle) * dist,
+                            anchor.getY() - 1.0D,
+                            anchor.getZ() + Math.sin(angle) * dist));
+                }
+                state.meteorTargets = targets;
+                level.playSound(null, dragon.blockPosition(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.AMBIENT, 2.0F, 0.5F);
             }
             default -> restore(dragon, state);
         }
@@ -272,8 +290,68 @@ public final class DragonSpecialAttacks {
                     finish(level, dragon, state, (28 - 4 * enrage) * 20);
                 }
             }
+            case "METEOR" -> {
+                int count = state.meteorTargets.size();
+                if (t <= 20) {
+                    // Climb to the apex while the storm forms.
+                    double k = t / 20.0D;
+                    Vec3 p = state.startPos;
+                    dragon.setPos(p.x, p.y + (88.0D - p.y) * k, p.z);
+                    if (t == 10) {
+                        level.playSound(null, dragon.blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.AMBIENT, 2.0F, 0.6F);
+                    }
+                    if (t % 4 == 0) {
+                        // Telegraph every impact point with end-rod markers.
+                        for (Vec3 target : state.meteorTargets) {
+                            level.sendParticles(ParticleTypes.END_ROD,
+                                    target.x, groundY(level, target.x, target.z) + 1.0D, target.z,
+                                    2, 0.6D, 0.1D, 0.6D, 0.0D);
+                        }
+                    }
+                } else {
+                    // Hover at the apex and rain the storm down.
+                    dragon.setPos(dragon.getX(), 88.0D, dragon.getZ());
+                    for (int i = 0; i < count; i++) {
+                        int fallStart = 20 + i * 6;
+                        if (t < fallStart || t >= fallStart + 12) continue;
+                        Vec3 target = state.meteorTargets.get(i);
+                        double progress = (t - fallStart) / 12.0D;
+                        double streakY = groundY(level, target.x, target.z) + 46.0D * (1.0D - progress);
+                        level.sendParticles(ParticleTypes.DRAGON_BREATH, target.x, streakY, target.z, 4, 0.3D, 0.6D, 0.3D, 0.02D);
+                        level.sendParticles(ParticleTypes.FLAME, target.x, streakY, target.z, 2, 0.2D, 0.4D, 0.2D, 0.02D);
+                        if (t == fallStart + 11) {
+                            meteorImpact(level, dragon, target, enrage);
+                        }
+                    }
+                    if (t >= 20 + count * 6 + 14) {
+                        finish(level, dragon, state, (26 - 4 * enrage) * 20);
+                    }
+                }
+            }
             default -> finish(level, dragon, state, 200);
         }
+    }
+
+    /** One void meteor: impact damage, knockback, and a lingering void-fire pool. */
+    private static void meteorImpact(ServerLevel level, EnderDragon dragon, Vec3 at, int enrage) {
+        double groundY = groundY(level, at.x, at.z) + 1.0D;
+        Vec3 impact = new Vec3(at.x, groundY, at.z);
+        float damage = 4.0F + 1.5F * enrage;
+        for (ServerPlayer player : level.players()) {
+            Vec3 delta = player.position().subtract(impact);
+            if (delta.lengthSqr() > 12.25D) continue; // 3.5 block blast radius
+            player.hurt(level.damageSources().mobAttack(dragon), damage);
+            Vec3 push = new Vec3(delta.x, 0.0D, delta.z);
+            if (push.lengthSqr() < 0.01D) push = new Vec3(1.0D, 0.0D, 0.0D);
+            push = push.normalize().scale(0.6D);
+            player.setDeltaMovement(player.getDeltaMovement().add(push.x, 0.45D, push.z));
+            player.hurtMarked = true;
+        }
+        // The impact burns as a void-fire pool that lingers and denies the ground.
+        RIFTS.add(new Rift(level, impact, 100, 0.0D, 1.0F + 0.5F * enrage));
+        level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y, impact.z, 4, 1.0D, 0.5D, 1.0D, 0.05D);
+        level.sendParticles(ParticleTypes.PORTAL, impact.x, impact.y, impact.z, 40, 1.2D, 0.6D, 1.2D, 0.2D);
+        level.playSound(null, BlockPos.containing(impact), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.AMBIENT, 1.6F, 1.1F);
     }
 
     private static void erupt(ServerLevel level, EnderDragon dragon, Vec3 at, int enrage) {
@@ -312,6 +390,7 @@ public final class DragonSpecialAttacks {
         else if ("SEIZE".equals(state.lastAttack)) state.seizeCd = cooldownTicks;
         else if ("RIFT".equals(state.lastAttack)) state.riftCd = cooldownTicks;
         else if ("CHARGE".equals(state.lastAttack)) state.chargeCd = cooldownTicks;
+        else if ("METEOR".equals(state.lastAttack)) state.meteorCd = cooldownTicks;
     }
 
     /** One straight-line sweep; leaves void-fire wakes every three ticks. */
@@ -462,6 +541,8 @@ public final class DragonSpecialAttacks {
         private int seizeCd;
         private int riftCd;
         private int chargeCd;
+        private int meteorCd;
+        private List<Vec3> meteorTargets = new ArrayList<>();
         private boolean pendingForced;
         private long nextScheduled;
         private ServerPlayer grabbed;

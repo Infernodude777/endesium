@@ -56,8 +56,6 @@ public final class ModItems {
 	public static final Item ARCHIVE_SIGIL = register("archive_sigil", new ArchiveSigilItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
 	public static final Item RESONANT_WINGS = register("resonant_wings",
 			new ResonantWingsItem(new Item.Properties().stacksTo(1).durability(864).rarity(Rarity.RARE)));
-	public static final Item ENDESIUM_GUIDEBOOK = register("endesium_guidebook",
-			new com.infernodude777.endesium.item.EndesiumGuidebookItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
 	public static final Item PROGRESSION_GUIDE = register("progression_guide",
 			new com.infernodude777.endesium.item.ProgressionGuideItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
 

@@ -22,7 +22,6 @@ public final class ModItemGroups {
 					.icon(() -> new ItemStack(ModItems.VOID_SHARD))
 					.displayItems((parameters, output) -> {
 						output.accept(ModItems.VOID_SHARD);
-						output.accept(ModItems.ENDESIUM_GUIDEBOOK);
 						output.accept(ModItems.PROGRESSION_GUIDE);
 						output.accept(ModEndgear.LUMINOUS_HELMET);
 						output.accept(ModEndgear.LUMINOUS_CHESTPLATE);

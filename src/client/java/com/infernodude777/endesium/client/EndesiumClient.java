@@ -2,7 +2,6 @@ package com.infernodude777.endesium.client;
 
 import com.infernodude777.endesium.client.entity.*;
 import com.infernodude777.endesium.client.particle.ResonanceMoteParticle;
-import com.infernodude777.endesium.client.screen.EndesiumGuidebookScreen;
 import com.infernodude777.endesium.client.screen.ProgressionGuideScreen;
 import com.infernodude777.endesium.item.VoidSwordItem;
 import com.infernodude777.endesium.net.EndesiumPackets.SonicBoomPayload;
@@ -20,18 +19,12 @@ import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.gui.screens.MenuScreens;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import org.lwjgl.glfw.GLFW;
 
 public class EndesiumClient implements ClientModInitializer {
@@ -95,22 +88,6 @@ public class EndesiumClient implements ClientModInitializer {
                 ClientPlayNetworking.send(new SonicBoomPayload());
             }
         });
-
-        // Open the guidebook screen on right-click. The item's own use() is
-        // common code and cannot reference client classes, so the hook lives here.
-        UseItemCallback.EVENT.register((Player player, Level level, InteractionHand hand) -> {
-            ItemStack stack = player.getItemInHand(hand);
-            if (!stack.is(ModItems.ENDESIUM_GUIDEBOOK)) {
-                return InteractionResultHolder.pass(stack);
-            }
-            if (level.isClientSide()) {
-                Minecraft.getInstance().setScreen(new EndesiumGuidebookScreen());
-            }
-            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
-        });
-
-        // Open the progression guide screen the same way as the guidebook.
-        
 
         // Void Sword charge bar: a restrained readout above the hotbar that
         // fills while the singularity charges, cyan to pale glow, and pulses
