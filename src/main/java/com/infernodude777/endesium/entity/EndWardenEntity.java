@@ -1,4 +1,3 @@
-// Jimbibo retyped session
 package com.infernodude777.endesium.entity;
 
 import com.infernodude777.endesium.Endesium;

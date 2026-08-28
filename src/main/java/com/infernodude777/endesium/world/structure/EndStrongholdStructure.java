@@ -138,6 +138,14 @@ public final class EndStrongholdStructure extends Structure {
 		builder.addPiece(new Piece(bbox(cx - 25, depth - 1, cz + 27, cx - 13, depth + 8, cz + 39),
 				Kind.RELIQUARY, 0, 0, 0, 0)); // reliquary
 
+		// --- New district wings: forge, dining hall, and prison ---
+		builder.addPiece(new Piece(bbox(cx + 24, depth - 1, cz + 23, cx + 38, depth + 8, cz + 35),
+				Kind.FORGE, 0, 0, 0, 0));       // smithy above the sanctum
+		builder.addPiece(new Piece(bbox(cx - 26, depth - 1, cz + 4, cx - 16, depth + 8, cz + 24),
+				Kind.DINING_HALL, 0, 0, 0, 0));  // mess hall off the hub
+		builder.addPiece(new Piece(bbox(cx + 15, depth - 1, cz - 30, cx + 29, depth + 6, cz - 20),
+				Kind.PRISON, 0, 0, 0, 0));      // brig behind the barracks
+
 		// --- Crypt below the hub, reached by a ladder shaft ---
 		builder.addPiece(new Piece(bbox(cx - 7, depth - 18, cz - 7, cx + 7, depth - 8, cz + 7),
 				Kind.CRYPT, 0, 0, 0, 0));
@@ -196,6 +204,12 @@ public final class EndStrongholdStructure extends Structure {
 				Kind.CORRIDOR, 2, 10, 0, 4));
 		builder.addPiece(new Piece(bbox(cx - 31, depth - 1, cz - 3, cx - 48, depth + 4, cz + 3),
 				Kind.CORRIDOR, 2, 17, 0, 3));
+		// Hub east edge -> forge (overlaps the forge wall so the air punches the door)
+		builder.addPiece(new Piece(bbox(cx + 15, depth - 1, cz + 27, cx + 26, depth + 4, cz + 31),
+				Kind.CORRIDOR, 2, 8, 0, 1));
+		// Barracks north wall -> prison
+		builder.addPiece(new Piece(bbox(cx + 19, depth - 1, cz - 21, cx + 25, depth + 4, cz - 18),
+				Kind.CORRIDOR, 2, 8, 0, 0));
 	}
 
 	private static BoundingBox bbox(int x0, int y0, int z0, int x1, int y1, int z1) {
@@ -222,7 +236,7 @@ public final class EndStrongholdStructure extends Structure {
 		HALL, ARRIVAL_VAULT, HUB, JUNCTION, LIBRARY, TREASURY, GUARD_POST, SANCTUM, BARRACKS,
 		SCRIPTORIUM, ARBORETUM, PORTAL, CRYPT, CORRIDOR, STARWELL, OBSERVATORY,
 		RESONANCE_ENGINE, BASTION, CONSERVATORY, RELIQUARY, CATACOMBS, BRIDGE,
-		GALLERY
+		GALLERY, FORGE, DINING_HALL, PRISON
 	}
 
 	public static final class Piece extends net.minecraft.world.level.levelgen.structure.StructurePiece {
@@ -293,10 +307,12 @@ public final class EndStrongholdStructure extends Structure {
 			case RESONANCE_ENGINE -> buildResonanceEngine(level, box, random);
 			case BASTION -> buildBastion(level, box, random);
 			case CONSERVATORY -> buildConservatory(level, box, random);
-			case RELIQUARY -> buildReliquary(level, box, random);
-			case CATACOMBS -> buildCatacombs(level, box, random);
-			case BRIDGE -> buildBridge(level, box, random);
-			case GALLERY -> buildGallery(level, box, random);
+			case RELIQUARY -> buildReliquary(level, box, random);				case CATACOMBS -> buildCatacombs(level, box, random);
+				case BRIDGE -> buildBridge(level, box, random);
+				case GALLERY -> buildGallery(level, box, random);
+				case FORGE -> buildForge(level, box, random);
+				case DINING_HALL -> buildDiningHall(level, box, random);
+				case PRISON -> buildPrison(level, box, random);
 			}
 		}
 
@@ -722,6 +738,142 @@ public final class EndStrongholdStructure extends Structure {
 			level.addFreshEntity(guard);
 		}
 
+		// ---- New district wings ----
+
+		private void buildDiningHall(WorldGenLevel level, BoundingBox clip, RandomSource random) {
+			BoundingBox bb = this.getBoundingBox();
+			int floorY = bb.minY();
+			int cx = (bb.minX() + bb.maxX()) / 2;
+			int cz = (bb.minZ() + bb.maxZ()) / 2;
+			shell(level, clip, random, bb.minX(), bb.minZ(), bb.maxX(), bb.maxZ(), floorY, bb.maxY());
+			carpet(level, clip, bb.minX() + 1, bb.minZ() + 1, bb.maxX() - 1, bb.maxZ() - 1, floorY, Blocks.POLISHED_ANDESITE.defaultBlockState());
+			// Red runner down the center aisle first so the tables cut clean lines.
+			carpet(level, clip, cx, bb.minZ() + 3, cx, bb.maxZ() - 3, floorY + 1, Blocks.RED_CARPET.defaultBlockState());
+			roomDressing(level, clip, random, bb.minX(), bb.minZ(), bb.maxX(), bb.maxZ(), floorY, bb.maxY(), 5);
+			// Three feast tables: plank tops on fence legs, candle centers, benches
+			// down both long sides, and a chandelier over every table.
+			for (int z : new int[]{bb.minZ() + 5, bb.minZ() + 10, bb.minZ() + 15}) {
+				for (int x = cx - 4; x <= cx + 4; x++) {
+					supportedFurniture(level, clip, x, floorY + 1, z, Blocks.DARK_OAK_PLANKS.defaultBlockState());
+				}
+				supportedFurniture(level, clip, cx - 4, floorY + 1, z, Blocks.OAK_FENCE.defaultBlockState());
+				supportedFurniture(level, clip, cx + 4, floorY + 1, z, Blocks.OAK_FENCE.defaultBlockState());
+				supportedFurniture(level, clip, cx, floorY + 2, z, Blocks.CANDLE.defaultBlockState());
+				BlockState benchN = Blocks.DARK_OAK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.SOUTH);
+				BlockState benchS = Blocks.DARK_OAK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.NORTH);
+				for (int x = cx - 4; x <= cx + 4; x++) {
+					supportedFurniture(level, clip, x, floorY + 1, z - 1, benchN);
+					supportedFurniture(level, clip, x, floorY + 1, z + 1, benchS);
+				}
+				if (bb.maxY() - floorY >= 7) chandelier(level, clip, cx, bb.maxY() - 1, z);
+			}
+			// Serving counter along the north wall and a drink cask in the corner.
+			for (int x = bb.minX() + 2; x <= bb.maxX() - 2; x += 3) {
+				supportedFurniture(level, clip, x, floorY + 1, bb.minZ() + 1, Blocks.BARREL.defaultBlockState());
+				supportedFurniture(level, clip, x, floorY + 2, bb.minZ() + 1, Blocks.BARREL.defaultBlockState());
+			}
+			place(level, clip, bb.minX() + 2, floorY + 1, bb.maxZ() - 2, Blocks.CAULDRON.defaultBlockState());
+			place(level, clip, bb.maxX() - 2, floorY + 1, bb.maxZ() - 2, Blocks.BARREL.defaultBlockState());
+			// Two-wide archway punched straight through into the hub beyond this wall.
+			air(level, clip, bb.maxX(), floorY + 1, cz - 1, bb.maxX(), floorY + 3, cz + 1);
+			place(level, clip, bb.maxX(), floorY + 1, cz - 3, Blocks.CHISELED_STONE_BRICKS.defaultBlockState());
+			place(level, clip, bb.maxX(), floorY + 1, cz + 3, Blocks.CHISELED_STONE_BRICKS.defaultBlockState());
+			place(level, clip, bb.maxX(), floorY + 4, cz - 3, Blocks.END_ROD.defaultBlockState());
+			place(level, clip, bb.maxX(), floorY + 4, cz + 3, Blocks.END_ROD.defaultBlockState());
+			spawnMob(level, clip, EntityType.BAT, bb.minX() + 3, bb.maxY() - 2, cz, 0);
+			spawnMob(level, clip, EntityType.BAT, bb.maxX() - 3, bb.maxY() - 2, cz, 120);
+		}
+
+		private void buildForge(WorldGenLevel level, BoundingBox clip, RandomSource random) {
+			BoundingBox bb = this.getBoundingBox();
+			int floorY = bb.minY();
+			int cx = (bb.minX() + bb.maxX()) / 2;
+			int cz = (bb.minZ() + bb.maxZ()) / 2;
+			shell(level, clip, random, bb.minX(), bb.minZ(), bb.maxX(), bb.maxZ(), floorY, bb.maxY());
+			roomDressing(level, clip, random, bb.minX(), bb.minZ(), bb.maxX(), bb.maxZ(), floorY, bb.maxY(), 4);
+			// Central forge pit: a contained lava bed ringed in polished deepslate,
+			// a chimney chain above, and smithing stations all around it.
+			fill(level, clip, cx - 1, floorY, cz - 1, cx + 1, floorY, cz + 1, Blocks.LAVA.defaultBlockState());
+			fill(level, clip, cx - 2, floorY, cz - 2, cx + 2, floorY, cz + 2, Blocks.POLISHED_DEEPSLATE.defaultBlockState());
+			fill(level, clip, cx - 1, floorY - 1, cz - 1, cx + 1, floorY - 1, cz + 1, Blocks.MAGMA_BLOCK.defaultBlockState());
+			if (bb.maxY() - floorY >= 6) {
+				place(level, clip, cx, bb.maxY() - 2, cz, Blocks.CHAIN.defaultBlockState());
+				place(level, clip, cx, bb.maxY() - 3, cz, Blocks.LANTERN.defaultBlockState());
+			}
+			// Anvils and smithing tables around the pit.
+			place(level, clip, cx - 3, floorY + 1, cz - 1, Blocks.ANVIL.defaultBlockState());
+			place(level, clip, cx - 3, floorY + 1, cz + 1, Blocks.CHIPPED_ANVIL.defaultBlockState());
+			place(level, clip, cx + 3, floorY + 1, cz - 1, Blocks.DAMAGED_ANVIL.defaultBlockState());
+			place(level, clip, cx + 3, floorY + 1, cz + 1, Blocks.SMITHING_TABLE.defaultBlockState());
+			// Furnace line and fuel stores along the east wall.
+			for (int z = bb.minZ() + 2; z <= bb.maxZ() - 2; z += 3) {
+				wallDecor(level, clip, bb.maxX() - 1, floorY + 1, z, Direction.EAST, z % 6 == 0 ? Blocks.BLAST_FURNACE.defaultBlockState() : Blocks.FURNACE.defaultBlockState());
+				wallDecor(level, clip, bb.maxX() - 1, floorY + 3, z, Direction.EAST, Blocks.CANDLE.defaultBlockState());
+				supportedFurniture(level, clip, bb.maxX() - 2, floorY + 1, z, Blocks.COAL_BLOCK.defaultBlockState());
+			}
+			// Crafting benches and tool racks along the west wall.
+			for (int z = bb.minZ() + 2; z <= bb.maxZ() - 2; z += 3) {
+				supportedFurniture(level, clip, bb.minX() + 1, floorY + 1, z, Blocks.CRAFTING_TABLE.defaultBlockState());
+				supportedFurniture(level, clip, bb.minX() + 1, floorY + 2, z, Blocks.CANDLE.defaultBlockState());
+				wallDecor(level, clip, bb.minX() + 1, floorY + 3, z, Direction.WEST, Blocks.OAK_FENCE.defaultBlockState());
+			}
+			// Two-wide archway punched through the west wall into the hub corridor.
+			air(level, clip, bb.minX(), floorY + 1, cz - 1, bb.minX(), floorY + 3, cz + 1);
+			place(level, clip, bb.minX(), floorY + 1, cz - 3, Blocks.CHISELED_STONE_BRICKS.defaultBlockState());
+			place(level, clip, bb.minX(), floorY + 1, cz + 3, Blocks.CHISELED_STONE_BRICKS.defaultBlockState());
+			spawnMob(level, clip, EntityType.BAT, cx, bb.maxY() - 2, bb.minZ() + 2, 0);
+			spawnMob(level, clip, EntityType.BAT, cx, bb.maxY() - 2, bb.maxZ() - 2, 180);
+		}
+
+		private void buildPrison(WorldGenLevel level, BoundingBox clip, RandomSource random) {
+			BoundingBox bb = this.getBoundingBox();
+			int floorY = bb.minY();
+			shell(level, clip, random, bb.minX(), bb.minZ(), bb.maxX(), bb.maxZ(), floorY, bb.maxY());
+			carpet(level, clip, bb.minX() + 1, bb.minZ() + 1, bb.maxX() - 1, bb.maxZ() - 1, floorY, Blocks.STONE_BRICKS.defaultBlockState());
+			// Three cells along the west wall with iron-bar fronts facing the corridor.
+			int frontZ = bb.minZ() + 6;
+			int[] cellStarts = {bb.minX() + 2, bb.minX() + 6, bb.minX() + 10};
+			for (int i = 0; i < 3; i++) {
+				int x0c = cellStarts[i];
+				int x1c = x0c + 2;
+				int mid = x0c + 1;
+				fill(level, clip, x0c, floorY, bb.minZ() + 1, x1c, floorY, frontZ - 1, Blocks.POLISHED_DEEPSLATE.defaultBlockState());
+				for (int z = bb.minZ() + 1; z <= frontZ - 1; z++) {
+					for (int y = floorY + 1; y <= bb.maxY() - 1; y++) {
+						place(level, clip, x0c - 1, y, z, brick(random));
+					place(level, clip, x1c + 1, y, z, brick(random));
+					}
+				}
+				for (int x = x0c; x <= x1c; x++) {
+					place(level, clip, x, floorY + 1, frontZ, Blocks.IRON_BARS.defaultBlockState());
+					place(level, clip, x, floorY + 2, frontZ, Blocks.IRON_BARS.defaultBlockState());
+				}
+				place(level, clip, mid, floorY + 1, frontZ, Blocks.IRON_DOOR.defaultBlockState()
+						.setValue(net.minecraft.world.level.block.DoorBlock.FACING, Direction.SOUTH)
+						.setValue(net.minecraft.world.level.block.DoorBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER));
+				place(level, clip, mid, floorY + 2, frontZ, Blocks.IRON_DOOR.defaultBlockState()
+						.setValue(net.minecraft.world.level.block.DoorBlock.FACING, Direction.SOUTH)
+						.setValue(net.minecraft.world.level.block.DoorBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
+				// Cot against the back wall, chains and a footlocker near the bars.
+				place(level, clip, mid, floorY + 1, bb.minZ() + 2, Blocks.RED_BED.defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH).setValue(BedBlock.PART, BedPart.FOOT));
+				place(level, clip, mid, floorY + 1, bb.minZ() + 3, Blocks.RED_BED.defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH).setValue(BedBlock.PART, BedPart.HEAD));
+				place(level, clip, x0c, floorY + 1, frontZ - 2, Blocks.CHAIN.defaultBlockState());
+				place(level, clip, x1c, floorY + 1, frontZ - 2, Blocks.CHAIN.defaultBlockState());
+				place(level, clip, mid, floorY + 1, frontZ - 1, Blocks.CHEST.defaultBlockState());
+				place(level, clip, mid, bb.maxY() - 2, frontZ - 1, Blocks.END_ROD.defaultBlockState());
+			}
+			// Corridor dressing: lamps over the bars, barrel stores and the warden's desk.
+			for (int x = bb.minX() + 2; x <= bb.maxX() - 2; x += 3) {
+				supportedLight(level, clip, x, bb.maxY() - 2, frontZ + 1, Direction.NORTH);
+				supportedFurniture(level, clip, x, floorY + 1, bb.maxZ() - 2, Blocks.BARREL.defaultBlockState());
+			}
+			place(level, clip, bb.minX() + 2, floorY + 1, bb.maxZ() - 3, Blocks.LECTERN.defaultBlockState());
+			place(level, clip, bb.minX() + 2, floorY + 2, bb.maxZ() - 3, Blocks.CANDLE.defaultBlockState());
+			// Occupants: a skeleton in the first cell, a witch in the last.
+			spawner(level, clip, cellStarts[0] + 1, floorY + 1, bb.minZ() + 4, EntityType.SKELETON, random);
+			spawnMob(level, clip, EntityType.WITCH, cellStarts[2] + 1, floorY + 1, bb.minZ() + 4, 180.0F);
+		}
+
 		// ---- Great Descent Hall ----
 
 		private void buildHall(WorldGenLevel level, BoundingBox clip, RandomSource random) {
@@ -817,6 +969,20 @@ public final class EndStrongholdStructure extends Structure {
 				place(level, clip, x, surface, zNorth + 3, Blocks.CHISELED_STONE_BRICKS.defaultBlockState());
 				place(level, clip, x, bottom, zSouth - 2, Blocks.CHISELED_STONE_BRICKS.defaultBlockState());
 			}
+			// Monumental entrance: purpur columns flanking the porch with end-rod caps.
+			groundedPillar(level, clip, cx - 5, surface, zNorth, 4, Blocks.PURPUR_PILLAR.defaultBlockState());
+			groundedPillar(level, clip, cx + 5, surface, zNorth, 4, Blocks.PURPUR_PILLAR.defaultBlockState());
+			place(level, clip, cx - 5, surface + 4, zNorth, Blocks.END_ROD.defaultBlockState());
+			place(level, clip, cx + 5, surface + 4, zNorth, Blocks.END_ROD.defaultBlockState());
+			// Red runner across the bottom landing and an amethyst core on a dais.
+			for (int x = cx - 2; x <= cx + 2; x++) {
+				place(level, clip, x, bottom, zSouth - 3, Blocks.RED_CARPET.defaultBlockState());
+			}
+			fill(level, clip, cx - 2, bottom + 1, zSouth - 4, cx + 2, bottom + 1, zSouth - 2, Blocks.POLISHED_DEEPSLATE.defaultBlockState());
+			place(level, clip, cx, bottom + 2, zSouth - 3, Blocks.AMETHYST_BLOCK.defaultBlockState());
+			place(level, clip, cx, bottom + 3, zSouth - 3, Blocks.END_ROD.defaultBlockState());
+			place(level, clip, cx - 2, bottom + 2, zSouth - 3, Blocks.CANDLE.defaultBlockState());
+			place(level, clip, cx + 2, bottom + 2, zSouth - 3, Blocks.CANDLE.defaultBlockState());
 		}
 
 		private void buildArrivalVault(WorldGenLevel level, BoundingBox clip, RandomSource random) {
@@ -1480,6 +1646,22 @@ public final class EndStrongholdStructure extends Structure {
 				place(level, clip, cx, bb.maxY() - 3, cz, Blocks.CHAIN.defaultBlockState());
 				place(level, clip, cx, bb.maxY() - 4, cz, Blocks.LANTERN.defaultBlockState());
 			}
+			// Cross-bridges across the shaft at three heights, with rails and lamps.
+			int[] bridgeYs = {floorY + 3, floorY + 11, floorY + 19};
+			int[] bridgeZs = {cz + 4, cz + 2, cz + 5};
+			for (int b = 0; b < 3; b++) {
+				int by = bridgeYs[b];
+				int bz = bridgeZs[b];
+				fill(level, clip, bb.minX() + 1, by, bz, bb.maxX() - 1, by, bz, Blocks.POLISHED_DEEPSLATE.defaultBlockState());
+				for (int x = bb.minX() + 1; x <= bb.maxX() - 1; x++) {
+					place(level, clip, x, by + 1, bz - 1, Blocks.IRON_BARS.defaultBlockState());
+					place(level, clip, x, by + 1, bz + 1, Blocks.IRON_BARS.defaultBlockState());
+				}
+				place(level, clip, bb.minX() + 1, by + 2, bz - 1, Blocks.LANTERN.defaultBlockState());
+				place(level, clip, bb.maxX() - 1, by + 2, bz - 1, Blocks.LANTERN.defaultBlockState());
+				place(level, clip, bb.minX() + 1, by + 2, bz + 1, Blocks.LANTERN.defaultBlockState());
+				place(level, clip, bb.maxX() - 1, by + 2, bz + 1, Blocks.LANTERN.defaultBlockState());
+			}
 		}
 
 		private void buildObservatory(WorldGenLevel level, BoundingBox clip, RandomSource random) {
@@ -1805,6 +1987,26 @@ public final class EndStrongholdStructure extends Structure {
 				chandelier(level, clip, bb.minX() + 4, bb.maxY() - 1, cz);
 				chandelier(level, clip, bb.maxX() - 4, bb.maxY() - 1, cz);
 			}
+			// Grand staircase down into the portal cathedral: a stairwell punched
+			// through this floor that descends along the cathedral's east side.
+			int stairX0 = cx + 8;
+			int stairX1 = cx + 10;
+			int stairZ0 = bb.minZ();
+			int stairZ1 = bb.minZ() + 3;
+			air(level, clip, stairX0, floorY, stairZ0, stairX1, floorY, stairZ1);
+			for (int i = 0; i <= 12; i++) {
+				int y = floorY - 1 - i;
+				int z = stairZ1 - i;
+				BlockState stair = Blocks.STONE_BRICK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.NORTH);
+				for (int x = stairX0; x <= stairX1; x++) place(level, clip, x, y, z, stair);
+			}
+			// Iron handrail posts along both edges of the descent.
+			for (int i = 0; i <= 12; i += 3) {
+				int y = floorY - 1 - i;
+				int z = stairZ1 - i;
+				place(level, clip, stairX0, y + 1, z, Blocks.IRON_BARS.defaultBlockState());
+				place(level, clip, stairX1, y + 1, z, Blocks.IRON_BARS.defaultBlockState());
+			}
 		}
 
 		private void buildCorridor(WorldGenLevel level, BoundingBox clip, RandomSource random) {
@@ -1898,6 +2100,12 @@ public final class EndStrongholdStructure extends Structure {
 				}
 			}
 
+			// Every corridor gets a carpet runner down its length.
+			if (alongZ) {
+				carpet(level, clip, midX, az0 + 1, midX, az1 - 1, floorY + 1, Blocks.RED_CARPET.defaultBlockState());
+			} else {
+				carpet(level, clip, ax0 + 1, midZ, ax1 - 1, midZ, floorY + 1, Blocks.RED_CARPET.defaultBlockState());
+			}
 			switch (variant) {
 				case 1 -> { // carpet runner
 					if (alongZ) {
