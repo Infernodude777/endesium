@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Repair EndesiumRecipeProvider.java.
 
-The prior Jimbibo run inserted the ashen recipe block 3x and corrupted a line
+The ashen recipe block was inserted 3x and a line was corrupted
 (`.\t\t// Ember Charm:` and stray `save(exporter);`). This keeps exactly one
 clean ashen recipe block and removes the corruption.
 """

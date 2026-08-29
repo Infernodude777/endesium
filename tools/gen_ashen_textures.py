@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 """Generate the 5 missing Ashen Expanse textures (16x16 pixel art).
 
-Direct texture generation is explicitly exempt from the "Jimbibo-only edits"
-rule, so these PNGs are written here. Each texture is hand-designed pixel art
-with the Endesium style: crisp edges, dark mineral base, restrained warm
-accents (ember orange / magma red), no anti-aliasing.
+Each texture is hand-designed pixel art with the Endesium style: crisp edges,
+dark mineral base, restrained warm accents (ember orange / magma red), no
+anti-aliasing.
 """
 import os
 import struct

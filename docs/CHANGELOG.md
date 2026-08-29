@@ -47,7 +47,6 @@
 - New loot table: `chests/end_archive.json`.
 - Development-only command: `/endesium dragonstate get|set` for testing the
   transformation without fighting the Dragon.
-- Design document: `docs/ENDESIUM_POST_DRAGON_DESIGN.md`.
 
 ## Unreleased — End Ecology and Early Progression
 
@@ -61,7 +60,6 @@
   trail. It never reveals coordinates.
 - New advancement: **Echo Sight** (parent: First Resonance) when the compass is
   obtained.
-- Design document: `docs/ENDESIUM_ECOLOGY_AND_PROGRESSION_DESIGN.md`.
 
 ## Unreleased — QA stabilization pass
 
@@ -73,7 +71,7 @@
 - Fixed `tools/validate_resources.mjs` to resolve the `endesium` namespace
   correctly and skip vanilla `minecraft:` references.
 - Removed debug probe logging from mixins and feature code.
-- Added `docs/QA_REPORT.md`, `docs/COMMANDS.md`, and refreshed developer docs.
+- Refreshed developer docs.
 - No new gameplay content, biomes, bosses, armor, or progression.
 
 ## 1.0.1
@@ -106,7 +104,6 @@
 - Enhanced dragon hoard on death: 1 Dragon Heart, 3 Dragon Fang, 8 Dragonbone, 2 Resonant Dragon Scale at the kill site.
 - `/dragonfight` live status command: dragon HP, remaining crystals, enrage level, alive adds.
 - Scripted dragon set-pieces that puppet the dragon directly: **Abyssal Burrow** (enrage 1+, dives into the void and erupts beneath a player), **Skyward Seize** (enrage 2+, grabs a player, carries them aloft, hurls them - slow falling mercy below enrage 3), and **Gravity Rifts** (enrage 3, four arena rifts that drag players into their cores). All scale damage, cooldowns, and mercy with the enrage ladder.
-- `docs/DRAGON_FIGHT.md`: full fight documentation with the attack table, enrage ladder, and testing checklist.
 - `docs/DEVLOG_16.md`, `docs/DEVLOG_17.md`.
 
 ## [Unreleased] - Terrain generation overhaul
@@ -141,4 +138,3 @@
 - Flagships are rarer: spacing 48 (was 24) with separation 20.
 - Progression Guide added to the creative menu.
 - `tools/gen_gear_textures.py` generates all recolored gear textures from the Void set.
-- `docs/GEAR.md`: full gear documentation.

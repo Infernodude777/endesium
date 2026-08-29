@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Generate the 16x16 Endesium Guidebook item texture as a PNG.
 
-Jimbibo types text, not binary, so the texture is produced by this small
-script instead. It writes an RGBA PNG with no external dependencies.
+Textures are binary, so they are produced by this small script instead of
+being edited by hand. It writes an RGBA PNG with no external dependencies.
 """
 import struct
 import zlib

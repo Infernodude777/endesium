@@ -5,9 +5,6 @@ import com.infernodude777.endesium.particle.ModParticles;
 import com.infernodude777.endesium.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,12 +49,9 @@ public final class PostDragonEvents {
 		endLevel.sendParticles(ModParticles.RESONANCE_ACTIVE, x, y, z, 60, 8.0D, 5.0D, 8.0D, 0.05D);
 		endLevel.sendParticles(ModParticles.RESONANCE_PULSE, x, y, z, 30, 6.0D, 4.0D, 6.0D, 0.02D);
 
-		// Players present in the End feel it directly and see it announced.
+		// Players present in the End feel it directly: the transformation cue
+		// is audio and particles only, no on-screen text.
 		for (ServerPlayer player : endLevel.players()) {
-			player.connection.send(new ClientboundSetTitleTextPacket(
-					Component.literal("The End Answers")));
-			player.connection.send(new ClientboundSetSubtitleTextPacket(
-					Component.literal("Resonance awakens in the deep")));
 			endLevel.playSound(null, player.blockPosition(), ModSounds.DRAGON_TRANSFORMATION,
 					SoundSource.AMBIENT, 0.8F, 1.0F);
 		}
@@ -124,12 +118,5 @@ public final class PostDragonEvents {
 		}
 		endLevel.playSound(null, BlockPos.containing(gx, gy, gz),
 				SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 1.6F, 0.6F);
-		for (ServerPlayer player : endLevel.players()) {
-			player.connection.send(new ClientboundSetTitleTextPacket(
-					net.minecraft.network.chat.Component.literal("\u00A75Something Older Stirs")));
-			player.connection.send(new ClientboundSetSubtitleTextPacket(
-					net.minecraft.network.chat.Component.literal(
-							"The Golem wakes where the dragon fell")));
-		}
 	}
 }

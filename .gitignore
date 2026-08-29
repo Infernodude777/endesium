@@ -48,3 +48,6 @@ src/main/generated/.cache/
 
 # local DogSprite installation and generated staging output
 tools/DogSprite/
+
+# freebuff internal state
+.freebuff/

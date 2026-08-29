@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Repair the broken Endesium registries caused by a prior Jimbibo insert run.
+"""Repair the broken Endesium registries caused by a duplicated insert run.
 
-The prior run's insert_at_line landed 3x, so several files declare the same
-fields multiple times. This script dedupes them and fixes the missing imports.
+The insert_at_line landed 3x, so several files declare the same fields
+multiple times. This script dedupes them and fixes the missing imports.
 Only Java/JSON files are touched; textures are generated separately.
 """
 import os

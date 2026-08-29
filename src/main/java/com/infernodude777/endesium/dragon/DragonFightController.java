@@ -6,9 +6,6 @@ import com.infernodude777.endesium.state.PostDragonState;
 import com.infernodude777.endesium.world.ArenaGeometry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -254,36 +251,6 @@ public final class DragonFightController {
 		// stage change arrive before the attack pool changed.
 		int phase = fraction > 0.75F ? 1 : fraction > 0.45F ? 2 : fraction > 0.20F ? 3 : 4;
 
-		// Transformed Dragons announce different phases.
-		String title;
-		String subtitle;
-		if (state.transformed) {
-			title = switch (phase) {
-				case 2 -> "The Awakened Hunts";
-				case 3 -> "The Deep Resonance Trembles";
-				case 4 -> "The End's Eternal Fury";
-				default -> "The Awakened Watches";
-			};
-			subtitle = switch (phase) {
-				case 2 -> "Resonance sharpens its ancient hunt";
-				case 3 -> "The island remembers its wounds";
-				case 4 -> "Nothing was ever held back";
-				default -> "It remembers you";
-			};
-		} else {
-			title = switch (phase) {
-				case 2 -> "The Dragon Hunts";
-				case 3 -> "The Wastes Tremble";
-				case 4 -> "The End's Fury";
-				default -> "The Dragon Watches";
-			};
-			subtitle = switch (phase) {
-				case 2 -> "Resonance sharpens its hunting";
-				case 3 -> "The island answers the wounds";
-				case 4 -> "Nothing is held back";
-				default -> "";
-			};
-		}
 		if (phase == state.phase) return;
 		state.phase = phase;
 		state.transitionTicks = 80;
@@ -303,10 +270,6 @@ public final class DragonFightController {
 				90, 10.0D, 6.0D, 10.0D, 0.08D);
 		level.sendParticles(ParticleTypes.CRIMSON_SPORE, dragon.getX(), dragon.getY() + 2.0D, dragon.getZ(),
 				60, 9.0D, 5.0D, 9.0D, 0.10D);
-		for (ServerPlayer player : level.players()) {
-			player.connection.send(new ClientboundSetTitleTextPacket(Component.literal(title)));
-			player.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(subtitle)));
-		}
 	}
 
 	// ------------------------------------------------------------------

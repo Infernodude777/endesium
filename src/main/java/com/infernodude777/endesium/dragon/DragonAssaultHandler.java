@@ -37,6 +37,12 @@ public final class DragonAssaultHandler {
     private static final AABB ARENA_BOX =
             new AABB(-256.0D, 0.0D, -256.0D, 256.0D, 256.0D, 256.0D);
 
+    /** Damage reduction granted per surviving pillar crystal (capped). */
+    private static final double AEGIS_REDUCTION_PER_CRYSTAL = 0.10D;
+    private static final double AEGIS_MAX_REDUCTION = 0.60D;
+    /** How long the dragon stays staggered (extra damage) after the last crystal falls. */
+    private static final int AEGIS_BROKEN_WINDOW = 100;
+
     private static final Map<net.minecraft.resources.ResourceKey<Level>, FightState> STATES =
             new HashMap<>();
     private static final java.util.Set<java.util.UUID> BUFFED_DRAGONS = new java.util.HashSet<>();
@@ -46,6 +52,8 @@ public final class DragonAssaultHandler {
     public static void register() {
         ServerTickEvents.END_SERVER_TICK.register(DragonAssaultHandler::tick);
         DragonSpecialAttacks.register();
+        ArenaReactionHandler.register();
+        EndFightSky.register();
         DragonFightCommand.register();
         Endesium.LOGGER.info("Dragon assault layer registered");
     }
@@ -72,6 +80,7 @@ public final class DragonAssaultHandler {
         if (dragons.isEmpty()) {
             if (state.active) {
                 state.active = false;
+                DragonHoard.spawnHoard(level, state.lastDragonPos);
                 DragonRewards.dropEnhancedLoot(level, state.lastDragonPos);
                 announce(level, "The Sky Falls Silent", "The dragon's hoard reveals itself",
                         SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
@@ -95,12 +104,36 @@ public final class DragonAssaultHandler {
             dragon.setHealth(600.0F);
         }
 
-        int crystals = level.getEntitiesOfClass(EndCrystal.class, ARENA_BOX,
-                c -> c.distanceToSqr(0.0D, 64.0D, 0.0D) < ARENA_CRYSTAL_RADIUS_SQR).size();
+        // Crystal aegis: track the pillars individually so a destroyed crystal
+        // can burst at its pillar and the last one can stagger the dragon.
+        Map<java.util.UUID, Vec3> currentCrystals = new HashMap<>();
+        for (EndCrystal crystal : level.getEntitiesOfClass(EndCrystal.class, ARENA_BOX,
+                c -> c.distanceToSqr(0.0D, 64.0D, 0.0D) < ARENA_CRYSTAL_RADIUS_SQR)) {
+            currentCrystals.put(crystal.getUUID(), crystal.position());
+        }
+        for (Map.Entry<java.util.UUID, Vec3> gone : state.crystalPositions.entrySet()) {
+            if (!currentCrystals.containsKey(gone.getKey())) {
+                crystalShattered(level, dragon, gone.getValue());
+            }
+        }
+        state.crystalPositions.clear();
+        state.crystalPositions.putAll(currentCrystals);
+        int crystals = currentCrystals.size();
+        int previousCrystals = state.lastCrystalCount;
+        state.lastCrystalCount = crystals;
 
         // Crystal aegis: pillars hold the dragon together.
         if (crystals >= 3 && dragon.getHealth() < dragon.getMaxHealth()) {
             dragon.heal(crystals >= 5 ? 2.0F : 1.0F);
+        }
+        // The last crystal falling breaks the aegis: the dragon is staggered,
+        // takes bonus damage for a few seconds, and a set-piece is forced.
+        if (previousCrystals > 0 && crystals == 0) {
+            state.aegisBrokenUntil = level.getGameTime() + AEGIS_BROKEN_WINDOW;
+            announce(level, "Aegis Broken", "The Dragon is staggered - strike now",
+                    SoundEvents.ENDER_DRAGON_DEATH);
+            DragonSpecialAttacks.forceNext(level);
+            spawnWave(level, dragon, Math.max(1, state.enrageLevel));
         }
 
         float fraction = dragon.getHealth() / dragon.getMaxHealth();
@@ -129,7 +162,48 @@ public final class DragonAssaultHandler {
         String[] subtitles = {"", "The air begins to shake", "Wisps tear free of its wake",
                 "Reality thins around its wings"};
         announce(level, titles[enrage], subtitles[enrage], SoundEvents.ENDER_DRAGON_GROWL);
+        // Every enrage escalation guarantees a scripted set-piece.
+        DragonSpecialAttacks.onEnrage(level);
         spawnWave(level, dragon, enrage);
+    }
+
+    private static void crystalShattered(ServerLevel level, EnderDragon dragon, Vec3 at) {
+        level.playSound(null, BlockPos.containing(at), SoundEvents.GENERIC_EXPLODE.value(),
+                SoundSource.HOSTILE, 1.4F, 0.8F);
+        level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y + 0.5D, at.z,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        level.sendParticles(ParticleTypes.END_ROD, at.x, at.y + 1.0D, at.z,
+                40, 2.5D, 2.0D, 2.5D, 0.10D);
+        level.sendParticles(ParticleTypes.CRIMSON_SPORE, at.x, at.y + 1.0D, at.z,
+                24, 2.0D, 1.5D, 2.0D, 0.06D);
+    }
+
+    /**
+     * Scales damage dealt to an Endesium dragon by the state of the crystal
+     * aegis. Surviving pillars reduce damage; the window after the last pillar
+     * falls increases it. Hooked from the hurt mixin on every incoming hit.
+     */
+    public static float modifyDragonDamage(ServerLevel level, float amount) {
+        if (level.dimension() != Level.END) return amount;
+        FightState state = STATES.get(level.dimension());
+        if (state == null) return amount;
+        if (state.lastCrystalCount > 0) {
+            double reduction = Math.min(AEGIS_MAX_REDUCTION,
+                    state.lastCrystalCount * AEGIS_REDUCTION_PER_CRYSTAL);
+            return amount * (float) (1.0D - reduction);
+        }
+        if (state.aegisBrokenUntil > level.getGameTime()) {
+            return amount * 1.4F;
+        }
+        return amount;
+    }
+
+    /** Percentage reduction currently granted by the aegis (0-60). */
+    public static int aegisReductionPercent(ServerLevel level) {
+        FightState state = STATES.get(level.dimension());
+        if (state == null || state.lastCrystalCount <= 0) return 0;
+        return (int) Math.round(Math.min(AEGIS_MAX_REDUCTION,
+                state.lastCrystalCount * AEGIS_REDUCTION_PER_CRYSTAL) * 100.0D);
     }
 
     private static void spawnWave(ServerLevel level, EnderDragon dragon, int enrage) {
@@ -181,8 +255,10 @@ public final class DragonAssaultHandler {
         int adds = level.getEntitiesOfClass(VoidWispEntity.class,
                 dragon.getBoundingBox().inflate(128.0D), w -> true).size();
         int enrage = state == null ? 0 : state.enrageLevel;
+        int aegis = aegisReductionPercent(level);
         return "dragon hp=" + (int) dragon.getHealth() + "/" + (int) dragon.getMaxHealth()
-                + " crystals=" + crystals + " enrage=" + enrage + " adds=" + adds;
+                + " crystals=" + crystals + " aegis=" + aegis + "% enrage=" + enrage
+                + " adds=" + adds;
     }
 
     private static final class FightState {
@@ -191,5 +267,8 @@ public final class DragonAssaultHandler {
         private int breathDelay = 12;
         private int waveDelay = 8;
         private BlockPos lastDragonPos;
+        private int lastCrystalCount;
+        private long aegisBrokenUntil;
+        private final Map<java.util.UUID, Vec3> crystalPositions = new HashMap<>();
     }
 }

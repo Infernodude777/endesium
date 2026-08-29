@@ -9,7 +9,6 @@ VSCODE_MCP = APPDATA / "Code" / "User" / "mcp.json"
 OPENCODE_CONFIG = HOME / ".config" / "opencode" / "opencode.jsonc"
 CODEX_CONFIG = HOME / ".codex" / "config.toml"
 
-JIMBIBO_PATH = "C:/Users/Nikhil/Desktop/ai-typer/jimbibo_mcp.py"
 DOGSPRITE_PATH = "C:/Users/Nikhil/Desktop/endesium/tools/DogSprite/mcp-server/dist/index.js"
 
 # === 1. VS Code (GitHub Copilot + OpenCodex) ===
@@ -49,11 +48,6 @@ if '"mcp"' in raw or "'mcp'" in raw:
 else:
     # Insert mcp block before the closing brace
     mcp_block = '''  "mcp": {
-    "jimbibo": {
-      "type": "stdio",
-      "command": "python",
-      "args": ["''' + JIMBIBO_PATH + '''"]
-    },
     "blockbench": {
       "type": "stdio",
       "command": "node",
@@ -83,7 +77,7 @@ else:
         raw = '{\n' + mcp_block + '}'
 
     OPENCODE_CONFIG.write_text(raw, encoding="utf-8")
-    print("  + Added mcp block with all 5 servers")
+    print("  + Added mcp block with all 4 servers")
     print(f"  Saved: {OPENCODE_CONFIG}")
 
 # === 3. Codex CLI ===
@@ -92,10 +86,6 @@ codex_cfg = CODEX_CONFIG.read_text(encoding="utf-8") if CODEX_CONFIG.exists() el
 
 if "[mcp_servers]" not in codex_cfg:
     new_section = """
-[mcp_servers.jimbibo]
-command = "python"
-args = ["C:/Users/Nikhil/Desktop/ai-typer/jimbibo_mcp.py"]
-
 [mcp_servers.blockbench]
 command = "node"
 args = ["-e", "const http = require('http'); http.get('http://localhost:3000/bb-mcp')"]
@@ -114,7 +104,7 @@ command = "uvx"
 args = ["blender-mcp"]
 """
     CODEX_CONFIG.write_text(codex_cfg.rstrip() + "\n" + new_section, encoding="utf-8")
-    print("  + Added mcp_servers section with all 5 servers")
+    print("  + Added mcp_servers section with all 4 servers")
 else:
     print("  = mcp_servers section already exists")
 
@@ -132,7 +122,6 @@ print(f"{'OpenCode':<25} {OPENCODE_CONFIG}")
 print(f"{'Codex CLI':<25} {CODEX_CONFIG}")
 print(f"\n{'Server':<25} {'Type':<10} Where")
 print(f"{'-'*25} {'-'*10} {'-'*30}")
-print(f"{'Jimbibo (AI Typer)':<25} {'stdio':<10} VS Code + OpenCode + Codex")
 print(f"{'Blockbench (3D)':<25} {'stdio':<10} VS Code + OpenCode + Codex")
 print(f"{'DogSprite (Pixel)':<25} {'stdio':<10} VS Code + OpenCode + Codex")
 print(f"{'BrowserOS':<25} {'http':<10} VS Code + OpenCode + Codex")

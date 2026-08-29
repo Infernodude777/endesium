@@ -723,8 +723,6 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 						warden.carryDamage = 0.0F;
 						warden.playSound(SoundEvents.SHULKER_BOX_OPEN, 1.2F, 0.6F);
 						if (target instanceof ServerPlayer player) {
-							player.displayClientMessage(
-									Component.literal("The Warden hoists you into its claws!"), true);
 							player.hurt(warden.damageSources().mobAttack(warden), warden.isEnraged() ? 6.0F : 4.0F);
 						}
 					} else {

@@ -857,8 +857,6 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 						golem.carryDamage = 0.0F;
 						golem.playSound(SoundEvents.PISTON_CONTRACT, 1.2F, 0.5F);
 						if (target instanceof Player player) {
-							player.displayClientMessage(
-									Component.literal("The End Golem hoists you into its arms!"), true);
 							player.hurt(golem.damageSources().mobAttack(golem), golem.isEnragedPhase() ? 7.0F : 5.0F);
 						}
 					} else {

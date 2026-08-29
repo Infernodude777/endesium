@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Dedupe the ashen blocks that the prior Jimbibo run inserted 3x in
+"""Dedupe the ashen blocks that were inserted 3x in
 EndesiumLanguageProvider.java and ModItemGroups.java."""
 import os
 

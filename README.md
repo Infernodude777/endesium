@@ -14,8 +14,8 @@ permanently change your character.
 
 > **Status:** the 10x overhaul is done - regions, landmarks, bosses, and the
 > post-Dragon transformation. The vanilla stronghold has been replaced with an
-> Endesium one. The codebase also went through a full ten-hour retype pass.
-> See `docs/ROADMAP.md` for what's next and `docs/TESTING_RUNBOOK.md` for QA.
+> Endesium one. See `docs/ROADMAP.md` for what's next and `docs/CHANGELOG.md`
+> for the history.
 
 ## Table of contents
 
@@ -214,20 +214,12 @@ These are the rules I keep coming back to:
 
 ## Documentation
 
-Start here:
+The docs are kept deliberately small:
 
-- `docs/GAMEPLAY_GUIDE.md` and `docs/PROGRESSION_GUIDE.md`
-- `docs/FEATURE_REFERENCE.md` and `docs/CRAFTING_REFERENCE.md`
-
-Then the deep cuts:
-
-- `docs/ARCHITECTURE.md` and `docs/CODE_WALKTHROUGH.md`
-- `docs/WORLDGEN.md` - regions, spacing grids, feature wiring
-- `docs/VOID_STALKER_AI.md` - the 10-state combat machine
-- `docs/MEANINGFUL_STRUCTURES_PLAN.md` and `docs/10X_OVERHAUL_PLAN.md`
-- `docs/BALANCE_NOTES.md`, `docs/TESTING_RUNBOOK.md`, `docs/QA_REPORT.md`
-- `docs/CHANGELOG.md` and the devlogs in `docs/` (the recent ones cover the
-  stronghold takeover, the boss-duel polish, and the ten-hour retype pass)
+- `docs/ROADMAP.md` - what's built and what's next
+- `docs/CHANGELOG.md` - the feature history
+- `docs/DEVLOG_*.md` - the devlogs, in order (stronghold takeover, boss
+  polish, and everything after)
 - `ABOUT.md` - the short version of why this mod exists
 
 ## License

@@ -66,12 +66,16 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 
+	/** Damage that must be dealt mid-hold to force an early drop. */
+	private static final float GRAB_BREAK_DAMAGE = 18.0F;
+
 	private int slamTicks;
 	private int slamReadyAt;
 	private int rayCooldown = 120;
 	private int phantomCallCooldown = 200;
 	private int grabCooldown;
 	private int grabHoldTicks;
+	private float grabDamageTaken;
 	private boolean phantomsCalled;
 	private boolean enragedAnnounced;
 
@@ -108,9 +112,9 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 		goalSelector.addGoal(2, new SlamGoal(this));
 		goalSelector.addGoal(3, new GrabGoal(this));
 		goalSelector.addGoal(4, new CrownRayGoal(this));
-		goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 0.5D));
-		goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 12.0F));
-		goalSelector.addGoal(6, new RandomLookAroundGoal(this));
+		goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.5D));
+		goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 12.0F));
+		goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 		targetSelector.addGoal(1, new HurtByTargetGoal(this));
 		targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
 	}
@@ -286,6 +290,18 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
 		if (source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) return false;
+		// Counterplay for the grab: chunky damage mid-hold forces an early drop,
+		// matching the Warden's and Golem's carry-break rules.
+		if (isGrabbing()) {
+			grabDamageTaken += amount;
+			if (grabDamageTaken >= GRAB_BREAK_DAMAGE) {
+				grabDamageTaken = 0;
+				grabHoldTicks = 0;
+				setGrabbing(false);
+				grabCooldown = Math.max(grabCooldown, 80);
+				playSound(SoundEvents.SHIELD_BLOCK, 1.0F, 0.8F);
+			}
+		}
 		return super.hurt(source, amount);
 	}
 
@@ -384,6 +400,7 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 		@Override
 		public void start() {
 			sentinel.grabHoldTicks = 26;
+			sentinel.grabDamageTaken = 0;
 			sentinel.setGrabbing(true);
 			sentinel.grabCooldown = sentinel.isEnraged() ? 140 : 220;
 			sentinel.getNavigation().stop();
