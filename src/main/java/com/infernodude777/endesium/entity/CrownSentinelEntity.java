@@ -61,6 +61,8 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 			CrownSentinelEntity.class, EntityDataSerializers.BOOLEAN);
 	private static final EntityDataAccessor<Boolean> DATA_CASTING = SynchedEntityData.defineId(
 			CrownSentinelEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Boolean> DATA_GRABBING = SynchedEntityData.defineId(
+			CrownSentinelEntity.class, EntityDataSerializers.BOOLEAN);
 
 	private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 
@@ -68,6 +70,8 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 	private int slamReadyAt;
 	private int rayCooldown = 120;
 	private int phantomCallCooldown = 200;
+	private int grabCooldown;
+	private int grabHoldTicks;
 	private boolean phantomsCalled;
 	private boolean enragedAnnounced;
 
@@ -80,6 +84,7 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 		super.defineSynchedData(builder);
 		builder.define(DATA_SLAMMING, false);
 		builder.define(DATA_CASTING, false);
+		builder.define(DATA_GRABBING, false);
 	}
 
 	public static AttributeSupplier.Builder createAttributes() {
@@ -101,7 +106,8 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 		goalSelector.addGoal(0, new FloatGoal(this));
 		goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
 		goalSelector.addGoal(2, new SlamGoal(this));
-		goalSelector.addGoal(3, new CrownRayGoal(this));
+		goalSelector.addGoal(3, new GrabGoal(this));
+		goalSelector.addGoal(4, new CrownRayGoal(this));
 		goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 0.5D));
 		goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 12.0F));
 		goalSelector.addGoal(6, new RandomLookAroundGoal(this));
@@ -117,7 +123,7 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 	private <E extends CrownSentinelEntity> PlayState animate(AnimationState<E> state) {
 		if (isDeadOrDying()) return state.setAndContinue(RawAnimation.begin().thenPlay("animation.crown_sentinel.death"));
 		if (isCasting()) return state.setAndContinue(RAY_ANIM);
-		if (swinging || isSlamming()) return state.setAndContinue(ATTACK);
+		if (swinging || isSlamming() || isGrabbing()) return state.setAndContinue(ATTACK);
 		if (state.isMoving()) return state.setAndContinue(WALK);
 		return state.setAndContinue(IDLE);
 	}
@@ -143,6 +149,14 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 		getEntityData().set(DATA_CASTING, casting);
 	}
 
+	public boolean isGrabbing() {
+		return getEntityData().get(DATA_GRABBING);
+	}
+
+	private void setGrabbing(boolean grabbing) {
+		getEntityData().set(DATA_GRABBING, grabbing);
+	}
+
 	public boolean isEnraged() {
 		return getHealth() > 0.0D && getHealth() < getMaxHealth() * 0.35D;
 	}
@@ -154,12 +168,30 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 			// Cooldowns tick centrally so goal polling can never stall them.
 			if (rayCooldown > 0) rayCooldown--;
 			if (phantomCallCooldown > 0) phantomCallCooldown--;
+			if (grabCooldown > 0) grabCooldown--;
 			if (slamTicks > 0) {
 				slamTicks--;
 				if (slamTicks == 0) setSlamming(false);
 				// The slam lands at the end of the windup.
 				if (slamTicks == 0 && getTarget() != null && distanceToSqr(getTarget()) <= 25.0D) {
 					landSlam(server);
+				}
+			}
+			// Grab-and-hurl: while the victim is pinned the sentinel holds them
+			// in front of its chest, then hurls them across the room.
+			if (grabHoldTicks > 0) {
+				grabHoldTicks--;
+				LivingEntity grabbed = getTarget();
+				if (grabbed != null && grabbed.isAlive()) {
+					Vec3 hold = position().add(getLookAngle().scale(2.2D)).add(0.0D, 1.3D, 0.0D);
+					grabbed.setDeltaMovement(hold.subtract(grabbed.position()).scale(0.5D).add(0.0D, 0.35D, 0.0D));
+					grabbed.hurtMarked = true;
+					if (grabHoldTicks == 0) {
+						hurlGrabbed(server, grabbed);
+					}
+				} else {
+					grabHoldTicks = 0;
+					setGrabbing(false);
 				}
 			}
 			// Enrage: below a third the sentinel burns hotter - once, loudly.
@@ -206,6 +238,19 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 				getX(), getY() + 0.4D, getZ(), 20, 1.4D, 0.15D, 1.4D, 0.04D);
 		server.sendParticles(ParticleTypes.EXPLOSION,
 				getX(), getY() + 0.6D, getZ(), 2, 0.8D, 0.2D, 0.8D, 0.0D);
+	}
+
+	/** Hurls a grabbed victim across the room with heavy knockback. */
+	private void hurlGrabbed(ServerLevel server, LivingEntity victim) {
+		setGrabbing(false);
+		Vec3 away = victim.position().subtract(position()).normalize();
+		victim.setDeltaMovement(away.scale(2.3D).add(0.0D, 1.4D, 0.0D));
+		victim.hurtMarked = true;
+		victim.resetFallDistance();
+		victim.hurt(damageSources().mobAttack(this), isEnraged() ? 20.0F : 14.0F);
+		playSound(SoundEvents.RAVAGER_ROAR, 1.3F, 0.6F);
+		server.sendParticles(ParticleTypes.CRIT, victim.getX(), victim.getY() + 1.0D, victim.getZ(),
+				20, 0.4D, 0.4D, 0.4D, 0.12D);
 	}
 
 	/** Below half health the sentinel calls the observatory sky down: phantoms. */
@@ -310,6 +355,49 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 		@Override
 		public boolean canContinueToUse() {
 			return sentinel.slamTicks > 0;
+		}
+	}
+
+	/**
+	 * GRAB-AND-HURL: seizes a target that crowds the sentinel, holds it aloft
+	 * for a beat, then throws it across the room. Getting grabbed is a death
+	 * sentence near a wall - keep your distance after it slams.
+	 */
+	private static final class GrabGoal extends Goal {
+		private final CrownSentinelEntity sentinel;
+
+		GrabGoal(CrownSentinelEntity sentinel) {
+			this.sentinel = sentinel;
+		}
+
+		@Override
+		public boolean canUse() {
+			if (sentinel.grabCooldown > 0 || sentinel.isCasting() || sentinel.isSlamming()
+					|| sentinel.grabHoldTicks > 0) return false;
+			LivingEntity target = sentinel.getTarget();
+			if (target == null) return false;
+			double dist = sentinel.distanceToSqr(target);
+			// The grab punishes crowding after a slam; it needs to actually reach.
+			return dist <= 9.0D && sentinel.hasLineOfSight(target);
+		}
+
+		@Override
+		public void start() {
+			sentinel.grabHoldTicks = 26;
+			sentinel.setGrabbing(true);
+			sentinel.grabCooldown = sentinel.isEnraged() ? 140 : 220;
+			sentinel.getNavigation().stop();
+			sentinel.playSound(SoundEvents.IRON_GOLEM_ATTACK, 1.2F, 0.5F);
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return sentinel.grabHoldTicks > 0;
+		}
+
+		@Override
+		public void stop() {
+			sentinel.setGrabbing(false);
 		}
 	}
 
