@@ -1,6 +1,8 @@
 package com.infernodude777.endesium.client.entity;
 
 import com.infernodude777.endesium.Endesium;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.EnderDragonRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -24,5 +26,18 @@ public class CompanionDragonRenderer extends EnderDragonRenderer {
 	@Override
 	public ResourceLocation getTextureLocation(EnderDragon dragon) {
 		return COMPANION_DRAGON_TEXTURE;
+	}
+
+	@Override
+	public void render(EnderDragon dragon, float yaw, float tickDelta, PoseStack poseStack,
+			MultiBufferSource buffers, int light) {
+		// Vanilla's dragon renderer draws the model at a fixed size, but the
+		// companion's hitbox scales with her growth stage. Wrap the whole
+		// render in the same scale so baby Ember actually looks like a baby.
+		poseStack.pushPose();
+		float scale = dragon.getScale();
+		poseStack.scale(scale, scale, scale);
+		super.render(dragon, yaw, tickDelta, poseStack, buffers, light);
+		poseStack.popPose();
 	}
 }

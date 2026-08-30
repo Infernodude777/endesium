@@ -1,5 +1,6 @@
 package com.infernodude777.endesium.dragon;
 
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.SmallFireball;
@@ -25,5 +26,16 @@ public class CompanionDragonBolt extends SmallFireball {
 	@Override
 	protected void onHitBlock(BlockHitResult result) {
 		// Deliberately no fire: a tame dragon should never burn your builds.
+	}
+
+	@Override
+	protected boolean canHitEntity(Entity target) {
+		// Vanilla already spares the owner itself; also spare the rider
+		// sitting on the dragon's back so a close-range shot can't clip them.
+		Entity owner = this.getOwner();
+		if (owner != null && target.getVehicle() == owner) {
+			return false;
+		}
+		return super.canHitEntity(target);
 	}
 }

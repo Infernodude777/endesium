@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * The companion dragon: place the vanilla dragon egg on the End exit fountain
@@ -103,11 +105,21 @@ public final class DragonCompanionSystem {
 		private long lastScan;
 		private final Map<BlockPos, Long> eggStart = new HashMap<>();
 		private boolean spawnedBaby;
+		private UUID babyId;
 
 		HatchState(ServerLevel level) {
 		}
 
 		void tick(ServerLevel level) {
+			// Once the current companion is gone (died or removed), a fresh
+			// egg placed on the fountain can hatch a new one.
+			if (spawnedBaby && babyId != null) {
+				Entity baby = level.getEntity(babyId);
+				if (baby == null || !baby.isAlive()) {
+					spawnedBaby = false;
+					babyId = null;
+				}
+			}
 			long now = level.getGameTime();
 			if (now - lastScan >= 40) {
 				lastScan = now;
@@ -128,9 +140,10 @@ public final class DragonCompanionSystem {
 			}
 		}
 
-		private static void hatchedBaby(ServerLevel level, BlockPos at) {
+		private void hatchedBaby(ServerLevel level, BlockPos at) {
 			CompanionDragon dragon = COMPANION_DRAGON.create(level);
 			if (dragon == null) return;
+			this.babyId = dragon.getUUID();
 			dragon.moveTo(at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, 0.0F, 0.0F);
 			dragon.setPersistenceRequired();
 			dragon.setCustomName(net.minecraft.network.chat.Component.literal("Ember"));
@@ -171,6 +184,8 @@ public final class DragonCompanionSystem {
 				SynchedEntityData.defineId(CompanionDragon.class, EntityDataSerializers.INT);
 		private static final EntityDataAccessor<Boolean> DATA_TAMED =
 				SynchedEntityData.defineId(CompanionDragon.class, EntityDataSerializers.BOOLEAN);
+		private static final EntityDataAccessor<Optional<UUID>> DATA_OWNER =
+				SynchedEntityData.defineId(CompanionDragon.class, EntityDataSerializers.OPTIONAL_UUID);
 
 		private static final int GROW_PER_STAGE = 6000; // ~5 minutes per stage
 		private static final int CHARGE_REQUIRED = 60; // hold Space 3 seconds
@@ -189,6 +204,7 @@ public final class DragonCompanionSystem {
 			super.defineSynchedData(builder);
 			builder.define(DATA_STAGE, 0);
 			builder.define(DATA_TAMED, false);
+			builder.define(DATA_OWNER, Optional.empty());
 		}
 
 		public int getStage() {
@@ -197,6 +213,19 @@ public final class DragonCompanionSystem {
 
 		public boolean isTamed() {
 			return this.entityData.get(DATA_TAMED);
+		}
+
+		public UUID getOwnerId() {
+			return this.entityData.get(DATA_OWNER).orElse(null);
+		}
+
+		private void setOwnerId(UUID ownerId) {
+			this.entityData.set(DATA_OWNER, Optional.ofNullable(ownerId));
+		}
+
+		private boolean isOwner(Player player) {
+			UUID ownerId = getOwnerId();
+			return ownerId != null && ownerId.equals(player.getUUID());
 		}
 
 		private void setStage(int stage) {
@@ -243,7 +272,7 @@ public final class DragonCompanionSystem {
 		}
 
 		private void steerWithRider(Player rider) {
-			if (this.getStage() < 2 || !this.isTamed()) {
+			if (this.getStage() < 2 || !this.isTamed() || !this.isOwner(rider)) {
 				this.ejectPassengers();
 				return;
 			}
@@ -256,8 +285,11 @@ public final class DragonCompanionSystem {
 			float side = rider.xxa;    // A/D
 			Vec3 look = Vec3.directionFromRotation(0.0F, yaw);
 			Vec3 right = new Vec3(-look.z, 0.0D, look.x);
+			// Vanilla's input model: a positive xxa means "strafe left" (see
+			// Entity.getInputVector), while the right vector here points to the
+			// dragon's right, so negate the side input to match the rider's keys.
 			Vec3 wish = look.scale(forward * RIDE_SPEED)
-					.add(right.scale(side * RIDE_SPEED * 0.6D));
+					.add(right.scale(-side * RIDE_SPEED * 0.6D));
 
 			// Look up or down to climb and dive.
 			float pitch = rider.getXRot();
@@ -310,12 +342,13 @@ public final class DragonCompanionSystem {
 		@Override
 		public boolean hurt(DamageSource source, float amount) {
 			if (this.isTamed()) {
-				// A bonded dragon only answers to its rider: other players, the
-				// void, and /kill can hurt it, but stray mob hits cannot.
+				// A bonded dragon only answers to its rider: the owner, the
+				// void, and /kill can hurt it, but stray mobs and other
+				// players cannot.
 				if (source.is(DamageTypes.FELL_OUT_OF_WORLD) || source.is(DamageTypes.GENERIC_KILL)) {
 					return super.hurt(source, amount);
 				}
-				if (!(source.getEntity() instanceof Player)) {
+				if (!(source.getEntity() instanceof Player player) || !this.isOwner(player)) {
 					return false;
 				}
 			}
@@ -333,13 +366,14 @@ public final class DragonCompanionSystem {
 				if (!this.isTamed()) {
 					stack.shrink(1);
 					this.setTamed(true);
+					this.setOwnerId(player.getUUID());
 					this.playSound(SoundEvents.ENDER_DRAGON_GROWL, 1.0F, 0.7F);
 					this.setCustomNameVisible(true);
 					this.setPersistenceRequired();
 				}
 				return InteractionResult.sidedSuccess(this.level().isClientSide);
 			}
-			if (this.isTamed() && this.getStage() >= 2) {
+			if (this.isTamed() && this.getStage() >= 2 && this.isOwner(player)) {
 				if (!this.level().isClientSide) {
 					if (player.isShiftKeyDown()) {
 						if (this.isVehicle()) this.ejectPassengers();
