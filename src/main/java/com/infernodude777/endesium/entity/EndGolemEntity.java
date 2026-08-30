@@ -403,6 +403,17 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 		}
 	}
 
+	/**
+	 * The golem walks on top of the exit portal rather than being carried
+	 * through it. Refusing portals keeps the colossus (and the egg altar that
+	 * summons it) grounded in the End instead of teleporting the player fight
+	 * away to the overworld spawn.
+	 */
+	@Override
+	public boolean canUsePortal(boolean allowSpawn) {
+		return false;
+	}
+
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
 		// The engine never suffocates; arena terrain must never kill it.

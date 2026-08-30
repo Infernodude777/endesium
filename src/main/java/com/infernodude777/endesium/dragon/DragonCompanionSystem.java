@@ -2,11 +2,15 @@ package com.infernodude777.endesium.dragon;
 
 import com.infernodude777.endesium.Endesium;
 import com.infernodude777.endesium.mixin.LivingEntityJumpAccessor;
+import com.infernodude777.endesium.particle.ModParticles;
+import com.infernodude777.endesium.entity.BossPlacement;
+import com.infernodude777.endesium.registry.ModEntities;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -15,8 +19,11 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.BossEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -33,9 +40,11 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,76 +116,154 @@ public final class DragonCompanionSystem {
 		}
 	}
 
-	/** Watches the fountain column for a dragon egg, then hatches a companion. */
+	/**
+	 * Watches the fountain column for a dragon egg, then summons the End
+	 * Golem. The egg itself becomes a stationary boss altar: it cannot be
+	 * teleported, mined, dropped, or pushed, so it sits on the exit portal
+	 * until the countdown completes. Each egg summons exactly one golem.
+	 */
 	static final class HatchState {
-		private static final long HATCH_TICKS = 12000; // 10 minutes
+		/** 60 seconds - the awakening countdown. */
+		private static final long HATCH_TICKS = 1200;
+		/** Players within this range see the countdown boss bar. */
+		private static final double BARS_RADIUS_SQR = 64.0D * 64.0D;
 		private long lastScan;
-		private final Map<BlockPos, Long> eggStart = new HashMap<>();
-		private boolean spawnedBaby;
-		private UUID babyId;
+
+		/** One tracked egg per block, each with its own countdown boss bar. */
+		private final Map<BlockPos, EggAltar> altars = new HashMap<>();
 
 		HatchState(ServerLevel level) {
 		}
 
 		void tick(ServerLevel level) {
-			// Once the current companion is gone (died or removed), a fresh
-			// egg placed on the fountain can hatch a new one.
-			if (spawnedBaby && babyId != null) {
-				Entity baby = level.getEntity(babyId);
-				if (baby == null || !baby.isAlive()) {
-					spawnedBaby = false;
-					babyId = null;
-				}
-			}
 			long now = level.getGameTime();
 			if (now - lastScan >= 40) {
 				lastScan = now;
 				for (BlockPos egg : findEggs(level)) {
-					eggStart.putIfAbsent(egg, now);
+					if (!altars.containsKey(egg)) {
+						altars.put(egg, new EggAltar(egg, now));
+					}
 				}
 			}
-			eggStart.entrySet().removeIf(e ->
-					!level.getBlockState(e.getKey()).is(Blocks.DRAGON_EGG));
-			for (var entry : new HashMap<>(eggStart).entrySet()) {
-				BlockPos pos = entry.getKey();
-				if (now - entry.getValue() >= HATCH_TICKS && !spawnedBaby) {
-					level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-					hatchedBaby(level, pos.above());
-					spawnedBaby = true;
-					eggStart.clear();
+
+			// Drop tracking the moment an egg is moved/removed; a removed egg
+			// aborts that altar's summon (its bar disappears with it).
+			altars.keySet().removeIf(pos -> !level.getBlockState(pos).is(Blocks.DRAGON_EGG));
+
+			for (var entry : new HashMap<>(altars).entrySet()) {
+				EggAltar altar = entry.getValue();
+				// Clean up a finished altar's boss bar up front: once cleared,
+				// nothing else references it.
+				if (altar.done) {
+					clearBar(altar);
+					continue;
+				}
+				tickBar(level, altar);
+				if (now - altar.start >= HATCH_TICKS) {
+					level.setBlock(altar.pos, Blocks.AIR.defaultBlockState(), 3);
+					altar.done = true;
+					summonGolem(level, altar.pos);
+				}
+			}
+			altars.entrySet().removeIf(e -> e.getValue().done);
+		}
+
+		/** Keeps the countdown boss bar visible to players standing near the egg. */
+		private void tickBar(ServerLevel level, EggAltar altar) {
+			float remaining = HATCH_TICKS - (level.getGameTime() - altar.start);
+			altar.bossEvent.setProgress(Math.clamp(remaining / HATCH_TICKS, 0.0F, 1.0F));
+			// Safely add players near the egg. ServerBossEvent.getPlayers() is an
+			// unmodifiable view, so additions go through addPlayer() and removals
+			// are decided against a copy before calling removePlayer().
+			for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class,
+					new AABB(altar.pos).inflate(64.0D), p -> p.isAlive() && !p.isSpectator())) {
+				if (!altar.bossEvent.getPlayers().contains(player)
+						&& player.distanceToSqr(altar.pos.getX() + 0.5D, altar.pos.getY(), altar.pos.getZ() + 0.5D) < BARS_RADIUS_SQR) {
+					altar.bossEvent.addPlayer(player);
+				}
+			}
+			for (ServerPlayer player : new HashSet<>(altar.bossEvent.getPlayers())) {
+				if (!player.isAlive()
+						|| player.distanceToSqr(altar.pos.getX() + 0.5D, altar.pos.getY(), altar.pos.getZ() + 0.5D) >= BARS_RADIUS_SQR) {
+					altar.bossEvent.removePlayer(player);
 				}
 			}
 		}
 
-		private void hatchedBaby(ServerLevel level, BlockPos at) {
-			CompanionDragon dragon = COMPANION_DRAGON.create(level);
-			if (dragon == null) return;
-			this.babyId = dragon.getUUID();
-			dragon.moveTo(at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, 0.0F, 0.0F);
-			dragon.setPersistenceRequired();
-			dragon.setCustomName(net.minecraft.network.chat.Component.literal("Ember"));
-			// Her name tag is up from the moment she hatches so she's never
-			// confused with the boss dragon.
-			dragon.setCustomNameVisible(true);
-			dragon.setHealth(dragon.getMaxHealth());
-			level.addFreshEntity(dragon);
-			Endesium.LOGGER.info("Dragon egg hatched into a companion at {}", at.toShortString());
+		private void clearBar(EggAltar altar) {				for (ServerPlayer player : new HashSet<>(altar.bossEvent.getPlayers())) {
+					altar.bossEvent.removePlayer(player);
+				}
+		}
+
+		private void summonGolem(ServerLevel level, BlockPos at) {
+			var type = ModEntities.END_GOLEM;
+			var golem = type.create(level);
+			if (!(golem instanceof net.minecraft.world.entity.Mob mob)) return;
+			mob.setPersistenceRequired();
+			boolean settled = BossPlacement.settleOnGround(mob, level,
+					at.getX() + 0.5D, at.getZ() + 0.5D);
+			if (!settled) {
+				settled = BossPlacement.settleOnGround(mob, level,
+						at.getX() + 0.5D + 4.0D, at.getZ() + 0.5D);
+			}
+			if (!settled) {
+				Endesium.LOGGER.warn("Dragon egg golem summon skipped at {}: no open ground", at);
+				return;
+			}
+			mob.setCustomName(net.minecraft.network.chat.Component.translatable("entity.endesium.end_golem"));
+			level.addFreshEntity(golem);
+			level.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
+					mob.getX(), mob.getY() + 3.0D, mob.getZ(), 3, 1.5D, 1.5D, 1.5D, 0.0D);
+			level.sendParticles(ModParticles.RESONANCE_ACTIVE,
+					mob.getX(), mob.getY() + 3.0D, mob.getZ(), 120, 4.0D, 2.5D, 4.0D, 0.1D);
+			level.playSound(null, at, SoundEvents.WITHER_SPAWN, net.minecraft.sounds.SoundSource.HOSTILE, 1.6F, 0.6F);
+			Endesium.LOGGER.info("Dragon egg summoned the End Golem at {}", at.toShortString());
 		}
 
 		private static List<BlockPos> findEggs(ServerLevel level) {
 			List<BlockPos> found = new ArrayList<>();
-			// The End fountain sits at x=z=0; scan a 3x3 column region around it.
-			for (int dx = -1; dx <= 1; dx++) {
-				for (int dz = -1; dz <= 1; dz++) {
-					for (int y = level.getMaxBuildHeight() - 1; y > level.getMinBuildHeight(); y--) {
-						if (level.getBlockState(new BlockPos(dx, y, dz)).is(Blocks.DRAGON_EGG)) {
-							found.add(new BlockPos(dx, y, dz));
+			// Scan the main End island around the exit portal (a 32-block square
+			// around x=z=0 - where draft eggs are realistically placed/guarded).
+			// Each egg block found becomes its own altar, so every egg placed in
+			// range summons its own golem.
+			int r = 16;
+			// Bound the vertical pass to the playable build window (ground-to-near
+			// build-height). Eggs can never sit in the void below the island or
+			// float above the build limit, so skipping that keeps the sweep cheap.
+			int top = Math.min(level.getMaxBuildHeight(), 160);
+			int bottom = Math.max(level.getMinBuildHeight(), 0);
+			for (int dx = -r; dx <= r; dx++) {
+				for (int dz = -r; dz <= r; dz++) {
+					for (int y = top - 1; y > bottom; y--) {
+						BlockPos pos = new BlockPos(dx, y, dz);
+						if (level.getBlockState(pos).is(Blocks.DRAGON_EGG)) {
+							found.add(pos);
 							break;
 						}
 					}
 				}
 			}
 			return found;
+		}
+
+		/** A single egg's altar: its block and its dedicated countdown boss bar. */
+		private static final class EggAltar {
+			private final BlockPos pos;
+			private final long start;
+			private final ServerBossEvent bossEvent = new ServerBossEvent(
+					net.minecraft.network.chat.Component.literal("End Golem Awakening"),
+					BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
+
+			EggAltar(BlockPos pos, long start) {
+				this.pos = pos;
+				this.start = start;
+			}
+
+			boolean visible() {
+				return !bossEvent.getPlayers().isEmpty();
+			}
+
+			private boolean done;
 		}
 	}
 

@@ -8,6 +8,7 @@
     "RandomStateMixin",		"EndDragonFightMixin",
 		"EnderDragonMixin",
 		"EnderDragonPartMixin",
+		"DragonEggBlockMixin",
 		"LivingEntityMixin",
 		"LivingEntityJumpAccessor",
 		"EntityMixin"
