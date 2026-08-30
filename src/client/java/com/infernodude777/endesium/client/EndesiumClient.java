@@ -23,6 +23,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.gui.screens.MenuScreens;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -52,6 +53,8 @@ public class EndesiumClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.GALEFIN, GalefinRenderer::new);
 		EntityRendererRegistry.register(ModEntities.DEEP_LURKER, DeepLurkerRenderer::new);
         EntityRendererRegistry.register(DragonCompanionSystem.COMPANION_DRAGON, CompanionDragonRenderer::new);
+        EntityRendererRegistry.register(DragonCompanionSystem.COMPANION_DRAGON_BOLT,
+                ctx -> new ThrownItemRenderer<>(ctx, 0.75F, true));
         EntityModelLayerRegistry.registerModelLayer(EndesiumDragonArmorModel.LAYER, EndesiumDragonArmorModel::createBodyLayer);
         BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.VOID_GLASS, RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.MIREGLASS, RenderType.translucent());

@@ -15,7 +15,7 @@ public final class ProgressionGuideContent {
     }
 
     public static final List<String> CATEGORIES =
-            List.of("Start", "Progression", "Items", "Crafting", "Landmarks", "Endgame");
+            List.of("Start", "Progression", "Items", "Crafting", "Landmarks", "Endgame", "Ember");
 
     public static final List<Entry> PAGES = List.of(
         new Entry("Start", "Read Me First", List.of(
@@ -210,6 +210,32 @@ public final class ProgressionGuideContent {
             "Absorb ten cores to unlock GOLEM'S RESOLVE: once per day, death",
             "refuses you. Craft a GOLEM EFFIGY (dragonbone + void bricks + a",
             "core) to summon another golem whenever one is ready to fall.")),
+        new Entry("Ember", "Hatching Ember", List.of(
+            "Kill the Dragon, then take the egg off the fountain.",
+            "Place it back on TOP of the End fountain and leave it.",
+            "Ten minutes later it cracks: a baby dragon hatches.",
+            "She's called Ember, she's cyan, and she's friendly.",
+            "Only one companion per world at a time.")),
+        new Entry("Ember", "Growing & Taming", List.of(
+            "Ember grows through three stages - baby, teen, adult -",
+            "about five minutes each. She hovers while she grows.",
+            "Right-click her holding an ENDER PEARL to bond with her.",
+            "Once bonded, her name shows and only you, the void, or",
+            "/kill can hurt her. She stays as you left her across reloads.")),
+        new Entry("Ember", "Riding Ember", List.of(
+            "She must be an ADULT and bonded, then right-click to ride.",
+            "WASD to fly - she steers by where you look.",
+            "Look up to climb, look down to dive.",
+            "HOLD SPACE for three seconds: she charges up and fires",
+            "a magic ball in the direction she's facing.",
+            "Sneak to dismount.")),
+        new Entry("Ember", "Care & Keeping", List.of(
+            "Ember can pass through nether and end portals, so she'll",
+            "follow you home.",
+            "Unlike a wild dragon she never breaks blocks, never digs",
+            "through terrain, and never fights you.",
+            "Riding into a fight: her breath damages mobs but can't",
+            "set your builds on fire.")),
         new Entry("Endgame", "Advancement Checklist", List.of(
             "Order: Into the Wastes/Wilds -> First Resonance -> Whispers ->",
             "Sunken Archive -> Echo Sight -> What Remains (Spire) ->",

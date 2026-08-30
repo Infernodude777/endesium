@@ -17,7 +17,7 @@ import org.lwjgl.glfw.GLFW;
  * the top, and pages rendered verbatim from {@link ProgressionGuideContent}.
  */
 public class GuidePagesScreen extends Screen {
-    private static final int PANEL_WIDTH = 340;
+    private static final int PANEL_WIDTH = 420;
     private static final int PANEL_HEIGHT = 216;
     private static final int MARGIN = 14;
     private static final int TEXT_LEFT = MARGIN + 6;

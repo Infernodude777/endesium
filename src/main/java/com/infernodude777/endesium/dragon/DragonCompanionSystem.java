@@ -29,7 +29,6 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.SmallFireball;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -58,6 +57,19 @@ public final class DragonCompanionSystem {
 					.dimensions(EntityDimensions.fixed(4.0F, 3.0F))
 					.trackRangeChunks(10)
 					.build());
+
+	/** The charged breath projectile - a small fireball that never sets blocks on fire. */
+	public static final EntityType<CompanionDragonBolt> COMPANION_DRAGON_BOLT = Registry.register(
+			BuiltInRegistries.ENTITY_TYPE,
+			ResourceLocation.fromNamespaceAndPath(Endesium.MOD_ID, "companion_dragon_bolt"),
+			FabricEntityTypeBuilder.create(MobCategory.MISC, DragonCompanionSystem::createBolt)
+					.dimensions(EntityDimensions.fixed(0.3125F, 0.3125F))
+					.trackRangeChunks(4)
+					.build());
+
+	private static CompanionDragonBolt createBolt(EntityType<CompanionDragonBolt> type, Level level) {
+		return new CompanionDragonBolt(type, level);
+	}
 
 	/** Per-dimension hatching state, kept in memory for the session. */
 	private static final Map<ResourceKey<Level>, HatchState> STATES = new HashMap<>();
@@ -277,7 +289,7 @@ public final class DragonCompanionSystem {
 		private void shootMagicBall(Vec3 dir) {
 			if (!(this.level() instanceof ServerLevel server)) return;
 			dir = dir.normalize().scale(1.2D);
-			SmallFireball ball = new SmallFireball(this.level(), this, dir);
+			CompanionDragonBolt ball = new CompanionDragonBolt(this.level(), this, dir);
 			ball.setPos(this.getX() + dir.x * 2.0D, this.getY() + 1.5D, this.getZ() + dir.z * 2.0D);
 			server.addFreshEntity(ball);
 			this.playSound(SoundEvents.DRAGON_FIREBALL_EXPLODE, 1.0F, 1.0F);
@@ -286,6 +298,13 @@ public final class DragonCompanionSystem {
 		@Override
 		public LivingEntity getControllingPassenger() {
 			return this.getFirstPassenger() instanceof LivingEntity living ? living : null;
+		}
+
+		@Override
+		public boolean canUsePortal(boolean allowSpawn) {
+			// Vanilla dragons are hard-coded to never use portals. Ember is a
+			// pet, so she follows her rider through nether and end portals.
+			return true;
 		}
 
 		@Override
