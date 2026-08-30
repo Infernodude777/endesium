@@ -3,7 +3,6 @@ package com.infernodude777.endesium.dragon;
 import com.infernodude777.endesium.particle.ModParticles;
 import com.infernodude777.endesium.registry.ModEndgear;
 import com.infernodude777.endesium.registry.ModItems;
-import com.infernodude777.endesium.state.PostDragonState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
@@ -33,7 +32,7 @@ public final class DragonHoard {
 
     private DragonHoard() { }
 
-    public static void spawnHoard(ServerLevel level, BlockPos at) {
+    public static void spawnHoard(ServerLevel level, BlockPos at, boolean firstKill) {
         BlockPos anchor = at == null ? new BlockPos(0, 64, 0) : at;
         BlockPos spot = findGround(level, anchor);
         if (spot == null) return;
@@ -41,7 +40,6 @@ public final class DragonHoard {
         // The hoard chest: the landmark itself.
         level.setBlock(spot, Blocks.CHEST.defaultBlockState(), 3);
         if (level.getBlockEntity(spot) instanceof ChestBlockEntity chest) {
-            boolean firstKill = !PostDragonState.get(level).isDragonDefeated();
             fill(chest, firstKill, level.random);
         }
 
@@ -69,14 +67,23 @@ public final class DragonHoard {
         level.playSound(null, spot, SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.AMBIENT, 2.0F, 1.0F);
     }
 
-    /** Finds the air block just above the island surface nearest the anchor. */
+    /** Finds the air block just above the island surface nearest the anchor.
+     *  If the dragon died over the void, the hoard is placed on the main
+     *  island beside the portal instead of being lost in the void. */
     private static BlockPos findGround(ServerLevel level, BlockPos at) {
         int x = at.getX();
         int z = at.getZ();
         if (!level.isLoaded(new BlockPos(x, 0, z))) return null;
         int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) + 1;
         BlockPos pos = new BlockPos(x, y, z);
-        return level.getBlockState(pos).isAir() ? pos : null;
+        if (level.getBlockState(pos).isAir() && y > 1) {
+            return pos;
+        }
+        // No real ground at the death site: fall back to the island at the
+        // End entrance so the hoard (and the Dragon Wings) is always reachable.
+        int spawnY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, 0, 0) + 1;
+        BlockPos fallback = new BlockPos(0, spawnY, 0);
+        return level.getBlockState(fallback).isAir() ? fallback : null;
     }
 
     private static void fill(ChestBlockEntity chest, boolean firstKill, RandomSource random) {

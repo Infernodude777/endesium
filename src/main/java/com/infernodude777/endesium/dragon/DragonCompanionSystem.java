@@ -197,6 +197,25 @@ public final class DragonCompanionSystem {
 		public CompanionDragon(EntityType<? extends CompanionDragon> type, Level level) {
 			super(type, level);
 			setNoGravity(true);
+			// The vanilla Dragon is a boss that clips through the terrain; a pet
+			// must not. Undo the hard-coded noPhysics so Ember collides with
+			// blocks like any other mount instead of flying through your base.
+			this.noPhysics = false;
+		}
+
+		/**
+		 * Vanilla's {@link EnderDragon} constructor ignores the entity type it
+		 * is given and hard-codes {@link EntityType#ENDER_DRAGON}, which would
+		 * make the spawn packet carry the vanilla type. The client would then
+		 * create a plain EnderDragon with fewer synched-data entries than the
+		 * server's CompanionDragon, and the first extra data broadcast (growth
+		 * stage) would desync the connection with a network protocol error.
+		 * Reporting our own type keeps both sides on the same entity and same
+		 * data layout - and lets the renderer and save/load treat her as Ember.
+		 */
+		@Override
+		public net.minecraft.world.entity.EntityType<?> getType() {
+			return COMPANION_DRAGON;
 		}
 
 		@Override
@@ -251,8 +270,14 @@ public final class DragonCompanionSystem {
 				// hostile arena phases, whether or not she's tamed yet. An
 				// untamed adult just hovers peacefully instead of going feral.
 				Vec3 v = this.getDeltaMovement();
+				// Set the bob directly each tick instead of accumulating it into
+				// the vertical velocity: folding it in (v.y * 0.94 + bob) makes a
+				// lightly-damped oscillator that resonates with the ~5s bob
+				// period, so the hover slowly grows into a 8-block seesaw. With
+				// the bob as the whole Y velocity the hover stays a gentle
+				// +/-0.4 block drift around the spawn point.
 				double bob = Math.sin(this.tickCount * 0.06D) * 0.02D;
-				this.setDeltaMovement(v.x * 0.92D, v.y * 0.94D + bob, v.z * 0.92D);
+				this.setDeltaMovement(v.x * 0.92D, bob, v.z * 0.92D);
 				this.move(MoverType.SELF, this.getDeltaMovement());
 			}
 			this.growTick();
@@ -345,14 +370,34 @@ public final class DragonCompanionSystem {
 				// A bonded dragon only answers to its rider: the owner, the
 				// void, and /kill can hurt it, but stray mobs and other
 				// players cannot.
-				if (source.is(DamageTypes.FELL_OUT_OF_WORLD) || source.is(DamageTypes.GENERIC_KILL)) {
-					return super.hurt(source, amount);
-				}
-				if (!(source.getEntity() instanceof Player player) || !this.isOwner(player)) {
+				boolean byOwner = source.getEntity() instanceof Player player && this.isOwner(player);
+				boolean unavoidable = source.is(DamageTypes.FELL_OUT_OF_WORLD)
+						|| source.is(DamageTypes.GENERIC_KILL);
+				if (!byOwner && !unavoidable) {
 					return false;
+				}
+				// The vanilla dragon ignores everything that is not a player or
+				// an explosion, which would silently swallow the void and /kill.
+				// Apply that damage directly so the documented ways to put a
+				// bonded dragon down actually work.
+				if (unavoidable && !byOwner) {
+					return this.reallyHurt(source, amount);
 				}
 			}
 			return super.hurt(source, amount);
+		}
+
+		@Override
+		public void die(DamageSource source) {
+			// A pet has no boss ceremony. The vanilla dragon survives its death
+			// through the DYING phase, but Ember drives her own aiStep so that
+			// phase never ticks - without this she would linger forever at
+			// 1 HP, unkillable and never really gone.
+			this.skipDropExperience();
+			super.die(source);
+			if (!this.level().isClientSide()) {
+				this.remove(Entity.RemovalReason.KILLED);
+			}
 		}
 
 		@Override

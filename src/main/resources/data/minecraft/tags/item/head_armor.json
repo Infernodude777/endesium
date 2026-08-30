@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "endesium:void_helmet",
+    "endesium:luminous_helmet",
+    "endesium:ash_helmet",
+    "endesium:null_helmet"
+  ]
+}

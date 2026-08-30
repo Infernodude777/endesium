@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "endesium:void_shovel",
+    "endesium:luminous_shovel",
+    "endesium:ash_shovel",
+    "endesium:null_shovel"
+  ]
+}

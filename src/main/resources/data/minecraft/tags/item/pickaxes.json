@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "endesium:void_pickaxe",
+    "endesium:luminous_pickaxe",
+    "endesium:ash_pickaxe",
+    "endesium:null_pickaxe"
+  ]
+}

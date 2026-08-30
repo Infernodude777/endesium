@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "endesium:void_sword",
+    "endesium:luminous_sword",
+    "endesium:ash_sword",
+    "endesium:null_sword"
+  ]
+}

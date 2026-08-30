@@ -4,6 +4,7 @@ import com.infernodude777.endesium.Endesium;
 import com.infernodude777.endesium.command.DragonFightCommand;
 import com.infernodude777.endesium.registry.ModEntities;
 import com.infernodude777.endesium.entity.VoidWispEntity;
+import com.infernodude777.endesium.state.PostDragonState;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -81,7 +82,7 @@ public final class DragonAssaultHandler {
         if (dragons.isEmpty()) {
             if (state.active) {
                 state.active = false;
-                DragonHoard.spawnHoard(level, state.lastDragonPos);
+                DragonHoard.spawnHoard(level, state.lastDragonPos, state.hoardFirstKill);
                 DragonRewards.dropEnhancedLoot(level, state.lastDragonPos);
                 announce(level, "The Sky Falls Silent", "The dragon's hoard reveals itself",
                         SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
@@ -90,7 +91,14 @@ public final class DragonAssaultHandler {
         }
 
         EnderDragon dragon = dragons.get(0);
-        state.active = true;
+        // Capture whether this is the world's first kill the moment the fight
+        // starts. The hoard is filled later, after the death, by which point
+        // PostDragonState is already marked defeated - looking the flag up then
+        // would always yield "repeat kill" and drop the first-kill prizes.
+        if (!state.active) {
+            state.active = true;
+            state.hoardFirstKill = !PostDragonState.get(level).isDragonDefeated();
+        }
         state.lastDragonPos = dragon.blockPosition();
 
         // Final boss buff: the dragon opens at 600 health (vanilla 200).
@@ -265,6 +273,7 @@ public final class DragonAssaultHandler {
 
     private static final class FightState {
         private boolean active;
+        private boolean hoardFirstKill;
         private int enrageLevel;
         private int breathDelay = 12;
         private int waveDelay = 8;

@@ -24,7 +24,10 @@ abstract class EntityMixin {
 	private float endesium$aegisDragonDamage(float amount) {
 		Entity self = (Entity) (Object) this;
 		if (self instanceof EnderDragon
+				&& !(self instanceof com.infernodude777.endesium.dragon.DragonCompanionSystem.CompanionDragon)
 				&& self.level() instanceof ServerLevel server) {
+			// The crystal aegis is a boss-fight mechanic; the tameable
+			// companion must never inherit its damage gates.
 			return DragonAssaultHandler.modifyDragonDamage(server, amount);
 		}
 		return amount;

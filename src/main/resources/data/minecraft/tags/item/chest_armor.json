@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "endesium:void_chestplate",
+    "endesium:luminous_chestplate",
+    "endesium:ash_chestplate",
+    "endesium:null_chestplate"
+  ]
+}
