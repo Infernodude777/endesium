@@ -68,6 +68,16 @@ public final class DragonCompanionSystem {
 		Endesium.LOGGER.info("Companion dragon system registered");
 	}
 
+	/**
+	 * True for the actual Endesium boss dragon, false for the tameable
+	 * companion. Every fight layer (assault, special attacks, arena
+	 * reactions, sky) keys off "the EnderDragon in the arena", so they must
+	 * never pick up a companion as their boss.
+	 */
+	public static boolean isBossDragon(EnderDragon dragon) {
+		return !(dragon instanceof CompanionDragon);
+	}
+
 	private static void tick(MinecraftServer server) {
 		for (ServerLevel level : server.getAllLevels()) {
 			if (level.dimension() != Level.END) continue;
@@ -193,15 +203,14 @@ public final class DragonCompanionSystem {
 
 			if (this.isVehicle() && this.getControllingPassenger() instanceof Player rider && rider.isAlive()) {
 				this.steerWithRider(rider);
-			} else if (this.isTamed() || this.getStage() < 2) {
-				// Friendly and docile - never run the vanilla Dragon's hostile
-				// arena phases. Hover gently where it is.
+			} else {
+				// Always friendly and docile - never run the vanilla Dragon's
+				// hostile arena phases, whether or not she's tamed yet. An
+				// untamed adult just hovers peacefully instead of going feral.
 				Vec3 v = this.getDeltaMovement();
 				double bob = Math.sin(this.tickCount * 0.06D) * 0.02D;
 				this.setDeltaMovement(v.x * 0.92D, v.y * 0.94D + bob, v.z * 0.92D);
 				this.move(MoverType.SELF, this.getDeltaMovement());
-			} else {
-				super.aiStep();
 			}
 			this.growTick();
 			// No explicit baseTick() here: the entity tick chain already runs

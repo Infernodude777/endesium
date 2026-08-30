@@ -1,5 +1,6 @@
 package com.infernodude777.endesium.mixin;
 
+import com.infernodude777.endesium.dragon.DragonCompanionSystem;
 import com.infernodude777.endesium.dragon.DragonFightController;
 import com.infernodude777.endesium.dragon.DragonLoot;
 import com.infernodude777.endesium.state.PostDragonState;
@@ -47,7 +48,10 @@ abstract class EnderDragonMixin {
 	@Inject(method = "tickDeath", at = @At("HEAD"))
 	private void endesium$onDeathStarted(CallbackInfo ci) {
 		EnderDragon dragon = (EnderDragon) (Object) this;
-		if (dragon.level().isClientSide() || dragon.dragonDeathTime != 0) return;
+		// The companion dragon is a pet, not the boss - it must never trigger
+		// boss drops or fight state.
+		if (dragon.level().isClientSide() || dragon.dragonDeathTime != 0
+				|| dragon instanceof DragonCompanionSystem.CompanionDragon) return;
 		ServerLevel level = (ServerLevel) dragon.level();
 		PostDragonState state = PostDragonState.get(level);
 		endesium$state().clearZones();
@@ -61,7 +65,10 @@ abstract class EnderDragonMixin {
 	@Inject(method = "aiStep", at = @At("HEAD"))
 	private void endesium$aiStep(CallbackInfo ci) {
 		EnderDragon dragon = (EnderDragon) (Object) this;
-		if (dragon.level().isClientSide()) return;
+		// Companion dragons override aiStep entirely, but guard anyway so a
+		// future path through super.aiStep() can never put the pet in the fight.
+		if (dragon.level().isClientSide()
+				|| dragon instanceof DragonCompanionSystem.CompanionDragon) return;
 		DragonFightController.tick(dragon, (ServerLevel) dragon.level(), endesium$state());
 	}
 

@@ -59,7 +59,8 @@ public final class DragonSpecialAttacks {
         tickRifts();
         for (ServerLevel level : server.getAllLevels()) {
             if (level.dimension() != Level.END) continue;
-            List<EnderDragon> dragons = level.getEntitiesOfClass(EnderDragon.class, ARENA_BOX, EnderDragon::isAlive);
+            List<EnderDragon> dragons = level.getEntitiesOfClass(EnderDragon.class, ARENA_BOX,
+                d -> d.isAlive() && DragonCompanionSystem.isBossDragon(d));
             if (dragons.isEmpty()) continue;
             tickDragon(level, dragons.get(0), DragonAssaultHandler.enrageOf(level));
         }

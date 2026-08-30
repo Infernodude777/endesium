@@ -54,7 +54,8 @@ public final class EndFightSky {
     private static void tickLevel(ServerLevel level) {
         SkyState state = STATES.computeIfAbsent(level.dimension(), key -> new SkyState());
         List<EnderDragon> dragons =
-                level.getEntitiesOfClass(EnderDragon.class, ARENA_BOX, EnderDragon::isAlive);
+                level.getEntitiesOfClass(EnderDragon.class, ARENA_BOX,
+                d -> d.isAlive() && DragonCompanionSystem.isBossDragon(d));
         if (dragons.isEmpty()) {
             state.active = false;
             return;

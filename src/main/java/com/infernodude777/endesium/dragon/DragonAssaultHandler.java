@@ -76,7 +76,8 @@ public final class DragonAssaultHandler {
     private static void tickLevel(ServerLevel level) {
         FightState state = STATES.computeIfAbsent(level.dimension(), key -> new FightState());
         List<EnderDragon> dragons =
-                level.getEntitiesOfClass(EnderDragon.class, ARENA_BOX, EnderDragon::isAlive);
+                level.getEntitiesOfClass(EnderDragon.class, ARENA_BOX,
+                d -> d.isAlive() && DragonCompanionSystem.isBossDragon(d));
         if (dragons.isEmpty()) {
             if (state.active) {
                 state.active = false;
@@ -247,7 +248,8 @@ public final class DragonAssaultHandler {
     public static String snapshot(ServerLevel level) {
         FightState state = STATES.get(level.dimension());
         List<EnderDragon> dragons =
-                level.getEntitiesOfClass(EnderDragon.class, ARENA_BOX, EnderDragon::isAlive);
+                level.getEntitiesOfClass(EnderDragon.class, ARENA_BOX,
+                d -> d.isAlive() && DragonCompanionSystem.isBossDragon(d));
         if (dragons.isEmpty()) return "no dragon present";
         EnderDragon dragon = dragons.get(0);
         int crystals = level.getEntitiesOfClass(EndCrystal.class, ARENA_BOX,

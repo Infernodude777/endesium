@@ -60,7 +60,8 @@ public final class ArenaReactionHandler {
     private static void tickLevel(ServerLevel level) {
         ReactionState state = STATES.computeIfAbsent(level.dimension(), key -> new ReactionState());
         List<EnderDragon> dragons =
-                level.getEntitiesOfClass(EnderDragon.class, ARENA_BOX, EnderDragon::isAlive);
+                level.getEntitiesOfClass(EnderDragon.class, ARENA_BOX,
+                d -> d.isAlive() && DragonCompanionSystem.isBossDragon(d));
         int enrage = DragonAssaultHandler.enrageOf(level);
         int crystals = countCrystals(level);
 
