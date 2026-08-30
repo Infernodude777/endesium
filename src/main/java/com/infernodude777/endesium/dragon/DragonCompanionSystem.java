@@ -29,7 +29,6 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
@@ -201,6 +200,12 @@ public final class DragonCompanionSystem {
 			// must not. Undo the hard-coded noPhysics so Ember collides with
 			// blocks like any other mount instead of flying through your base.
 			this.noPhysics = false;
+			// Ember hatches already tame and fully grown - a rideable mount from
+			// the instant she appears, no feeding or ten-minute growth wait. She
+			// starts unowned and the first player to ride her claims her (the
+			// owner is persisted separately so the bond survives a restart).
+			this.setTamed(true);
+			this.setStage(2);
 		}
 
 		/**
@@ -244,7 +249,9 @@ public final class DragonCompanionSystem {
 
 		private boolean isOwner(Player player) {
 			UUID ownerId = getOwnerId();
-			return ownerId != null && ownerId.equals(player.getUUID());
+			// An unclaimed (but tame) dragon answers to anyone; riding her
+			// claims her to that rider.
+			return ownerId == null || ownerId.equals(player.getUUID());
 		}
 
 		private void setStage(int stage) {
@@ -402,28 +409,21 @@ public final class DragonCompanionSystem {
 
 		@Override
 		public InteractionResult mobInteract(Player player, InteractionHand hand) {
-			var stack = player.getItemInHand(hand);
-			if (stack.is(Items.ENDER_PEARL)) {
-				if (this.level().isClientSide) {
-					player.swing(hand);
-					return InteractionResult.CONSUME;
-				}
-				if (!this.isTamed()) {
-					stack.shrink(1);
-					this.setTamed(true);
-					this.setOwnerId(player.getUUID());
-					this.playSound(SoundEvents.ENDER_DRAGON_GROWL, 1.0F, 0.7F);
-					this.setCustomNameVisible(true);
-					this.setPersistenceRequired();
-				}
-				return InteractionResult.sidedSuccess(this.level().isClientSide);
-			}
-			if (this.isTamed() && this.getStage() >= 2 && this.isOwner(player)) {
+			// Ember is tame on arrival; no pearl-feeding step. Right-click to
+			// ride (which also claims her if she is unowned), sneak-right-click
+			// to dismount. Always a mount, never tamed away from you.
+			if (this.getStage() >= 2 && this.isTamed()) {
 				if (!this.level().isClientSide) {
 					if (player.isShiftKeyDown()) {
 						if (this.isVehicle()) this.ejectPassengers();
-					} else if (!this.isVehicle()) {
-						player.startRiding(this, true);
+					} else if (this.isOwner(player)) {
+						if (this.getOwnerId() == null) {
+							this.setOwnerId(player.getUUID());
+							this.setCustomNameVisible(true);
+							this.setPersistenceRequired();
+							this.playSound(SoundEvents.ENDER_DRAGON_GROWL, 1.0F, 0.6F);
+						}
+						if (!this.isVehicle()) player.startRiding(this, true);
 					}
 				}
 				return InteractionResult.sidedSuccess(this.level().isClientSide);
@@ -448,15 +448,25 @@ public final class DragonCompanionSystem {
 		@Override
 		public void addAdditionalSaveData(CompoundTag tag) {
 			super.addAdditionalSaveData(tag);
-			// stage/tamed ride the synched data (auto-persisted); keep the
-			// growth progress so a reloaded baby keeps its timer.
+			// Stage and tame are always (adult, tamed) by construction, but the
+			// owner is real state and must survive a reload - synched entity
+			// data is not auto-persisted, so write it out explicitly.
 			tag.putInt("EndesiumGrowthTicks", this.growthTicks);
+			UUID ownerId = getOwnerId();
+			if (ownerId != null) {
+				tag.putUUID("EndesiumOwner", ownerId);
+			}
 		}
 
 		@Override
 		public void readAdditionalSaveData(CompoundTag tag) {
 			super.readAdditionalSaveData(tag);
 			this.growthTicks = tag.getInt("EndesiumGrowthTicks");
+			if (tag.hasUUID("EndesiumOwner")) {
+				this.setOwnerId(tag.getUUID("EndesiumOwner"));
+			} else {
+				this.setOwnerId(null);
+			}
 		}
 	}
 }
