@@ -196,13 +196,16 @@ public final class DragonFightController {
 			var maxHealthAttribute = dragon.getAttribute(Attributes.MAX_HEALTH);
 			if (maxHealthAttribute != null) {
 				double maxHealth = Math.min(maxHealthAttribute.getBaseValue() * 2.0D, 400.0D);
-				// On a reload the attribute base value may already be boosted
-				// (the buff is persisted). Only top the health up when the buff
-				// is genuinely new, so a server restart mid-fight cannot heal a
+				// Top the health up to the new cap so a freshly respawned
+				// Dragon starts the awakened fight full, not at half. Counting
+				// from 200 (a brand-new vanilla Dragon's base) would call a
+				// genuine respawn "already buffed" and skip the heal. The
+				// reload case needs no guard here: the "!state.transformed" gate
+				// above is persisted via the mixin's save/load, so a server
+				// restart mid-fight never re-enters this block and cannot heal a
 				// wounded Dragon back to full.
-				boolean alreadyBuffed = maxHealthAttribute.getBaseValue() >= 200.0D;
 				maxHealthAttribute.setBaseValue(maxHealth);
-				if (!alreadyBuffed) dragon.setHealth((float) maxHealth);
+				dragon.setHealth((float) maxHealth);
 			}
 		}
 
