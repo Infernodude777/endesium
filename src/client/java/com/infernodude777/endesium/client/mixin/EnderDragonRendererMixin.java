@@ -72,6 +72,9 @@ public abstract class EnderDragonRendererMixin {
 	private void endesium$renderArmor(EnderDragon dragon, float yaw, float tickDelta, PoseStack pose,
 			MultiBufferSource buffers, int light, CallbackInfo ci) {
 		if (endesium$armorModel == null) return;
+		// The companion dragon wears its own skin - the boss's armor overlay
+		// would clash with it.
+		if (dragon instanceof com.infernodude777.endesium.dragon.DragonCompanionSystem.CompanionDragon) return;
 		float healthFraction = dragon.getMaxHealth() <= 0.0F ? 1.0F : dragon.getHealth() / dragon.getMaxHealth();
 		int stage = healthFraction > 0.75F ? 1 : healthFraction > 0.45F ? 2 : healthFraction > 0.20F ? 3 : 4;
 		boolean awakened = dragon.getScale() > 1.1F;

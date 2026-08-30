@@ -2,6 +2,7 @@ package com.infernodude777.endesium.client;
 
 import com.infernodude777.endesium.client.entity.*;
 import com.infernodude777.endesium.client.particle.ResonanceMoteParticle;
+import com.infernodude777.endesium.dragon.DragonCompanionSystem;
 import com.infernodude777.endesium.client.screen.ProgressionGuideScreen;
 import com.infernodude777.endesium.item.VoidSwordItem;
 import com.infernodude777.endesium.net.EndesiumPackets.SonicBoomPayload;
@@ -50,6 +51,7 @@ public class EndesiumClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.SKY_JELLY, SkyJellyRenderer::new);
 		EntityRendererRegistry.register(ModEntities.GALEFIN, GalefinRenderer::new);
 		EntityRendererRegistry.register(ModEntities.DEEP_LURKER, DeepLurkerRenderer::new);
+        EntityRendererRegistry.register(DragonCompanionSystem.COMPANION_DRAGON, CompanionDragonRenderer::new);
         EntityModelLayerRegistry.registerModelLayer(EndesiumDragonArmorModel.LAYER, EndesiumDragonArmorModel::createBodyLayer);
         BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.VOID_GLASS, RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.MIREGLASS, RenderType.translucent());

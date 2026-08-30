@@ -122,7 +122,9 @@ public final class DragonCompanionSystem {
 			dragon.moveTo(at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, 0.0F, 0.0F);
 			dragon.setPersistenceRequired();
 			dragon.setCustomName(net.minecraft.network.chat.Component.literal("Ember"));
-			dragon.setCustomNameVisible(false);
+			// Her name tag is up from the moment she hatches so she's never
+			// confused with the boss dragon.
+			dragon.setCustomNameVisible(true);
 			dragon.setHealth(dragon.getMaxHealth());
 			level.addFreshEntity(dragon);
 			Endesium.LOGGER.info("Dragon egg hatched into a companion at {}", at.toShortString());
