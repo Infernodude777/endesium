@@ -1,6 +1,7 @@
 package com.infernodude777.endesium.dragon;
 
 import com.infernodude777.endesium.particle.ModParticles;
+import com.infernodude777.endesium.registry.ModEndgear;
 import com.infernodude777.endesium.registry.ModItems;
 import com.infernodude777.endesium.state.PostDragonState;
 import net.minecraft.core.BlockPos;
@@ -84,6 +85,9 @@ public final class DragonHoard {
         int slot = 0;
         if (firstKill) {
             items.set(slot++, new ItemStack(ModItems.DRAGON_HEART));
+            // The Dragon Wings are a first-kill prize from the hoard itself,
+            // not a crafting recipe - you earn them by winning the fight.
+            items.set(slot++, new ItemStack(ModEndgear.DRAGON_WINGS));
             items.set(slot++, new ItemStack(ModItems.DRAGON_FANG, 3));
             items.set(slot++, new ItemStack(ModItems.DRAGONBONE, 6));
             items.set(slot++, new ItemStack(ModItems.RESONANT_DRAGON_SCALE, 2));

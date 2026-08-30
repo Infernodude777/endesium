@@ -2,10 +2,10 @@
 """Generates the companion dragon's skin from the vanilla dragon texture.
 
 The hatched companion shares the vanilla EnderDragon model, so the boss and
-the pet look identical. This recolors the vanilla skin to the mod's resonance
-cyan (the same palette family as the Resonant Bloom), preserving the original
-shading so the model keeps its depth - the player can tell Ember from the
-boss at a glance.
+the pet look identical. This recolors the vanilla skin into a fire palette -
+deep red on the shadowed scales rising through orange to yellow on the
+brightest highlights - so the player can tell Ember (fire) from the boss
+(black-purple) at a glance.
 
 Reference: tools/ref/dragon.png (extracted verbatim from vanilla 1.21.1).
 Output: src/main/resources/assets/endesium/textures/entity/enderdragon/dragon.png
@@ -26,13 +26,14 @@ REF = pathlib.Path("tools/ref/dragon.png")
 OUT = pathlib.Path("src/main/resources/assets/endesium/textures/entity/enderdragon/dragon.png")
 
 
-def tint_img(img, hue_target, sat_mult, val_mult, sat_floor):
-    """Recolors the whole skin toward hue_target (0-1).
+def fire_tint(img):
+    """Tints the whole skin into a red -> orange -> yellow fire gradient.
 
     The vanilla dragon skin is nearly black, so a plain hue-remap leaves it
-    black. This forces every non-transparent pixel to the target hue and
-    lifts the darkest grays up to a saturation floor, keeping the original
-    luminance (and therefore the model's shading) intact.
+    black. Every non-transparent pixel is forced onto the warm fire arc with
+    hue rising along with brightness: shadowed scales go deep red, mid tones
+    orange, and the brightest highlights yellow. The original luminance is
+    kept (lifted slightly) so the model's shading stays readable.
     """
     out = img.copy()
     px = out.load()
@@ -42,18 +43,18 @@ def tint_img(img, hue_target, sat_mult, val_mult, sat_floor):
             if a == 0:
                 continue
             h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
-            s2 = max(sat_floor, min(1.0, s * sat_mult))
-            v2 = min(1.0, v * val_mult)
-            r2, g2, b2 = colorsys.hsv_to_rgb(hue_target, s2, v2)
+            # Deep red (0.0) -> orange (0.07) -> yellow (0.14) as it brightens.
+            hue = min(0.14, v * 0.16)
+            s2 = max(0.55, min(1.0, s * 1.2 + 0.3))
+            v2 = min(1.0, v * 1.4)
+            r2, g2, b2 = colorsys.hsv_to_rgb(hue, s2, v2)
             px[x, y] = (int(r2 * 255), int(g2 * 255), int(b2 * 255), a)
     return out
 
 
 def main():
     img = Image.open(REF).convert("RGBA")
-    # Resonance cyan: hue 0.50 (180 deg), pushed saturation and brightness so
-    # the pet reads clearly against the boss's dark purple-black.
-    out = tint_img(img, 0.50, 1.2, 1.35, sat_floor=0.45)
+    out = fire_tint(img)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     out.save(OUT)
     print(f"wrote {OUT} ({out.size[0]}x{out.size[1]})")

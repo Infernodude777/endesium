@@ -214,7 +214,7 @@ public final class ProgressionGuideContent {
             "Kill the Dragon, then take the egg off the fountain.",
             "Place it back on TOP of the End fountain and leave it.",
             "Ten minutes later it cracks: a baby dragon hatches.",
-            "She's called Ember, she's cyan, and she's friendly.",
+            "She's called Ember - a red-orange fire dragon, and she's friendly.",
             "Only one companion per world at a time.")),
         new Entry("Ember", "Growing & Taming", List.of(
             "Ember grows through three stages - baby, teen, adult -",

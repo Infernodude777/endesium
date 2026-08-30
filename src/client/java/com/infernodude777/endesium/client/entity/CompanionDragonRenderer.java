@@ -8,9 +8,10 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 
 /**
  * The companion dragon rides the vanilla dragon model but wears its own skin:
- * resonance cyan instead of the boss's near-black purple. It's the same
- * silhouette, so the animation and hitbox stay vanilla - just a different
- * color, which is all you need to tell Ember from the boss at a glance.
+ * a fire palette of red, orange, and yellow instead of the boss's near-black
+ * purple. It's the same silhouette, so the animation and hitbox stay vanilla -
+ * just a different color, which is all you need to tell Ember from the boss at
+ * a glance.
  */
 public class CompanionDragonRenderer extends EnderDragonRenderer {
 	private static final ResourceLocation COMPANION_DRAGON_TEXTURE =
