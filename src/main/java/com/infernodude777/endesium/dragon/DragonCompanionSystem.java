@@ -200,12 +200,6 @@ public final class DragonCompanionSystem {
 			// must not. Undo the hard-coded noPhysics so Ember collides with
 			// blocks like any other mount instead of flying through your base.
 			this.noPhysics = false;
-			// Ember hatches already tame and fully grown - a rideable mount from
-			// the instant she appears, no feeding or ten-minute growth wait. She
-			// starts unowned and the first player to ride her claims her (the
-			// owner is persisted separately so the bond survives a restart).
-			this.setTamed(true);
-			this.setStage(2);
 		}
 
 		/**
@@ -226,8 +220,13 @@ public final class DragonCompanionSystem {
 		@Override
 		protected void defineSynchedData(SynchedEntityData.Builder builder) {
 			super.defineSynchedData(builder);
-			builder.define(DATA_STAGE, 0);
-			builder.define(DATA_TAMED, false);
+			// Ember hatches already tame and fully grown - a rideable mount from
+			// the instant she appears, no feeding or ten-minute growth wait. The
+			// defaults (not the constructor) carry this so both client and server
+			// agree from the very first serialized snapshot. She starts unowned;
+			// the first player to ride her claims her.
+			builder.define(DATA_STAGE, 2);
+			builder.define(DATA_TAMED, true);
 			builder.define(DATA_OWNER, Optional.empty());
 		}
 

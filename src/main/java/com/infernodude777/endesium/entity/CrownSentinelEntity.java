@@ -95,8 +95,8 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 		// One entry per attribute - duplicates silently overwrite (last wins)
 		// and once cut this boss to 60 health while the docs promised 160.
 		return Mob.createMobAttributes()
-				.add(Attributes.MAX_HEALTH, 220.0D)
-				.add(Attributes.ATTACK_DAMAGE, 16.0D)
+				.add(Attributes.MAX_HEALTH, 165.0D)
+				.add(Attributes.ATTACK_DAMAGE, 12.0D)
 				.add(Attributes.ARMOR, 14.0D)
 				.add(Attributes.ARMOR_TOUGHNESS, 4.0D)
 				.add(Attributes.FOLLOW_RANGE, 48.0D)
@@ -169,14 +169,14 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 	public void aiStep() {
 
 		// --- Difficulty pass: harden the sentinel ---
-		if (this.getMaxHealth() < 300.0D) {
+		if (this.getMaxHealth() < 220.0D) {
 			var hp = getAttribute(Attributes.MAX_HEALTH);
 			if (hp != null) {
-				hp.setBaseValue(340.0D);
+				hp.setBaseValue(255.0D);
 				setHealth(getMaxHealth());
 			}
 			var atk = getAttribute(Attributes.ATTACK_DAMAGE);
-			if (atk != null) atk.setBaseValue(24.0D);
+			if (atk != null) atk.setBaseValue(18.0D);
 			var armor = getAttribute(Attributes.ARMOR);
 			if (armor != null) armor.setBaseValue(22.0D);
 			var tough = getAttribute(Attributes.ARMOR_TOUGHNESS);
@@ -220,7 +220,7 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 			// Enrage: below a third the sentinel burns hotter - once, loudly.
 			if (isEnraged() && !enragedAnnounced) {
 				enragedAnnounced = true;
-				setAttributeSafe(Attributes.ATTACK_DAMAGE, 20.0D);
+				setAttributeSafe(Attributes.ATTACK_DAMAGE, 15.0D);
 				setAttributeSafe(Attributes.MOVEMENT_SPEED, 0.32D);
 				playSound(SoundEvents.RAVAGER_ROAR, 1.2F, 0.7F);
 				server.sendParticles(ParticleTypes.FLAME,

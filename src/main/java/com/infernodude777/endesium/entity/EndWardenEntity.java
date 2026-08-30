@@ -131,9 +131,9 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 		// One entry per attribute - duplicated keys would silently clobber each
 		// other (last wins), which once reduced this boss's aggro range to 32.
 		return Mob.createMobAttributes()
-				.add(Attributes.MAX_HEALTH, 400.0D)
+				.add(Attributes.MAX_HEALTH, 300.0D)
 				.add(Attributes.MOVEMENT_SPEED, 0.33D)
-				.add(Attributes.ATTACK_DAMAGE, 18.0D)
+				.add(Attributes.ATTACK_DAMAGE, 13.0D)
 				.add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
 				.add(Attributes.ARMOR, 16.0D)
 				.add(Attributes.ARMOR_TOUGHNESS, 6.0D)
@@ -238,14 +238,14 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 	public void tick() {
 
 		// --- Difficulty pass: harden the Warden ---
-		if (this.getMaxHealth() < 500.0D) {
+		if (this.getMaxHealth() < 400.0D) {
 			var hp = getAttribute(Attributes.MAX_HEALTH);
 			if (hp != null) {
-				hp.setBaseValue(560.0D);
+				hp.setBaseValue(420.0D);
 				setHealth(getMaxHealth());
 			}
 			var atk = getAttribute(Attributes.ATTACK_DAMAGE);
-			if (atk != null) atk.setBaseValue(26.0D);
+			if (atk != null) atk.setBaseValue(19.0D);
 			var armor = getAttribute(Attributes.ARMOR);
 			if (armor != null) armor.setBaseValue(22.0D);
 			var tough = getAttribute(Attributes.ARMOR_TOUGHNESS);
@@ -553,7 +553,7 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 	/** A crack of resonance light and a horn blast mark the enrage threshold. */
 	private void announceEnrage(ServerLevel server) {
 		playSound(SoundEvents.RAVAGER_ROAR, 1.0F, 0.6F);
-		setAttributeValueSafe(Attributes.ATTACK_DAMAGE, 24.0D);
+		setAttributeValueSafe(Attributes.ATTACK_DAMAGE, 18.0D);
 		setAttributeValueSafe(Attributes.MOVEMENT_SPEED, 0.38D);
 		server.sendParticles(ModParticles.RESONANCE_PULSE,
 				getX(), getY() + 1.8D, getZ(), 24, 1.2D, 0.8D, 1.2D, 0.05D);

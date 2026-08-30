@@ -7,6 +7,7 @@
     "TheEndBiomeSourceMixin",
     "RandomStateMixin",		"EndDragonFightMixin",
 		"EnderDragonMixin",
+		"EnderDragonPartMixin",
 		"LivingEntityMixin",
 		"LivingEntityJumpAccessor",
 		"EntityMixin"
