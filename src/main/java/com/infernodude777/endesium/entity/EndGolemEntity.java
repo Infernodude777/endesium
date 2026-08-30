@@ -180,6 +180,25 @@ public class EndGolemEntity extends Monster implements GeoEntity {
 
 	@Override
 	public void tick() {
+
+		// --- Difficulty pass: harden this colossus ---
+		if (this.getMaxHealth() < 600.0D) {
+			var hp = getAttribute(Attributes.MAX_HEALTH);
+			if (hp != null) {
+				hp.setBaseValue(720.0D);
+				setHealth(getMaxHealth());
+			}
+			var atk = getAttribute(Attributes.ATTACK_DAMAGE);
+			if (atk != null) atk.setBaseValue(26.0D);
+			var armor = getAttribute(Attributes.ARMOR);
+			if (armor != null) armor.setBaseValue(26.0D);
+			var tough = getAttribute(Attributes.ARMOR_TOUGHNESS);
+			if (tough != null) tough.setBaseValue(12.0D);
+		}
+		// Below half health the engine slowly re-seals its core - kill it clean.
+		if (tickCount > 20 && tickCount % 160 == 0 && this.getHealth() > 0.0F && this.getHealth() < this.getMaxHealth() * 0.5F) {
+			this.heal(24.0F);
+		}
 		super.tick();
 		if (level() instanceof ServerLevel server) {
 			updatePhase(server);

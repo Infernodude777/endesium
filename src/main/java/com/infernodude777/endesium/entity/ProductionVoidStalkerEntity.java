@@ -103,6 +103,23 @@ public class ProductionVoidStalkerEntity extends Monster implements GeoEntity {
 
     @Override
     public void tick() {
+
+        // --- Difficulty pass: harden the wastes sentinel ---
+        if (this.getMaxHealth() < 40.0D) {
+            var hp = getAttribute(Attributes.MAX_HEALTH);
+            if (hp != null) {
+                hp.setBaseValue(52.0D);
+                setHealth(getMaxHealth());
+            }
+            var atk = getAttribute(Attributes.ATTACK_DAMAGE);
+            if (atk != null) atk.setBaseValue(10.0D);
+            var armor = getAttribute(Attributes.ARMOR);
+            if (armor != null) armor.setBaseValue(8.0D);
+            var tough = getAttribute(Attributes.ARMOR_TOUGHNESS);
+            if (tough != null) tough.setBaseValue(4.0D);
+            var knock = getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+            if (knock != null) knock.setBaseValue(0.6D);
+        }
         super.tick();
         if (!level().isClientSide()) updateBehavior();
     }

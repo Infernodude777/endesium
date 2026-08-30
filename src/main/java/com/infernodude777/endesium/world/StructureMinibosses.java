@@ -60,6 +60,22 @@ public final class StructureMinibosses {
 			guard.addEffect(new net.minecraft.world.effect.MobEffectInstance(
 					net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, net.minecraft.world.effect.MobEffectInstance.INFINITE_DURATION, 0,
 					false, false, true));
+
+			// --- Armor pass: fortify the honor guard ---
+			var hp2 = guard.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+			if (hp2 != null) {
+				hp2.setBaseValue(hp2.getBaseValue() + 120.0D);
+				guard.setHealth(guard.getMaxHealth());
+			}
+			var dmg2 = guard.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+			if (dmg2 != null) dmg2.setBaseValue(dmg2.getBaseValue() + 8.0D);
+			var arm2 = guard.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR);
+			if (arm2 != null) arm2.setBaseValue(arm2.getBaseValue() + 12.0D);
+			var tgh2 = guard.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS);
+			if (tgh2 != null) tgh2.setBaseValue(tgh2.getBaseValue() + 6.0D);
+			guard.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+					net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, net.minecraft.world.effect.MobEffectInstance.INFINITE_DURATION, 1,
+					false, false, true));
 			equip(guard, spec.mainhand, spec.chest, spec.boots);
 			level.addFreshEntity(guard);
 			Endesium.LOGGER.info("Flagship honor guard [{}] spawned at {}", spec.name, at.toShortString());

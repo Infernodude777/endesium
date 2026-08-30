@@ -2,6 +2,7 @@ package com.infernodude777.endesium;
 
 import com.infernodude777.endesium.command.EndesiumCommands;
 import com.infernodude777.endesium.dragon.DragonAssaultHandler;
+import com.infernodude777.endesium.dragon.DragonCompanionSystem;
 import com.infernodude777.endesium.dragon.ResonantWingsPassives;
 import com.infernodude777.endesium.dragon.SonicBoomHandler;
 import com.infernodude777.endesium.entity.*;
@@ -87,6 +88,7 @@ public class Endesium implements ModInitializer {
 
         // --- Dragon fight and world events ---
         DragonAssaultHandler.register();
+        DragonCompanionSystem.register();
         com.infernodude777.endesium.state.BossRewardEvents.register();
         com.infernodude777.endesium.state.RecipeUnlockEvents.register();
 

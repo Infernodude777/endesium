@@ -167,6 +167,25 @@ public class CrownSentinelEntity extends Monster implements GeoEntity {
 
 	@Override
 	public void aiStep() {
+
+		// --- Difficulty pass: harden the sentinel ---
+		if (this.getMaxHealth() < 300.0D) {
+			var hp = getAttribute(Attributes.MAX_HEALTH);
+			if (hp != null) {
+				hp.setBaseValue(340.0D);
+				setHealth(getMaxHealth());
+			}
+			var atk = getAttribute(Attributes.ATTACK_DAMAGE);
+			if (atk != null) atk.setBaseValue(24.0D);
+			var armor = getAttribute(Attributes.ARMOR);
+			if (armor != null) armor.setBaseValue(22.0D);
+			var tough = getAttribute(Attributes.ARMOR_TOUGHNESS);
+			if (tough != null) tough.setBaseValue(9.0D);
+		}
+		// Below half health the sentinel reforges its plating slowly.
+		if (tickCount > 20 && tickCount % 180 == 0 && this.getHealth() > 0.0F && this.getHealth() < this.getMaxHealth() * 0.5F) {
+			this.heal(18.0F);
+		}
 		super.aiStep();
 		if (level() instanceof ServerLevel server) {
 			// Cooldowns tick centrally so goal polling can never stall them.

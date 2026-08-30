@@ -236,6 +236,25 @@ public class EndWardenEntity extends Monster implements GeoEntity {
 
 	@Override
 	public void tick() {
+
+		// --- Difficulty pass: harden the Warden ---
+		if (this.getMaxHealth() < 500.0D) {
+			var hp = getAttribute(Attributes.MAX_HEALTH);
+			if (hp != null) {
+				hp.setBaseValue(560.0D);
+				setHealth(getMaxHealth());
+			}
+			var atk = getAttribute(Attributes.ATTACK_DAMAGE);
+			if (atk != null) atk.setBaseValue(26.0D);
+			var armor = getAttribute(Attributes.ARMOR);
+			if (armor != null) armor.setBaseValue(22.0D);
+			var tough = getAttribute(Attributes.ARMOR_TOUGHNESS);
+			if (tough != null) tough.setBaseValue(10.0D);
+		}
+		// Below half health it stops flinching and slowly regenerates.
+		if (tickCount > 20 && tickCount % 160 == 0 && this.getHealth() > 0.0F && this.getHealth() < this.getMaxHealth() * 0.5F) {
+			this.heal(20.0F);
+		}
 		super.tick();
 		if (level() instanceof ServerLevel server) {
 			if (getRegion() < 0) {
