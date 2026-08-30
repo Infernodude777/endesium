@@ -20,13 +20,15 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -68,6 +70,12 @@ public final class DragonCompanionSystem {
 					.trackRangeChunks(4)
 					.build());
 
+	/** 30 hearts - a rideable pet, not a raid boss (the vanilla dragon has 200). */
+	public static final AttributeSupplier.Builder createAttributes() {
+		return EnderDragon.createAttributes().add(Attributes.MAX_HEALTH, 60.0D);
+	}
+
+
 	private static CompanionDragonBolt createBolt(EntityType<CompanionDragonBolt> type, Level level) {
 		return new CompanionDragonBolt(type, level);
 	}
@@ -76,7 +84,8 @@ public final class DragonCompanionSystem {
 	private static final Map<ResourceKey<Level>, HatchState> STATES = new HashMap<>();
 
 	public static void register() {
-		FabricDefaultAttributeRegistry.register(COMPANION_DRAGON, EnderDragon.createAttributes());
+		FabricDefaultAttributeRegistry.register(COMPANION_DRAGON, createAttributes());
+
 		ServerTickEvents.END_SERVER_TICK.register(DragonCompanionSystem::tick);
 		Endesium.LOGGER.info("Companion dragon system registered");
 	}
@@ -200,6 +209,18 @@ public final class DragonCompanionSystem {
 			// must not. Undo the hard-coded noPhysics so Ember collides with
 			// blocks like any other mount instead of flying through your base.
 			this.noPhysics = false;
+
+			// Vanilla's EnderDragon constructor hard-codes EntityType.ENDER_DRAGON
+			// as the type it passes to Mob, so our FabricDefaultAttributeRegistry
+			// entry (30 hearts) is registered under CompanionDragon but never
+			// consulted - the instance is built from vanilla dragon attributes
+			// (200 HP). Force the real max health here instead. This runs on both
+			// the server and the client, so the hearts bar stays consistent when
+			// riding.
+			if (this.getAttribute(Attributes.MAX_HEALTH) != null) {
+				this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(60.0D);
+				this.setHealth(this.getMaxHealth());
+			}
 		}
 
 		/**
@@ -371,26 +392,24 @@ public final class DragonCompanionSystem {
 		}
 
 		@Override
+		public boolean hurt(EnderDragonPart part, DamageSource source, float amount) {
+			// Hits land on one of the dragon's body/wing/head/tail parts. Vanilla
+			// routes those through a gate that only lets players and explosions
+			// deal damage - route them to the normal hurt so Ember can take
+			// damage from anything, like any other ridden mob.
+			return this.hurt(source, amount);
+		}
+
+		@Override
 		public boolean hurt(DamageSource source, float amount) {
-			if (this.isTamed()) {
-				// A bonded dragon only answers to its rider: the owner, the
-				// void, and /kill can hurt it, but stray mobs and other
-				// players cannot.
-				boolean byOwner = source.getEntity() instanceof Player player && this.isOwner(player);
-				boolean unavoidable = source.is(DamageTypes.FELL_OUT_OF_WORLD)
-						|| source.is(DamageTypes.GENERIC_KILL);
-				if (!byOwner && !unavoidable) {
-					return false;
-				}
-				// The vanilla dragon ignores everything that is not a player or
-				// an explosion, which would silently swallow the void and /kill.
-				// Apply that damage directly so the documented ways to put a
-				// bonded dragon down actually work.
-				if (unavoidable && !byOwner) {
-					return this.reallyHurt(source, amount);
-				}
+			if (this.isRemoved() || this.isDeadOrDying()) {
+				return false;
 			}
-			return super.hurt(source, amount);
+			// Apply the damage plainly. EnderDragon.reallyHurt just runs the
+			// standard Mob damage path (and our die() override removes her
+			// cleanly), so the pet behaves like a normal, killable mount instead
+			// of shrugging off most sources.
+			return this.reallyHurt(source, amount);
 		}
 
 		@Override
