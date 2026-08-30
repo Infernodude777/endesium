@@ -27,7 +27,7 @@ public abstract class EnderDragonRendererMixin {
 
 	@org.spongepowered.asm.mixin.Unique
 	private static final net.minecraft.resources.ResourceLocation ENDESIUM_DRAGON_TEXTURE =
-			net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/enderdragon/enderdragon.png");
+			net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/enderdragon/dragon.png");
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void endesium$createArmorModel(EntityRendererProvider.Context context, CallbackInfo ci) {
