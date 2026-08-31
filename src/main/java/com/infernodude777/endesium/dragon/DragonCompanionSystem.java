@@ -146,35 +146,31 @@ public final class DragonCompanionSystem {
 				}
 			}
 
-			// Drop tracking the moment an egg is moved/removed; a removed egg
-			// aborts that altar's summon (its bar disappears with it).
-			var entryIt = altars.entrySet().iterator();
-			while (entryIt.hasNext()) {
-				var entry = entryIt.next();
-				if (!level.getBlockState(entry.getKey()).is(Blocks.DRAGON_EGG)) {
-					// Must clear the boss bar's players or it leaks a frozen
-					// "End Golem Awakening" bar on the client indefinitely.
-					clearBar(entry.getValue());
-					entryIt.remove();
-				}
-			}
-
-			for (var entry : new HashMap<>(altars).entrySet()) {
+			// Drive every live altar. Whatever the outcome - the countdown
+			// finishing, the egg being moved/removed, or a bar that outlives its
+			// entity - the altar is dropped from the map on the same pass and its
+			// boss bar is hidden first. Otherwise a finished altar's bar leaks a
+			// frozen "End Golem Awakening" bar on the client forever.
+			var it = altars.entrySet().iterator();
+			while (it.hasNext()) {
+				var entry = it.next();
 				EggAltar altar = entry.getValue();
-				// Clean up a finished altar's boss bar up front: once cleared,
-				// nothing else references it.
-				if (altar.done) {
+				// A removed/moved egg aborts that altar's summon.
+				if (!level.getBlockState(altar.pos).is(Blocks.DRAGON_EGG)) {
 					clearBar(altar);
+					it.remove();
 					continue;
 				}
 				tickBar(level, altar);
 				if (now - altar.start >= HATCH_TICKS) {
 					level.setBlock(altar.pos, Blocks.AIR.defaultBlockState(), 3);
-					altar.done = true;
 					summonGolem(level, altar.pos);
+					// Finish this altar right now: hide its bar and drop it so the
+					// countdown bar never lingers after the golem spawns.
+					clearBar(altar);
+					it.remove();
 				}
 			}
-			altars.entrySet().removeIf(e -> e.getValue().done);
 		}
 
 		/** Keeps the countdown boss bar visible to players standing near the egg. */
@@ -271,8 +267,6 @@ public final class DragonCompanionSystem {
 			boolean visible() {
 				return !bossEvent.getPlayers().isEmpty();
 			}
-
-			private boolean done;
 		}
 	}
 
