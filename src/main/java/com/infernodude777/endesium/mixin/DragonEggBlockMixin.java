@@ -1,14 +1,10 @@
 package com.infernodude777.endesium.mixin;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DragonEggBlock;
-import net.minecraft.world.level.block.FallingBlock;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
@@ -66,7 +62,8 @@ abstract class DragonEggBlockMixin {
 	}
 
 	public BlockState updateShape(BlockState state, net.minecraft.core.Direction dir,
-			BlockState neighbor, Level level, BlockPos pos, BlockPos neighborPos) {
+			BlockState neighbor, net.minecraft.world.level.LevelAccessor level,
+			BlockPos pos, BlockPos neighborPos) {
 		return state;
 	}
 
@@ -83,9 +80,13 @@ abstract class DragonEggBlockMixin {
 	/**
 	 * The egg cannot be mined while it is an altar: survival digging can never
 	 * collect or reposition it, so it truly stays stationary until the summon.
-	 * (A -1 destroy progress is the bedrock-style "unbreakable" signal.)
+	 * (A -1 destroy progress is the bedrock-style "unbreakable" signal. The
+	 * fourth parameter is {@link net.minecraft.world.level.BlockGetter} by
+	 * design - {@code Level} is a subtype, but Mixin soft-overrides need the
+	 * exact declared type to attach.)
 	 */
-	public float getDestroyProgress(BlockState state, Player player, Level level, BlockPos pos) {
+	public float getDestroyProgress(BlockState state, Player player,
+			net.minecraft.world.level.BlockGetter level, BlockPos pos) {
 		return -1.0F;
 	}
 }
