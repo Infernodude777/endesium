@@ -148,7 +148,16 @@ public final class DragonCompanionSystem {
 
 			// Drop tracking the moment an egg is moved/removed; a removed egg
 			// aborts that altar's summon (its bar disappears with it).
-			altars.keySet().removeIf(pos -> !level.getBlockState(pos).is(Blocks.DRAGON_EGG));
+			var entryIt = altars.entrySet().iterator();
+			while (entryIt.hasNext()) {
+				var entry = entryIt.next();
+				if (!level.getBlockState(entry.getKey()).is(Blocks.DRAGON_EGG)) {
+					// Must clear the boss bar's players or it leaks a frozen
+					// "End Golem Awakening" bar on the client indefinitely.
+					clearBar(entry.getValue());
+					entryIt.remove();
+				}
+			}
 
 			for (var entry : new HashMap<>(altars).entrySet()) {
 				EggAltar altar = entry.getValue();

@@ -38,12 +38,14 @@ abstract class DragonEggBlockMixin {
 	}
 
 	/**
-	 * No more jump-on-punch: punching it must never break it or fling it around.
+	 * No more jump-on-punch: cancel the original attack outright (it previously
+	 * ran on, teleporting the egg). The egg never breaks and never flings away,
+	 * so no new countdown can start from a relocated egg.
 	 */
-	@Inject(method = "attack", at = @At("HEAD"))
+	@Inject(method = "attack", at = @At("HEAD"), cancellable = true)
 	private void endesium$noAttackTeleport(BlockState state, Level level, BlockPos pos,
 			Player player, CallbackInfo ci) {
-		// Leaving the method without calling teleport keeps the egg in place.
+		ci.cancel();
 	}
 
 	/**
